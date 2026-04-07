@@ -1,6 +1,13 @@
-const { app, BrowserWindow, protocol } = require('electron');
+const electron = require('electron');
 const path = require('path');
 const url = require('url');
+const { app, BrowserWindow, protocol } = electron;
+
+// Defensive check for app object
+if (!app) {
+  console.error('Electron app module could not be initialized.');
+  process.exit(1);
+}
 
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
 
@@ -35,11 +42,17 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Handle some scheme issues in newer Electron
-  protocol.registerFileProtocol('app', (request, callback) => {
-    const url = request.url.substr(6);
-    callback({ path: path.normalize(`${__dirname}/${url}`) });
-  });
+  try {
+    // Handle some scheme issues in newer Electron
+    if (protocol && typeof protocol.registerFileProtocol === 'function') {
+      protocol.registerFileProtocol('app', (request, callback) => {
+        const url = request.url.substr(6);
+        callback({ path: path.normalize(`${__dirname}/${url}`) });
+      });
+    }
+  } catch (error) {
+    console.warn('Failed to register protocol:', error);
+  }
 
   createWindow();
 
