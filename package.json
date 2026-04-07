@@ -2,7 +2,7 @@
   "name": "alghwairy_fin",
   "private": true,
   "version": "1.0.0",
-  "description": "Alghwairy Ledger",
+  "description": "مؤسسة الغويري للتخليص الجمركي - المنظومة السيادية",
   "author": "Alghwairy",
   "main": "main.cjs",
   "type": "module",
@@ -28,7 +28,7 @@
   },
   "build": {
     "appId": "com.algh.sovereign.ledger",
-    "productName": "Alghwairy Sovereign Ledger",
+    "productName": "Alghwairy Customs Clearance",
     "directories": {
       "output": "release",
       "buildResources": "assets"
@@ -41,7 +41,7 @@
       "ALGHWAIRY_SOVEREIGN_MANUAL.md"
     ],
     "win": {
-      "target": "portable",
+      "target": "nsis",
       "publish": null,
       "icon": "assets/icon.png",
       "requestedExecutionLevel": "requireAdministrator"
@@ -53,8 +53,8 @@
       "runAfterFinish": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "الميزان السيادي",
-      "artifactName": "Alghwairy-Sovereign-Ledger-Setup-${version}.${ext}",
+      "shortcutName": "مؤسسة الغويري للتخليص الجمركي",
+      "artifactName": "Alghwairy-Customs-Clearance-Setup-${version}.${ext}",
       "installerIcon": "assets/icon.png",
       "uninstallerIcon": "assets/icon.png",
       "installerHeaderIcon": "assets/icon.png"

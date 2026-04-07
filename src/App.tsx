@@ -31,8 +31,7 @@ import {
   Banknote,
   BarChart3,
   FileSpreadsheet,
-  Trash2,
-  Briefcase
+  Trash2
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
@@ -56,7 +55,6 @@ import PettyCashView from './components/PettyCashView';
 import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
-import AffiliateView from './components/AffiliateView';
 
 
 const translations = {
@@ -90,8 +88,7 @@ const translations = {
       statements: 'القوائم المالية الجمركية',
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
-      biometrics: 'الأمان والبصمات',
-      affiliate: 'نظام الشركاء'
+      biometrics: 'الأمان والبصمات'
     },
     notifications: {
       success: 'تمت تسجيل العملية السيادية بنجاح بميزان الغويري!',
@@ -605,77 +602,6 @@ const translations = {
       transactions_automated: 'العمليات المؤتمتة',
       configure: 'تكوين'
     },
-    affiliate: {
-      lang: 'ar',
-      title: 'نظام الشركاء',
-      subtitle: 'إدارة علاقات الشركاء والتسويات السيادية.',
-      enroll_partner: 'تسجيل شريك جديد',
-      active_partners: 'الشركاء النشطون',
-      total_sales: 'إجمالي مبيعات الشركاء',
-      pending_payouts: 'عمولات معلقة',
-      avg_multiplier: 'متوسط المضاعف',
-      efficiency_multiplier: 'مضاعف الكفاءة',
-      since_label: 'منذ',
-      sovereign_load: 'الحمل السيادي',
-      manage_structures: 'إدارة الهياكل',
-      rate_label: 'المعدل',
-      link_copied: 'تم نسخ الرابط',
-      complete_partner_data: 'يرجى إكمال بيانات الشريك',
-      partner_enrolled_successfully: 'تم تسجيل الشريك بنجاح',
-      authorize_sovereign_payout: 'تفويض الدفع السيادي',
-      commission_architecture: 'بنية العمولات',
-      tabs: {
-        partners: 'الشركاء',
-        payouts: 'المدفوعات',
-        links: 'الروابط',
-        settings: 'الإعدادات'
-      },
-      table: {
-        identity: 'هوية الشريك',
-        status: 'الحالة',
-        conversions: 'التحويلات',
-        commission: 'العمولة',
-        total_payout: 'إجمالي المدفوعات',
-        node: 'العقدة السيادية'
-      },
-      status: {
-        active: 'نشط',
-        pending: 'معلق',
-        inactive: 'غير نشط'
-      },
-      types: {
-        individual: 'فردي',
-        agency: 'وكالة',
-        corporate: 'مؤسسة'
-      },
-      link_gen: {
-        title: 'مولد الروابط السيادية',
-        destination: 'رابط الوجهة',
-        partner: 'اختيار الشريك',
-        generate: 'توليد الرابط',
-        copy: 'نسخ الرابط',
-        label_destination: 'رابط الوجهة',
-        label_select: 'اختيار الشريك'
-      },
-      payouts: {
-        pending_title: 'المدفوعات المعلقة',
-        due_date: 'تاريخ الاستحقاق',
-        authorize: 'تفويض',
-        ref: 'المرجع',
-        partner: 'الشريك',
-        amount: 'المبلغ',
-        status: 'الحالة'
-      },
-      add_modal: {
-        title: 'تسجيل شريك سيادي',
-        name: 'اسم الشريك',
-        email: 'البريد الإلكتروني',
-        type: 'نوع الشراكة',
-        commission: 'نسبة العمولة (%)'
-      },
-      cancel: 'إلغاء',
-      activate_partner_btn: 'تنشيط الشريك'
-    }
   },
   en: {
     title: 'Alghwairy Customs Clearance',
@@ -708,8 +634,7 @@ const translations = {
       petty_cash: 'Petty Cash',
       trash: 'Trash bin',
       biometrics: 'Security & Biometrics',
-      marketing: 'Marketing Systems',
-      affiliate: 'Affiliate Network'
+      marketing: 'Marketing Systems'
     },
     notifications: {
       success: 'Sovereign transaction recorded successfully!',
@@ -1141,90 +1066,6 @@ const translations = {
       total_active: 'Total Active Petty Cash',
       add_request: 'Request Petty Cash'
     },
-    affiliate: {
-      lang: 'en',
-      title: 'Sovereign Affiliate Network',
-      subtitle: 'Managed partnership programs and commission ledgers.',
-      commission_pool: 'Total Commission Pool',
-      active_referrals: 'Active Referrals',
-      pending_payouts: 'Pending Transfers',
-      tabs: {
-        partners: 'Sovereign Partners',
-        links: 'Secure Asset Links',
-        payouts: 'Financial Payouts',
-        settings: 'Network Protocol'
-      },
-      search_placeholder: 'Search partners...',
-      add_partner: 'Register Sovereign Partner',
-      link_gen: {
-        title: 'Secure Link Generator',
-        destination: 'Destination URL',
-        partner: 'Select Partner Node',
-        generate: 'Generate Secure Link',
-        copy: 'Copy Node Link',
-        label_destination: 'Target URL',
-        label_select: 'Partner Entity'
-      },
-      payouts_table: {
-        pending_title: 'Pending Payout Authorization',
-        due_date: 'Sovereign Due Date',
-        authorize: 'Authorize Payout',
-        ref: 'Reference Code',
-        partner: 'Entity Node',
-        amount: 'Value (SAR)',
-        status: 'Audit Status'
-      },
-      add_modal: {
-        title: 'Sovereign Partner Enrollment',
-        name: 'Legal Name',
-        email: 'Encrypted Email',
-        type: 'Partnership Class',
-        commission: 'Commission Alpha (%)'
-      },
-      cancel: 'Cancel Enrollment',
-      activate_partner_btn: 'Authorize Partner Node',
-      enroll_partner: 'Enroll New Partner',
-      active_partners: 'Active Partners',
-      total_sales: 'Total Sales (Partner)',
-      avg_multiplier: 'Avg. Multiplier',
-      efficiency_multiplier: 'Efficiency Multiplier',
-      since_label: 'Since',
-      sovereign_load: 'Sovereign Load',
-      manage_structures: 'Manage Structures',
-      rate_label: 'Rate',
-      link_copied: 'Link Copied',
-      complete_partner_data: 'Please complete partner data',
-      partner_enrolled_successfully: 'Partner enrolled successfully',
-      authorize_sovereign_payout: 'Authorize Sovereign Payout',
-      commission_architecture: 'Commission Architecture',
-      table: {
-        identity: 'Partner Identity',
-        status: 'Status',
-        conversions: 'Conversion Count',
-        commission: 'Commission',
-        total_payout: 'Total Payout (SAR)',
-        node: 'Sovereign Node'
-      },
-      status: {
-        active: 'Active',
-        pending: 'Pending',
-        inactive: 'Inactive'
-      },
-      types: {
-        individual: 'Individual',
-        agency: 'Agency',
-        corporate: 'Corporate'
-      },
-      payouts: {
-        pending_title: 'Pending Payouts',
-        due_date: 'Due Date',
-        authorize: 'Authorize',
-        ref: 'Reference',
-        partner: 'Partner',
-        amount: 'Amount',
-        status: 'Status'
-      }
-    }
   }
 };
 
@@ -1497,8 +1338,6 @@ export default function App() {
       case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} isDark={isDark} toggleTheme={toggleTheme} t={{...t.settings, lang}} userName={userName} systemSettings={systemSettings} />;
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
-      case 'affiliate': return <AffiliateView showToast={showToast} t={{...t.affiliate, lang}} />;
-
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1536,16 +1375,16 @@ export default function App() {
         <div style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1rem 1.2rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
           {!isCollapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
-                  <ShieldCheck size={18} strokeWidth={2.8} />
-                  <h2 style={{ fontSize: '0.95rem', fontWeight: 800, fontFamily: 'Tajawal', margin: 0, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'white' }}>{t.title}</h2>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--secondary)' }}>
+                  <img src="/logo.png" alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+                  <h2 style={{ fontSize: '1rem', fontWeight: 900, fontFamily: 'Tajawal', margin: 0, letterSpacing: '0.5px', color: 'white' }}>{t.title}</h2>
                </div>
                <p style={{ fontSize: '0.55rem', opacity: 0.4, marginTop: '0.4rem', color: '#abc8f5', textAlign: 'center', fontWeight: 700, letterSpacing: '0.5px' }}>{t.subtitle}</p>
             </div>
           )}
           {isCollapsed && (
-            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.08)', borderRadius: '10px', margin: '1.2rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)', cursor: 'pointer', transition: 'all 0.3s' }}>
-               <ShieldCheck size={20} strokeWidth={2.5} />
+            <div className="sidebar-logo-mini" style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.08)', borderRadius: '12px', margin: '1.2rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid rgba(255,255,255,0.1)' }}>
+               <img src="/logo.png" alt="Logo" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
             </div>
           )}
         </div>
@@ -1556,7 +1395,6 @@ export default function App() {
               {!isCollapsed && <div style={{ padding: '1rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
               <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />
               <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Briefcase size={16} />} label={t.nav.affiliate} active={activeTab === 'affiliate'} onClick={() => setActiveTab('affiliate')} lang={lang} isCollapsed={isCollapsed} />
             </>
           )}
 

@@ -193,7 +193,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                   boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                   border: '1.5px solid var(--secondary)'
                }}>
-                  <img src="./assets/icon.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
+                  <img src="/logo.png" alt="Logo" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
                </div>
                <div>
                   <h3 style={{ fontSize: '1rem', color: 'var(--secondary)', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>مؤسسة الغويري</h3>
