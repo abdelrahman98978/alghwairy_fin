@@ -68,14 +68,14 @@ export default function MarketingView({ t, showToast }: MarketingViewProps) {
     setLoading(true);
     await new Promise(r => setTimeout(r, 1500));
     setLoading(false);
-    alert(t.lang === 'ar' ? 'تم إرسال البريد بنجاح' : 'Email broadcasted successfully');
+    showToast(t.lang === 'ar' ? 'تم إرسال البريد بنجاح' : 'Email broadcasted successfully', 'success');
   };
 
   const handleApplyOptimization = async () => {
     setLoading(true);
     await new Promise(r => setTimeout(r, 1200));
     setLoading(false);
-    alert(t.lang === 'ar' ? 'تم تطبيق تحسينات الذكاء الاصطناعي' : 'AI Optimizations applied successfully');
+    showToast(t.lang === 'ar' ? 'تم تطبيق تحسينات الذكاء الاصطناعي' : 'AI Optimizations applied successfully', 'success');
   };
 
   const getStatusStyle = (status: string) => {
