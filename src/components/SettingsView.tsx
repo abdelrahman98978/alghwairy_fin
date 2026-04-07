@@ -26,9 +26,11 @@ interface SettingsProps {
   isDark: boolean;
   toggleTheme: () => void;
   t: Translations['settings'];
+  userName: string;
+  systemSettings: any;
 }
 
-export default function SettingsView({ showToast, logActivity, isDark, toggleTheme, t }: SettingsProps) {
+export default function SettingsView({ showToast, logActivity, isDark, toggleTheme, t, userName, systemSettings }: SettingsProps) {
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -103,44 +105,50 @@ export default function SettingsView({ showToast, logActivity, isDark, toggleThe
 
     setIsEnrolling(true);
     try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
+      const challenge = window.crypto.getRandomValues(new Uint8Array(32));
 
+      // 1. Creation Options
       const createOptions: CredentialCreationOptions = {
         publicKey: {
           challenge,
           rp: { name: "Alghwairy Sovereign", id: window.location.hostname },
           user: {
-            id: Uint8Array.from("admin-user-id", c => c.charCodeAt(0)),
+            id: window.crypto.getRandomValues(new Uint8Array(16)),
             name: "admin@alghwairy.co",
-            displayName: "Sovereign Administrator"
+            displayName: systemSettings.companyName || "Administrator"
           },
           pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
           timeout: 60000,
-          authenticatorSelection: { userVerification: "required" }
+          authenticatorSelection: { 
+            userVerification: "required",
+            residentKey: "preferred",
+            requireResidentKey: false
+          }
         }
       };
 
       const credential = await navigator.credentials.create(createOptions) as PublicKeyCredential;
       
       if (credential) {
+        // 2. Serialize for storage
+        const rawId = new Uint8Array(credential.rawId);
         const bioData = {
           id: credential.id,
-          rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+          rawId: btoa(String.fromCharCode(...rawId)),
           type: credential.type
         };
 
-        // Update current user in local db
+        // 3. Update current user in backend
         await supabase.from('user_roles').update({
           biometric_key: JSON.stringify(bioData)
-        }).eq('name', 'عبدالله الغويري');
+        }).eq('name', userName);
 
-        await logActivity('Enrolled Biometric ID', 'security', 'webauthn_p256');
+        await logActivity('Enrolled Biometric ID', 'security', credential.id);
         showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة بنجاح', 'success');
       }
     } catch (err) {
-      console.error(err);
-      showToast(t.lang === 'en' ? 'Enrollment Failed' : 'فشل تسجيل البصمة', 'error');
+      console.error('Biometric Enrollment Error:', err);
+      showToast(t.lang === 'en' ? 'Enrollment Failed or Cancelled' : 'فشل تسجيل البصمة أو تم الإلغاء', 'error');
     } finally {
       setIsEnrolling(false);
     }

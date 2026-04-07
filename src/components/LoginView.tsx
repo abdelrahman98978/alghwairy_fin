@@ -147,19 +147,21 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
         if (matchedUser) {
           setScanStatus('success');
           setTimeout(() => {
-            onLogin(matchedUser.role ?? 'admin', matchedUser.name ?? matchedUser.role ?? 'admin');
-          }, 1000);
+            onLogin(matchedUser.role ?? 'admin', matchedUser.name ?? 'Administrator');
+            setShowBiometric(false);
+          }, 1200);
         } else {
           throw new Error('No identity match found for this biometric marker');
         }
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Biometric Error:', err);
-      setShowBiometric(false);
-      const errorMessage = err instanceof Error ? err.message : String(err);
+      setScanStatus('failed');
+      const errorMessage = err?.message || String(err);
       setError(errorMessage === 'No identity match found for this biometric marker' 
-        ? 'لم يتم العثور على هوية مطابقة لهذه البصمة' 
-        : 'فشل في التعرف على البصمة أو تم إلغاء العملية');
+        ? 'البصمة غير مسجلة في السجل المالي' 
+        : 'فشل التوثيق الحيوي. حاول مرة أخرى.');
+      setTimeout(() => setShowBiometric(false), 2000);
     }
   };
 

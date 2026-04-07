@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+release/
 *.local
 
 # Data files
@@ -35,5 +36,8 @@ temp_readable.txt
 *.sln
 *.sw?
 
-# Build output
-release/
+# Environment and sensitive data
+.env
+.env.*
+! .env.example
+skills-lock.json

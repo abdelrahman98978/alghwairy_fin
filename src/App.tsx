@@ -32,7 +32,6 @@ import {
   BarChart3,
   FileSpreadsheet,
   Trash2,
-  Megaphone,
   Briefcase
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
@@ -57,7 +56,6 @@ import PettyCashView from './components/PettyCashView';
 import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
-import MarketingView from './components/MarketingView';
 import AffiliateView from './components/AffiliateView';
 
 
@@ -93,7 +91,6 @@ const translations = {
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
       biometrics: 'الأمان والبصمات',
-      marketing: 'التسويق السيادي',
       affiliate: 'نظام الشركاء'
     },
     notifications: {
@@ -1144,101 +1141,6 @@ const translations = {
       total_active: 'Total Active Petty Cash',
       add_request: 'Request Petty Cash'
     },
-    marketing: {
-      lang: 'en',
-      title: 'Marketing Systems',
-      subtitle: 'Sovereign campaign management and audience tracking.',
-      create_campaign: 'Create Sovereign Campaign',
-      active_campaigns: 'Active Campaigns',
-      total_reach: 'Total Reach',
-      conv_rate: 'Conv. Rate',
-      roi_multiplier: 'Sovereign ROI',
-      table: {
-        identity: 'Campaign Identity',
-        status: 'Status',
-        reach: 'Reach',
-        engagement: 'Engagement',
-        leads: 'Leads',
-        budget: 'Budget'
-      },
-      tabs: {
-        campaigns: 'Campaign Center',
-        audiences: 'Audiences',
-        automation: 'AI Automation',
-        analytics: 'Analytics',
-        email: 'Secure Email Broadcaster',
-        intelligence: 'Marketing Intelligence'
-      },
-      add_modal: {
-        title: 'Create Marketing Node',
-        name: 'Campaign Name',
-        budget: 'Budget (SAR)',
-        start_date: 'Start Date',
-        category: 'Target Category'
-      },
-      status: {
-        active: 'Active',
-        scheduled: 'Scheduled',
-        completed: 'Completed'
-      },
-      categories: {
-        institutional: 'Institutional',
-        sovereign: 'Sovereign',
-        consumer: 'Consumer'
-      },
-      cancel: 'Cancel',
-      launched_at: 'Deployment Date',
-      intelligence_title: 'Sovereign Marketing Intelligence',
-      intelligence_accuracy: 'Forecast Accuracy',
-      intelligence_savings: 'Projected Savings',
-      intelligence_recommendation: 'Smart Ledger Recommendation',
-      activate_recommendations: 'Activate AI Recommendations',
-      platform_performance_title: 'Platform Performance Matrix',
-      node_email: 'Email Node',
-      node_google: 'Google Ads',
-      node_x: 'X Presence',
-      node_linkedin: 'LinkedIn Professional',
-      ai_automation_title: 'AI Ledger Automation',
-      ai_automation_desc: 'This module uses machine learning to optimize sovereign marketing spend.',
-      apply_optimization: 'Apply AI Optimization',
-      last_audit: 'Last Sovereign Audit',
-      secure_node_active: 'Secure Node Active',
-      filter: 'Filter',
-      complete_campaign_data: 'Please complete campaign data',
-      campaign_created_success: 'Campaign created successfully',
-      scheduled_emails_success: 'Broadcast emails scheduled',
-      ai_optimization_applied_success: 'AI optimizations applied',
-      email_composer_title: 'Sovereign Message Composer',
-      email_subject_placeholder: 'Official Subject',
-      email_content_placeholder: 'Approved Content...',
-      broadcast_to_all: 'Broadcast (Encrypted)',
-      templates_label: 'Approved Templates',
-      institutional_welcome_series: 'Institutional Welcome Series',
-      abandoned_cart_retargeting: 'Abandoned Cart Retargeting',
-      sovereign_loyalty_nodes: 'Sovereign Loyalty Nodes',
-      trigger_label: 'Trigger',
-      intelligent_conversion_audit: 'Intelligent Conversion Audit',
-      sovereign_forecast_accuracy: 'Ledger Forecast Accuracy',
-      projected_savings: 'Projected Sovereign Savings',
-      ai_recommendation_text: 'AI Recommendation',
-      activate_ai_recommendations: 'Activate Ledger Intelligence',
-      search_campaigns_placeholder: 'Search campaigns...',
-      filter_label: 'Filter Results',
-      platform_performance_matrix: 'Unified Performance Matrix',
-      sovereign_email_node: 'Email Node',
-      google_ads_search: 'Google Search',
-      x_sovereign_presence: 'X/Twitter Presence',
-      linkedin_institutional: 'LinkedIn Institutional',
-      sovereign_automation_ai: 'Secure AI Automation',
-      ai_marketing_engine_alert: 'Marketing Engine Alert',
-      apply_optimization_btn: 'Apply Optimization',
-      last_audit_prefix: 'Last Scan:',
-      secure_node_active_label: 'Secure Node Active',
-      activate_campaign_btn: 'Activate Campaign',
-      marketing_campaign_title: 'Marketing Campaign Title',
-      transactions_automated: 'Processes Automated',
-      configure: 'Configure'
-    },
     affiliate: {
       lang: 'en',
       title: 'Sovereign Affiliate Network',
@@ -1526,7 +1428,7 @@ export default function App() {
       
       if (error) throw error;
       
-      await logActivity('Added New Sovereign TRX', 'transactions', (data as any)?.[0]?.id);
+      await logActivity('Added New Sovereign TRX', 'transactions', (data as Transaction[] | null)?.[0]?.id);
       showToast(t.notifications.success, 'success');
       setShowAddTrxModal(false);
       setNewTrx({ description: '', amount: '', type: 'income' });
@@ -1588,14 +1490,13 @@ export default function App() {
       case 'tax': return <TaxAutomationView showToast={showToast} logActivity={logActivity} t={{...t.tax, lang}} />;
       case 'reports': return <ReportsView showToast={showToast} t={{...reportsT, lang}} />;
       case 'security': return <SecurityView showToast={showToast} t={{...t.security, lang}} />;
-      case 'data_import': return <DataImportView showToast={showToast} t={{...t.data_import, lang}} lang={lang} />;
+      case 'data_import': return <DataImportView showToast={showToast} logActivity={logActivity} t={{...t.data_import, lang}} lang={lang} />;
       case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} />;
       case 'petty_cash': return <PettyCashView t={{...t.petty_cash, lang}} lang={lang} showToast={showToast} />;
       case 'audit_logs': return <AuditLogsView showToast={showToast} t={{...t.audit_logs, lang}} />;
-      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} isDark={isDark} toggleTheme={toggleTheme} t={{...t.settings, lang}} />;
+      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} isDark={isDark} toggleTheme={toggleTheme} t={{...t.settings, lang}} userName={userName} systemSettings={systemSettings} />;
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
-      case 'marketing': return <MarketingView showToast={showToast} t={{...t.marketing, lang}} />;
       case 'affiliate': return <AffiliateView showToast={showToast} t={{...t.affiliate, lang}} />;
 
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
@@ -1655,7 +1556,6 @@ export default function App() {
               {!isCollapsed && <div style={{ padding: '1rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
               <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />
               <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Megaphone size={16} />} label={t.nav.marketing} active={activeTab === 'marketing'} onClick={() => setActiveTab('marketing')} lang={lang} isCollapsed={isCollapsed} />
               <NavItem icon={<Briefcase size={16} />} label={t.nav.affiliate} active={activeTab === 'affiliate'} onClick={() => setActiveTab('affiliate')} lang={lang} isCollapsed={isCollapsed} />
             </>
           )}

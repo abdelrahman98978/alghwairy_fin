@@ -16,9 +16,10 @@ interface DataImportProps {
   showToast: (msg: string, type?: string) => void;
   t: Translations['data_import'];
   lang: string;
+  logActivity: (action: string, entity: string, entity_id?: string) => Promise<void>;
 }
 
-export default function DataImportView({ showToast, t, lang }: DataImportProps) {
+export default function DataImportView({ showToast, t, lang, logActivity }: DataImportProps) {
   const [step, setStep] = useState(1);
   const [importing, setImporting] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -35,6 +36,7 @@ export default function DataImportView({ showToast, t, lang }: DataImportProps) 
   const handleClearData = async () => {
     if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من مسح كافة البيانات؟ لا يمكن التراجع عن هذه الخطوة.' : 'Are you sure you want to clear all data? This cannot be undone.')) {
       await (supabase as any).clearAll();
+      await logActivity('Wiped System Database', 'system');
       showToast(lang === 'ar' ? 'تم مسح كافة البيانات بنجاح' : 'All data cleared successfully', 'success');
       window.location.reload(); // Refresh to clear app state
     }
@@ -101,16 +103,17 @@ export default function DataImportView({ showToast, t, lang }: DataImportProps) 
 
         setRecordCount(customers.length + invoices.length + expenses.length);
         
-        setTimeout(() => {
+        setTimeout(async () => {
           setImporting(false);
           setStep(3);
+          await logActivity('Executed System Zero-Seed', 'database');
           showToast(lang === 'ar' ? 'اكتملت مواءمة البيانات السيادية' : 'Sovereign data mirroring complete', 'success');
         }, 2500);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setImporting(false);
-      showToast(lang === 'ar' ? 'خطأ في تهيئة قاعدة البيانات' : 'Error seeding database', 'error');
+      showToast(lang === 'ar' ? 'خطأ في تهيئة قاعدة البيانات: ' + (err?.message || '') : 'Error seeding database', 'error');
     }
   };
 

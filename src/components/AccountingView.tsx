@@ -61,7 +61,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   }, []);
 
   useEffect(() => {
-    fetchRecentInvoices();
+    const timer = setTimeout(() => {
+      fetchRecentInvoices();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchRecentInvoices]);
 
   const addItem = () => {
