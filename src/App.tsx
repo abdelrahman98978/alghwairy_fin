@@ -61,8 +61,8 @@ import AffiliateView from './components/AffiliateView';
 
 const translations = {
   ar: {
-    title: 'الميزان السيادي',
-    subtitle: 'للخدمات المالية والمحاسبية السيادية',
+    title: 'مؤسسة الغويري للتخليص الجمركي',
+    subtitle: 'منظومة الميزان السيادي - إدارة اللوجستيات والتخليص',
     welcome: 'مرحباً، ',
     last_sync: 'آخر مزامنة: اليوم، 10:45 صباحاً',
     search: 'بحث مالي سري...',
@@ -84,10 +84,10 @@ const translations = {
       audit: 'سجل النشاطات الموحد',
       data: 'استيراد البيانات',
       settings: 'إعدادات النظام',
-      shipments: 'الشحنات والتخليص',
-      financial_compliance: 'المالية والامتثال',
-      system_security: 'النظام والأمان',
-      statements: 'القوائم المالية',
+      shipments: 'إدارة الشحنات الجمركية',
+      financial_compliance: 'الامتثال المالي والجمركي',
+      system_security: 'الأمن السيادي',
+      statements: 'القوائم المالية الجمركية',
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
       biometrics: 'الأمان والبصمات',
@@ -315,8 +315,8 @@ const translations = {
       allocation_label: 'جهة التخصيص'
     },
     tax: {
-      title: 'الأتمتة الضريبية (ZATCA)',
-      subtitle: 'الربط المباشر مع أنظمة هيئة الزكاة والضريبة والجمارك - المرحلة الثانية.',
+      title: 'الأتمتة الضريبية والجمركية',
+      subtitle: 'الربط المباشر مع أنظمة هيئة الزكاة والضريبة والجمارك (ZATCA).',
       output_vat: 'ضريبة المخرجات (المبيعات)',
       input_vat: 'ضريبة المدخلات (المشتريات)',
       net_vat: 'صافي الضريبة المستحقة',
@@ -324,8 +324,8 @@ const translations = {
       ai_audit: 'التدقيق الذكي للبيانات الضريبية'
     },
     prepayments: {
-      title: 'الدفعات والأرصدة المقدمة',
-      subtitle: 'إدارة وتسوية الدفعات المقدمة للشركات والموردين والخدمات السنوية',
+      title: 'الاعتمادات المالية المسبقة',
+      subtitle: 'إدارة الودائع الجمركية والاعتمادات البنكية والخدمات السنوية',
       active_count: 'إجمالي الدفعات النشطة',
       recent_ledger: 'سجل الأرصدة المقدمة',
       loading: 'جاري تحميل البيانات السيادية...',
@@ -678,8 +678,8 @@ const translations = {
     }
   },
   en: {
-    title: 'Sovereign Ledger',
-    subtitle: 'High-Level Financial & Accounting Services',
+    title: 'Alghwairy Customs Clearance',
+    subtitle: 'Sovereign Ledger - Logistics & Clearance Management',
     welcome: 'Welcome, ',
     last_sync: 'Last sync: Today, 10:45 AM',
     search: 'Secure financial search...',
@@ -701,10 +701,10 @@ const translations = {
       audit: 'Unified Audit Logs',
       data: 'Data Import',
       settings: 'System Settings',
-      shipments: 'Shipments & Clearance',
-      financial_compliance: 'Finance & Compliance',
-      system_security: 'System & Security',
-      statements: 'Financial Statements',
+      shipments: 'Customs Shipments',
+      financial_compliance: 'Customs Compliance',
+      system_security: 'Sovereign Security',
+      statements: 'Customs Financial Statements',
       petty_cash: 'Petty Cash',
       trash: 'Trash bin',
       biometrics: 'Security & Biometrics',
@@ -1256,12 +1256,12 @@ export default function App() {
   
   // Sovereign Global Settings
   const [systemSettings, setSystemSettings] = useState({
-    companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+    companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
     taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
-    primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
+    primaryColor: localStorage.getItem('sov_primary_color') || '#001a33', // Official Navy
     fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
-    reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+    reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential'
   });
 
   const [userName, setUserName] = useState('عبدالله الغويري');
@@ -1355,12 +1355,12 @@ export default function App() {
     // Auto-sync settings from localStorage periodically (or on focus)
     const sync = () => {
       setSystemSettings({
-        companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+        companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
         taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
         primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
         fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
-        reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+        reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential'
       });
     };
     

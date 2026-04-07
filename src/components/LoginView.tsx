@@ -167,44 +167,57 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
 
   return (
     <div className="login-container slide-in">
-      {/* Visual Identity Side - Compact Institutional Focus */}
+      {/* Visual Identity Side - Custom Clearance Institutional Branding */}
       <div className="login-branding" style={{ 
         flex: 1.4, 
-        background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%)', 
+        background: 'linear-gradient(135deg, #001a33 0%, #003366 100%)', // Official Navy
         padding: '2rem 3.5rem', 
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'center',
-        position: 'relative'
+        position: 'relative',
+        color: 'white'
       }}>
-         <div style={{ position: 'absolute', top: -140, right: -140, width: 400, height: 400, background: 'rgba(212, 167, 106, 0.02)', borderRadius: '80px', transform: 'rotate(25deg)' }}></div>
+         <div style={{ position: 'absolute', top: -140, right: -140, width: 400, height: 400, background: 'rgba(212, 167, 106, 0.05)', borderRadius: '80px', transform: 'rotate(25deg)' }}></div>
          
          <div style={{ position: 'relative', zIndex: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-               <div style={{ width: 40, height: 40, borderRadius: '12px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', boxShadow: '0 6px 18px rgba(212,167,106,0.25)' }}>
-                  <ShieldCheck size={22} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+               <div style={{ 
+                  width: 55, 
+                  height: 55, 
+                  borderRadius: '15px', 
+                  background: 'white', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                  border: '1.5px solid var(--secondary)'
+               }}>
+                  <img src="./assets/icon.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
                </div>
-               <h3 style={{ fontSize: '0.95rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Alghwairy Sovereign</h3>
+               <div>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--secondary)', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>مؤسسة الغويري</h3>
+                  <p style={{ fontSize: '0.7rem', color: 'white', opacity: 0.8, fontWeight: 700, margin: 0 }}>للتخليص الجمركي</p>
+               </div>
             </div>
             
-            <h1 style={{ fontSize: '2.4rem', fontWeight: 950, marginBottom: '1.25rem', color: 'white', lineHeight: 1.1, fontFamily: 'Tajawal' }}>
-              منظومة <br />
-              <span style={{ color: 'var(--secondary)' }}>الميزان السيادي</span>
+            <h1 style={{ fontSize: '2.4rem', fontWeight: 950, marginBottom: '1.25rem', color: 'white', lineHeight: 1.1, fontFamily: 'Cairo' }}>
+               منظومة <span style={{ color: 'var(--secondary)' }}>الميزان</span> <br/> السيادي 2026
             </h1>
             
-            <p style={{ fontSize: '1rem', opacity: 0.75, color: 'white', maxWidth: '440px', lineHeight: '1.6', fontWeight: 500 }}>
-              الجيل الخامس من حلول التدقيق المالي والاستشارات الرقمية. نظام متكامل يجمع بين الذكاء الاصطناعي وبنية الأمان السيادية.
+            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, maxWidth: '440px', fontWeight: 600, marginBottom: '2.5rem' }}>
+               الجيل الخامس لإدارة العمليات المحاسبية واللوجستية والأمن الجمركي الموحد.
             </p>
 
-            <div style={{ display: 'flex', gap: '2.5rem', marginTop: '2.5rem' }}>
+            <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
                <div>
-                  <h4 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--secondary)', margin: 0 }}>ZATCA</h4>
-                  <p style={{ fontSize: '0.75rem', color: 'white', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Phase 2 Verified</p>
+                  <h4 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--secondary)', margin: 0 }}>ZATCA</h4>
+                  <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Phase 2 Certified</p>
                </div>
-               <div style={{ width: 1, height: 40, background: 'rgba(212,167,106,0.3)' }}></div>
+               <div style={{ width: 1.5, height: 40, background: 'rgba(212,167,106,0.2)' }}></div>
                <div>
-                  <h4 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'white', margin: 0 }}>AES 256</h4>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Security Locked</p>
+                  <h4 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'white', margin: 0 }}>LOGISTICS</h4>
+                  <p style={{ fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Sovereign Flow</p>
                </div>
             </div>
          </div>
@@ -221,8 +234,8 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
       }}>
          <div className="login-card" style={{ padding: '1.25rem 2.25rem', maxWidth: '440px', width: '100%' }}>
             <header style={{ marginBottom: '1.25rem' }}>
-               <h2 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.2rem', fontFamily: 'Tajawal' }}>تسجيل الدخول</h2>
-               <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>استخدم هويتك الرقمية السيادية للمصادقة</p>
+               <h2 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.2rem', fontFamily: 'Tajawal' }}>بوابة الولوج المؤسسي</h2>
+               <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>نظام التخليص الجمركي - الميزان المحاسبي</p>
             </header>
 
             {error && (
