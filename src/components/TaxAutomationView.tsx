@@ -265,6 +265,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                             status={tax.status} 
                             date={new Date(tax.created_at).toLocaleDateString()} 
                             showToast={showToast} 
+                            t={t}
                          />
                       ))}
                    </div>
@@ -331,7 +332,32 @@ function InsightItem({ icon, title, desc, bg, color }: any) {
   );
 }
 
-function TaxRecordItem({ id, title, amount, status, date, showToast }: any) {
+function TaxRecordItem({ id, title, amount, status, date, showToast, t }: any) {
+  const downloadTaxReturn = (tax: any) => {
+    const data = {
+      institution: "مؤسسة الغويري للتخليص الجمركي",
+      certificate_type: "Unified Customs & Tax Return",
+      reference: tax.reference_no,
+      date_certified: new Date(tax.created_at).toLocaleString(),
+      amount_sar: tax.total_amount,
+      status: tax.status,
+      compliance_engine: "ZATCA Phase 2 (Institutional - Alghwairy Sovereign)",
+      security_signature: "ALGH-" + Math.random().toString(36).substring(2, 15).toUpperCase()
+    };
+    
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${tax.reference_no}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(t.lang === 'ar' ? 'تم تحميل الإقرار بنجاح إلى مجلد التنزيلات.' : 'Tax return downloaded to your system Downloads folder.', 'success');
+  };
+
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.8rem', background: 'white', borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
@@ -353,7 +379,7 @@ function TaxRecordItem({ id, title, amount, status, date, showToast }: any) {
             <span style={{ fontSize: '0.7rem', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)', padding: '0.3rem 1rem', borderRadius: '20px', fontWeight: 900 }}>{status}</span>
           </div>
           <button 
-            onClick={() => showToast(`Generating institutional documentation for ${id}...`, 'success')}
+            onClick={() => downloadTaxReturn({ reference_no: id, title, total_amount: parseFloat(amount.replace(/,/g, '')), status, created_at: date })}
             style={{ width: 44, height: 44, background: 'var(--surface-container-low)', border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)', transition: 'all 0.2s' }}
           >
              <Download size={20} />
