@@ -5,18 +5,13 @@ import {
   Paperclip, 
   MessageSquare, 
   FolderSync, 
-  Share2, 
-  Users, 
   Clock, 
   ShieldCheck, 
   Database,
   ArrowRightLeft,
-  ChevronRight,
-  FileText,
   Download,
   Activity
 } from 'lucide-react';
-import type { Translations } from '../types/translations';
 
 interface CommunicationsProps {
   showToast: (msg: string, type?: string) => void;
@@ -27,7 +22,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
   const [activeTab, setActiveTab] = useState<'chat' | 'files' | 'sync'>('chat');
   const [employees, setEmployees] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
+  const [_files, _setFiles] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [syncSettings, setSyncSettings] = useState<any>(null);
@@ -41,7 +36,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
     
     setEmployees(users);
     setMessages(msgs);
-    setFiles(fls);
+    _setFiles(fls);
     setSyncSettings(settings);
     
     if (users.length > 0 && !selectedUser) {

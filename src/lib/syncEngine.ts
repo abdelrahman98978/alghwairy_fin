@@ -5,12 +5,6 @@ import { localDB } from './localDB';
  * محرك التزامن السيادي - يعمل عبر الشبكة المحلية (LAN) دون الحاجة للإنترنت
  */
 
-interface SyncStatus {
-  last_sync: string;
-  is_syncing: boolean;
-  active_nodes: string[];
-}
-
 export const syncEngine = {
   /**
    * Start the sync watcher
@@ -48,14 +42,13 @@ export const syncEngine = {
       fs.writeFileSync(pulseFile, JSON.stringify(pulseData));
 
       // 2. Look for other nodes' packets (Delta Exchange)
-      const files = fs.readdirSync(settings.sync_folder);
-      const otherNodes = files.filter((f: string) => f.startsWith('node_') && !f.includes(settings.device_id));
-
+      const _files = fs.readdirSync(settings.sync_folder);
+      
       // Note: In a real institutional implementation, we would compare timestamps
       // and merge deltas. Here we provide the architectural foundation.
       
       localDB.update('sync_settings', 'settings', { last_sync: new Date().toISOString() });
-      console.log('Sovereign Sync Accomplished');
+      console.log('Sovereign Sync Pulse Broadcasted. Peer Files Detected:', _files.length);
       
     } catch (err) {
       console.error('Sovereign Sync Failure:', err);

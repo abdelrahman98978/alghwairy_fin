@@ -24,7 +24,7 @@ interface DataImportProps {
 export default function DataImportView({ showToast, t, lang, logActivity }: DataImportProps) {
   const [step, setStep] = useState(1);
   const [importing, setImporting] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [_fileName, _setFileName] = useState('');
   const [recordCount, setRecordCount] = useState(0);
   const [importType, setImportType] = useState<'invoices' | 'customers'>('invoices');
   
@@ -50,7 +50,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFileName(file.name);
+      _setFileName(file.name);
       
       const reader = new FileReader();
       reader.onload = (event) => {
