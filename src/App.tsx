@@ -34,6 +34,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import { offlineSync } from './lib/offlineSync';
 
 // --- Views ---
 import DashboardView from './components/DashboardView';
@@ -1214,7 +1215,7 @@ export default function App() {
   }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
 
   const fetchData = useCallback(async () => {
-    const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+    const data = await offlineSync.read('transactions');
     if (data) setTransactions(data as Transaction[]);
     setLastSyncTime(new Date().toLocaleTimeString());
   }, []);
@@ -1224,6 +1225,63 @@ export default function App() {
       fetchData();
       const timer = setInterval(() => {
         setLastSyncTime(new Date().toLocaleTimeString());
+        
+        // Auto local save logic
+        const freq = localStorage.getItem('sov_sync_frequency') || 'daily';
+        const lastBackup = localStorage.getItem('sov_last_backup_date');
+        const now = new Date();
+        let shouldBackup = false;
+        
+        if (!lastBackup) {
+          shouldBackup = true;
+        } else {
+          const last = new Date(lastBackup);
+          const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (freq === 'daily' && diffDays >= 1) shouldBackup = true;
+          if (freq === 'weekly' && diffDays >= 7) shouldBackup = true;
+          if (freq === 'monthly' && diffDays >= 30) shouldBackup = true;
+        }
+
+        if (shouldBackup) {
+          (async () => {
+             const tables = ['invoices', 'customers', 'transactions', 'expenses'];
+             const backupData: any = {};
+             for (const table of tables) {
+               const { data } = await supabase.from(table).select('*');
+               backupData[table] = data;
+             }
+             
+             try {
+                if ((window as any).require) {
+                   const fs = (window as any).require('fs');
+                   const path = (window as any).require('path');
+                   const os = (window as any).require('os');
+                   const backupDir = path.join(os.homedir(), 'Documents', 'Alghwairy_Backups');
+                   if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+                   
+                   const backupPath = path.join(backupDir, `Sovereign_Backup_${now.toISOString().split('T')[0]}.json`);
+                   fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2), 'utf-8');
+                   showToast(lang === 'ar' ? 'تمت مزامنة وحفظ نسخة محلية تلقائياً' : 'Auto Local Sync completed', 'success');
+                } else {
+                   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                   const url = URL.createObjectURL(blob);
+                   const a = document.createElement('a');
+                   a.href = url;
+                   a.download = `Sovereign_Backup_${now.toISOString().split('T')[0]}.json`;
+                   a.click();
+                   showToast(lang === 'ar' ? 'تم تنزيل النسخة الاحتياطية' : 'Backup downloaded', 'success');
+                }
+                
+                // Add Offline sync flush here based on sync frequency!
+                await offlineSync.processSyncQueue();
+                
+                localStorage.setItem('sov_last_backup_date', now.toISOString());
+             } catch (e) {
+                console.error("Backup failed", e);
+             }
+          })();
+        }
       }, 60000);
       
       // PRODUCTION STABILITY: Overlay-Killer Effect
@@ -1257,19 +1315,17 @@ export default function App() {
 
     setIsActionLoading(true);
     try {
-      const { data, error } = await supabase.from('transactions').insert([
-        { 
+      const newRecord = {
           trx_number: 'TRX-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
           description: newTrx.description, 
           amount: parseFloat(newTrx.amount), 
           type: newTrx.type,
-          status: 'مكتمل'
-        }
-      ]).select();
+          status: 'مكتمل',
+          created_at: new Date().toISOString()
+      };
+      await offlineSync.insert('transactions', newRecord);
       
-      if (error) throw error;
-      
-      await logActivity('Added New Sovereign TRX', 'transactions', (data as Transaction[] | null)?.[0]?.id);
+      await logActivity('Added New Sovereign TRX (Offline/Queue)', 'transactions', newRecord.trx_number);
       showToast(t.notifications.success, 'success');
       setShowAddTrxModal(false);
       setNewTrx({ description: '', amount: '', type: 'income' });
@@ -1376,7 +1432,7 @@ export default function App() {
           {!isCollapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--secondary)' }}>
-                  <img src="/logo.png" alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+                  <img src="./logo.png" alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
                   <h2 style={{ fontSize: '1rem', fontWeight: 900, fontFamily: 'Tajawal', margin: 0, letterSpacing: '0.5px', color: 'white' }}>{t.title}</h2>
                </div>
                <p style={{ fontSize: '0.55rem', opacity: 0.4, marginTop: '0.4rem', color: '#abc8f5', textAlign: 'center', fontWeight: 700, letterSpacing: '0.5px' }}>{t.subtitle}</p>
@@ -1384,7 +1440,7 @@ export default function App() {
           )}
           {isCollapsed && (
             <div className="sidebar-logo-mini" style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.08)', borderRadius: '12px', margin: '1.2rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid rgba(255,255,255,0.1)' }}>
-               <img src="/logo.png" alt="Logo" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+               <img src="./logo.png" alt="Logo" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
             </div>
           )}
         </div>

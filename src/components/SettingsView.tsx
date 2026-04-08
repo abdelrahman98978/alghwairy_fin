@@ -56,7 +56,8 @@ export default function SettingsView({ showToast, logActivity, isDark, toggleThe
     primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
     fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
     reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential',
+    syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily'
   });
 
   const handleSave = async () => {
@@ -525,11 +526,11 @@ export default function SettingsView({ showToast, logActivity, isDark, toggleThe
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                     <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Backup Frequency' : 'تكرار النسخ الاحتياطي'}</label>
-                     <select className="input-executive" defaultValue="Hourly" style={{ fontWeight: 600 }}>
-                        <option>{t.lang === 'en' ? 'Real-time (Active Sync)' : 'لحظي (مزامنة نشطة)'}</option>
-                        <option>{t.lang === 'en' ? 'Hourly' : 'كل ساعة'}</option>
-                        <option>{t.lang === 'en' ? 'Daily at 12:00 AM' : 'يومياً الساعة 12 صباحاً'}</option>
+                     <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Local Sync Frequency' : 'تكرار الحفظ والمزامنة'}</label>
+                     <select className="input-executive" value={settings.syncFrequency} onChange={e => setSettings({...settings, syncFrequency: e.target.value})} style={{ fontWeight: 600 }}>
+                        <option value="daily">{t.lang === 'en' ? 'Daily Local Backup' : 'يومياً'}</option>
+                        <option value="weekly">{t.lang === 'en' ? 'Weekly Local Backup' : 'أسبوعياً'}</option>
+                        <option value="monthly">{t.lang === 'en' ? 'Monthly Local Backup' : 'شهرياً'}</option>
                      </select>
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

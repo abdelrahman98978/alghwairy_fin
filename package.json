@@ -54,10 +54,7 @@
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "مؤسسة الغويري للتخليص الجمركي",
-      "artifactName": "Alghwairy-Customs-Clearance-Setup-${version}.${ext}",
-      "installerIcon": "assets/icon.png",
-      "uninstallerIcon": "assets/icon.png",
-      "installerHeaderIcon": "assets/icon.png"
+      "artifactName": "Alghwairy-Customs-Clearance-Setup-${version}.${ext}"
     },
     "asar": true,
     "copyright": "Copyright © 2026 Alghwairy Financial Hub"

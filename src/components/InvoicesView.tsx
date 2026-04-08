@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   FileText, Plus, Search, 
   Download, QrCode, X, AlertCircle, CheckCircle2,
-  Filter, MessageCircle, Trash2, Send, Edit3, Eye
+  Filter, MessageCircle, Trash2, Send, Edit3, Eye, Mail
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../lib/supabase';
@@ -248,6 +248,12 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
     showToast(t.lang === 'ar' ? 'تم نسخ رابط المشاركة بنجاح' : 'Shareable link copied successfully', 'success');
   };
 
+  const handleEmailInvoice = (inv: Invoice) => {
+    const subject = encodeURIComponent(`فاتورة ضريبية من ${settings.companyName} - رقم ${inv.reference_number}`);
+    const body = encodeURIComponent(`عزيزي العميل،\n\nنرفق لكم تفاصيل الفاتورة الضريبية:\nرقم الفاتورة: ${inv.reference_number}\nالمبلغ الإجمالي: ${(inv.total || inv.total_amount || 0).toLocaleString()} ر.س\nالحالة: ${inv.status === 'paid' ? 'مدفوعة' : 'بانتظار السداد'}\n\nيمكنكم معاينة الفاتورة من خلال الرابط التالي:\n${window.location.origin + window.location.pathname + '?invoice_id=' + inv.id}\n\nمع تحيات،\n${settings.companyName}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   return (
     <div className="slide-in">
       <header className="view-header no-print" style={{ marginBottom: '2.5rem' }}>
@@ -352,6 +358,9 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
                              <button onClick={() => handleDelete(inv.id)} className="btn-executive" title={t.lang === 'en' ? 'Delete' : 'حذف'} style={{ padding: '0.55rem', background: 'var(--surface-container-high)', color: 'var(--error)', border: 'none' }}>
                                 <Trash2 size={18} />
                              </button>
+                             <button onClick={() => handleEmailInvoice(inv)} className="btn-executive" title={t.lang === 'en' ? 'Send Email' : 'إرسال بريد'} style={{ padding: '0.55rem', background: 'var(--surface-container-high)', color: '#005ab5', border: 'none' }}>
+                                <Mail size={18} />
+                             </button>
                           </div>
                        </td>
                     </tr>
@@ -439,6 +448,7 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
           invoice={selectedInvoice} 
           onClose={() => setShowPreviewModal(false)}
           onWhatsApp={() => handleWhatsAppInvoice(selectedInvoice)}
+          onEmail={() => handleEmailInvoice(selectedInvoice)}
           t={t}
           settings={settings}
         />
@@ -522,6 +532,7 @@ interface PreviewModalProps {
   invoice: Invoice;
   onClose: () => void;
   onWhatsApp: () => void;
+  onEmail: () => void;
   t: Translations['invoices'];
   settings: {
     companyName: string;
@@ -533,7 +544,7 @@ interface PreviewModalProps {
   };
 }
 
-function InvoicePreviewModal({ invoice, onClose, onWhatsApp, t, settings }: PreviewModalProps) {
+function InvoicePreviewModal({ invoice, onClose, onWhatsApp, onEmail, t, settings }: PreviewModalProps) {
   const qrData = generateZatcaQR(
     settings.companyName,
     settings.taxNumber,
@@ -638,6 +649,9 @@ function InvoicePreviewModal({ invoice, onClose, onWhatsApp, t, settings }: Prev
              <button onClick={() => window.print()} className="btn-executive" style={{ width: '250px', padding: '1.2rem', fontSize: '1.2rem', fontWeight: 900, border: 'none', boxShadow: '0 10px 30px rgba(0,26,51,0.2)' }}>{t.lang === 'ar' ? 'طباعة الفاتورة (PDF)' : 'Print Invoice'}</button>
              <button onClick={onWhatsApp} className="btn-executive" style={{ width: '200px', padding: '1.2rem', background: '#25D366', color: 'white', fontWeight: 900, border: 'none' }}>
                 {t.lang === 'ar' ? 'إرسال واتساب' : 'WhatsApp'}
+             </button>
+             <button onClick={onEmail} className="btn-executive" style={{ width: '200px', padding: '1.2rem', background: '#005ab5', color: 'white', fontWeight: 900, border: 'none' }}>
+                {t.lang === 'ar' ? 'إرسال بريد' : 'Email'}
              </button>
              <button onClick={onClose} className="btn-executive" style={{ width: '150px', padding: '1.2rem', background: '#f1f3f5', color: '#001a33', fontWeight: 800, border: 'none' }}>{t.lang === 'ar' ? 'إغلاق' : 'Close'}</button>
           </div>
