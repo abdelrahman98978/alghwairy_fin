@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 import { 
@@ -9,7 +9,9 @@ import {
   Database,
   RefreshCw,
   Trash2,
-  Zap
+  Zap,
+  Download,
+  Settings2
 } from 'lucide-react';
 
 interface DataImportProps {
@@ -24,12 +26,118 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
   const [importing, setImporting] = useState(false);
   const [fileName, setFileName] = useState('');
   const [recordCount, setRecordCount] = useState(0);
+  const [importType, setImportType] = useState<'invoices' | 'customers'>('invoices');
+  
+  // Parsing states
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvRows, setCsvRows] = useState<string[][]>([]);
+  const [mapping, setMapping] = useState<Record<string, number>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseCSV = (text: string) => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+    if (lines.length === 0) return { headers: [], rows: [] };
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    const rows = lines.slice(1).map(line => {
+      // Simple CSV split (not handling escaped commas in quotes for brevity/security)
+      return line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    });
+    
+    return { headers, rows };
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFileName(file.name);
-      setStep(2);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const { headers, rows } = parseCSV(text);
+        if (headers.length === 0) {
+          showToast(lang === 'ar' ? 'الملف فارغ أو غير صالح' : 'File is empty or invalid', 'error');
+          return;
+        }
+        setCsvHeaders(headers);
+        setCsvRows(rows);
+        
+        // Default mapping: try to find exact matches
+        const initialMapping: Record<string, number> = {};
+        const targetFields = importType === 'invoices' 
+          ? ['reference_number', 'amount', 'customer_name', 'created_at']
+          : ['name', 'vat_number', 'cr_number', 'phone'];
+        
+        targetFields.forEach(field => {
+          const idx = headers.findIndex(h => h.toLowerCase() === field.toLowerCase() || h.includes(field));
+          if (idx !== -1) initialMapping[field] = idx;
+        });
+        
+        setMapping(initialMapping);
+        setStep(2);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const downloadTemplate = () => {
+    let content = "";
+    let name = "";
+    if (importType === 'invoices') {
+      content = "reference_number,amount,customer_name,created_at\nINV-001,5400.00,Alghwairy Institution,2026-04-01";
+      name = "invoices_template.csv";
+    } else {
+      content = "name,vat_number,cr_number,phone\nAlghwairy Customs,310029384756382,1010000001,0543389314";
+      name = "customers_template.csv";
+    }
+    
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", name);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(lang === 'ar' ? 'تم تحميل النموذج بنجاح' : 'Template downloaded successfully', 'success');
+  };
+
+  const startImport = async () => {
+    setImporting(true);
+    let successCount = 0;
+    
+    // Virtual delay for "processing" feel
+    await new Promise(r => setTimeout(r, 1500));
+
+    try {
+      csvRows.forEach(row => {
+        const obj: any = {};
+        Object.keys(mapping).forEach(field => {
+          obj[field] = row[mapping[field]];
+        });
+
+        if (importType === 'invoices') {
+          // Special handling for numeric amount
+          obj.amount = parseFloat(obj.amount || '0');
+          obj.vat = obj.amount * 0.15;
+          obj.total = obj.amount + obj.vat;
+          obj.status = 'pending';
+          localDB.insert('invoices', obj);
+        } else {
+          localDB.insert('customers', obj);
+        }
+        successCount++;
+      });
+
+      setRecordCount(successCount);
+      await logActivity(`Imported ${successCount} ${importType} via CSV`, 'system');
+      setImporting(false);
+      setStep(3);
+    } catch (err: any) {
+      setImporting(false);
+      showToast('Import Error: ' + err.message, 'error');
     }
   };
 
@@ -55,77 +163,52 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
       { name: 'نيوم للاستثمار', vat_number: '390909090900003', cr_number: '1010600021', phone: '0118340000' }
     ];
 
-    // 2. Sample Invoices
     const invoices = [];
-    for(let i=0; i<45; i++) {
+    for(let i=0; i<25; i++) {
        invoices.push({
           reference_number: `INV-2026-${1000 + i}`,
           amount: Math.floor(Math.random() * 50000) + 10000,
-          vat: 0, 
           status: Math.random() > 0.3 ? 'paid' : 'pending',
           created_at: new Date(2026, 0, Math.floor(Math.random() * 90) + 1).toISOString()
        });
     }
 
-    // 3. Sample Expenses
-    const expenses = [];
-    const cats = ['Operational', 'Maintenance', 'Utilities', 'Government', 'Administrative'];
-    for(let i=0; i<30; i++) {
-       expenses.push({
-          exp_number: `EXP-A26-${500 + i}`,
-          title: `نموذج مصروف مؤسسي ${i+1}`,
-          category: cats[Math.floor(Math.random() * cats.length)],
-          amount: Math.floor(Math.random() * 5000) + 500,
-          status: 'Approved',
-          date: new Date(2026, 0, Math.floor(Math.random() * 90) + 1).toISOString().split('T')[0]
-       });
-    }
-
     try {
-      // Clear before seeding
       localDB.clearAll();
-
       const savedCustomers: any[] = [];
-      customers.forEach(c => {
-         savedCustomers.push(localDB.insert('customers', c));
-      });
-      
+      customers.forEach(c => { savedCustomers.push(localDB.insert('customers', c)); });
       invoices.forEach(inv => {
          const cust = savedCustomers[Math.floor(Math.random() * savedCustomers.length)];
          const tax = inv.amount * 0.15;
          localDB.insert('invoices', { ...inv, customer_id: cust.id, vat: tax, total: inv.amount + tax });
       });
 
-      expenses.forEach(exp => {
-         localDB.insert('expenses', exp);
-      });
-
-      localDB.insert('activity_logs', { action: 'Database Seeding Locally', entity: 'system', user_email: 'admin' });
-
-      setRecordCount(customers.length + invoices.length + expenses.length);
-      
+      setRecordCount(customers.length + invoices.length);
       setTimeout(async () => {
         setImporting(false);
         setStep(3);
         await logActivity('Executed Local System Seed', 'database');
         showToast(lang === 'ar' ? 'اكتملت تهيئة البيانات المحلية بنجاح' : 'Local data seeding complete', 'success');
       }, 2000);
-
-    } catch (err: any) {
+    } catch {
       setImporting(false);
       showToast('Error seeding local database', 'error');
     }
   };
 
-  const startImport = async () => {
-    setImporting(true);
-    setTimeout(() => {
-      setImporting(false);
-      setStep(3);
-      setRecordCount(1240);
-      showToast(lang === 'ar' ? 'تم استيراد ملف ' + fileName : 'File ' + fileName + ' imported locally', 'success');
-    }, 3000);
-  };
+  const targetFields = importType === 'invoices' 
+    ? [
+        { key: 'reference_number', label: lang === 'ar' ? 'رقم المرجع (رقم الفاتورة)' : 'Reference Number' },
+        { key: 'amount', label: lang === 'ar' ? 'المبلغ (قبل الضريبة)' : 'Amount (Excl. VAT)' },
+        { key: 'customer_name', label: lang === 'ar' ? 'اسم العميل' : 'Customer Name' },
+        { key: 'created_at', label: lang === 'ar' ? 'التاريخ' : 'Date (YYYY-MM-DD)' }
+      ]
+    : [
+        { key: 'name', label: lang === 'ar' ? 'اسم المؤسسة' : 'Company Name' },
+        { key: 'vat_number', label: lang === 'ar' ? 'الرقم الضريبي' : 'VAT Number' },
+        { key: 'cr_number', label: lang === 'ar' ? 'رقم السجل التجاري' : 'CR Number' },
+        { key: 'phone', label: lang === 'ar' ? 'رقم التواصل' : 'Phone' }
+      ];
 
   return (
     <div className="slide-in">
@@ -164,66 +247,76 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: step > s ? 'var(--success)' : (step === s ? 'var(--secondary)' : 'var(--primary)'), color: step === s ? 'var(--primary)' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.9rem' }}>
                 {step > s ? <CheckCircle2 size={18} /> : s}
               </div>
-              <div>
-                <h3 style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>
-                  {s === 1 ? t.steps.upload : s === 2 ? t.steps.alignment : t.steps.archive}
-                </h3>
-              </div>
+              <h3 style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>
+                {s === 1 ? t.steps.upload : s === 2 ? t.steps.alignment : t.steps.archive}
+              </h3>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="card" style={{ minHeight: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '4rem', border: '1px solid var(--surface-container-high)' }}>
+      <div className="card" style={{ minHeight: '520px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '4rem', border: '1px solid var(--surface-container-high)' }}>
         {step === 1 && (
-          <div style={{ maxWidth: '520px' }}>
-            <div style={{ width: 120, height: 120, borderRadius: '30px', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: 'var(--primary)', boxShadow: '0 15px 45px rgba(0,0,0,0.08)' }}>
-               <FileSpreadsheet size={60} />
+          <div style={{ maxWidth: '600px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem' }}>
+               <button onClick={() => setImportType('invoices')} className={`btn-executive ${importType === 'invoices' ? '' : 'btn-outline'}`} style={{ flex: 1, padding: '1rem' }}>الفواتير - Invoices</button>
+               <button onClick={() => setImportType('customers')} className={`btn-executive ${importType === 'customers' ? '' : 'btn-outline'}`} style={{ flex: 1, padding: '1rem' }}>العملاء - Customers</button>
             </div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1.2rem', fontFamily: 'Tajawal' }}>
-               {t.upload_center_title}
-            </h2>
-            <p style={{ fontSize: '1rem', color: 'var(--on-surface-variant)', marginBottom: '3rem', fontWeight: 700, lineHeight: '1.6' }}>
-               {t.upload_center_desc}
-            </p>
+
+            <div style={{ width: 100, height: 100, borderRadius: '25px', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: 'var(--primary)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+               <FileSpreadsheet size={50} />
+            </div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1rem', fontFamily: 'Tajawal' }}>{t.upload_center_title}</h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--on-surface-variant)', marginBottom: '2.5rem', fontWeight: 700 }}>{t.upload_center_desc}</p>
             
-            <label className="btn-executive" style={{ width: '100%', cursor: 'pointer', padding: '1.5rem', border: 'none', fontSize: '1.2rem', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-               <Upload size={24} />
-               {t.select_file}
-               <input type="file" hidden accept=".csv,.xlsx" onChange={handleFileChange} />
-            </label>
-            
-            <p style={{ marginTop: '2rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', opacity: 0.6 }}>
-               PROTECTION: LOCAL ENCRYPTED IMPORT PROTOCOL ACTIVE
-            </p>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <button onClick={downloadTemplate} className="btn-executive btn-outline" style={{ flex: 1, padding: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+                   <Download size={20} /> {lang === 'ar' ? 'تحميل النموذج' : 'Template'}
+                </button>
+                <label className="btn-executive" style={{ flex: 2, cursor: 'pointer', padding: '1.2rem', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}>
+                   <Upload size={20} /> {t.select_file}
+                   <input type="file" hidden accept=".csv" onChange={handleFileChange} ref={fileInputRef} />
+                </label>
+            </div>
           </div>
         )}
 
         {step === 2 && (
-          <div style={{ width: '100%', maxWidth: '800px' }}>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '3rem', fontFamily: 'Tajawal' }}>
-               {t.alignment_title}
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
-               {['العميل / المؤسسة', 'رقم المرجع', 'القيمة المالية', 'تاريخ الحركة', 'الهوية الضريبية', 'تصنيف السجل'].map(field => (
-                 <div key={field} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', textAlign: 'left', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '18px', border: '1px solid var(--surface-container-high)' }}>
-                    <span style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{field}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                       <select className="input-executive" style={{ flex: 1, fontWeight: 800, background: 'white' }}>
-                          <option>تلقائي: Column A</option>
-                          <option>تلقائي: Column B</option>
-                          <option>يدوي...</option>
-                       </select>
-                       <CheckCircle2 size={18} color="var(--success)" />
-                    </div>
+          <div style={{ width: '100%', maxWidth: '850px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
+               <Settings2 size={24} color="var(--primary)" />
+               <h2 style={{ fontSize: '1.6rem', fontWeight: 950, color: 'var(--primary)', margin: 0, fontFamily: 'Tajawal' }}>{t.alignment_title}</h2>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem', marginBottom: '3rem' }}>
+               {targetFields.map(field => (
+                 <div key={field.key} className="card" style={{ padding: '1.2rem', background: 'var(--surface-container-low)', textAlign: 'right', border: '1px solid var(--surface-container-high)', boxShadow: 'none' }}>
+                    <p style={{ fontWeight: 900, fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.8rem' }}>{field.label}</p>
+                    <select 
+                      value={mapping[field.key] ?? ""}
+                      onChange={(e) => setMapping({...mapping, [field.key]: parseInt(e.target.value)})}
+                      className="input-executive" 
+                      style={{ width: '100%', fontWeight: 700, background: 'white', color: mapping[field.key] !== undefined ? 'var(--success)' : 'var(--on-surface)' }}
+                    >
+                       <option value="">{lang === 'ar' ? '--- اختر العمود ---' : '--- Select Column ---'}</option>
+                       {csvHeaders.map((head, idx) => (
+                         <option key={idx} value={idx}>{head}</option>
+                       ))}
+                    </select>
                  </div>
                ))}
             </div>
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem' }}>
-               <button onClick={() => setStep(1)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '1.2rem', fontWeight: 800 }}>{t.cancel}</button>
-               <button onClick={startImport} className="btn-executive" style={{ flex: 2, border: 'none', padding: '1.2rem', fontSize: '1.1rem' }}>
-                  {importing ? <RefreshCw size={24} className="spin" /> : <Database size={24} />}
-                  {t.execute_import}
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+               <button onClick={() => setStep(1)} className="btn-executive btn-outline" style={{ flex: 1, padding: '1.2rem' }}>{t.cancel}</button>
+               <button 
+                 onClick={startImport} 
+                 disabled={Object.keys(mapping).length < targetFields.length || importing}
+                 className="btn-executive" 
+                 style={{ flex: 2, padding: '1.2rem' }}
+               >
+                  {importing ? <RefreshCw size={22} className="spin" /> : <Database size={22} />}
+                  {t.execute_import} ( {csvRows.length} )
                </button>
             </div>
           </div>
@@ -231,32 +324,22 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
 
         {step === 3 && (
           <div style={{ maxWidth: '520px' }}>
-            <div className="compliance-shield" style={{ width: 140, height: 140, borderRadius: '50%', background: 'rgba(27, 94, 32, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 3rem', color: 'var(--success)', border: 'none' }}>
-               <CheckCircle2 size={70} />
+            <div style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(27, 94, 32, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: 'var(--success)' }}>
+               <CheckCircle2 size={60} />
             </div>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1.2rem', fontFamily: 'Tajawal' }}>
-               {t.success_title}
-            </h2>
-            <p style={{ fontSize: '1.2rem', color: 'var(--on-surface-variant)', marginBottom: '3.5rem', fontWeight: 800 }}>
-               {recordCount.toLocaleString()} {t.success_desc}
-            </p>
-            <button onClick={() => { setStep(1); window.location.reload(); }} className="btn-executive" style={{ width: '100%', border: 'none', padding: '1.5rem', fontSize: '1.1rem' }}>
-               {t.return_home}
-            </button>
+            <h2 style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1rem', fontFamily: 'Tajawal' }}>{t.success_title}</h2>
+            <p style={{ fontSize: '1.1rem', color: 'var(--on-surface-variant)', marginBottom: '3rem', fontWeight: 800 }}>{recordCount.toLocaleString()} {t.success_desc}</p>
+            <button onClick={() => { setStep(1); window.location.reload(); }} className="btn-executive" style={{ width: '100%', padding: '1.2rem' }}>{t.return_home}</button>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: '2.5rem', padding: '2rem', borderRadius: '24px', background: 'var(--primary)', color: 'white', position: 'relative', overflow: 'hidden' }}>
-         <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(212, 167, 106, 0.2)', color: 'var(--secondary)' }}>
-               <AlertCircle size={32} />
-            </div>
-            <div style={{ flex: 1 }}>
-               <h4 style={{ color: 'var(--secondary)', fontWeight: 950, fontSize: '1.2rem', margin: 0 }}>بروتوكول أمن البيانات المحلي</h4>
-               <p style={{ fontSize: '0.9rem', opacity: 0.9, fontWeight: 600, margin: '0.5rem 0 0', lineHeight: '1.6' }}>
-                  {t.security_protocol_notice}
-               </p>
+      <div style={{ marginTop: '2.5rem', padding: '2rem', borderRadius: '24px', background: 'var(--primary)', color: 'white' }}>
+         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <div style={{ padding: '0.8rem', borderRadius: '14px', background: 'rgba(212, 167, 106, 0.2)', color: 'var(--secondary)' }}><AlertCircle size={28} /></div>
+            <div>
+               <h4 style={{ color: 'var(--secondary)', fontWeight: 950, fontSize: '1.1rem', margin: 0 }}>بروتوكول أمن البيانات المحلي</h4>
+               <p style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 600, margin: '0.4rem 0 0' }}>{t.security_protocol_notice}</p>
             </div>
          </div>
       </div>

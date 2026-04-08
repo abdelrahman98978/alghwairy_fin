@@ -8,7 +8,8 @@ import {
   Wallet,
   Calculator,
   CheckCircle2,
-  Filter
+  Filter,
+  Printer
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -44,8 +45,15 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
   const [chartData, setChartData] = useState<{name: string, revenue: number, expenses: number}[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [showOfficialModal, setShowOfficialModal] = useState(false);
 
-  // Manual Transaction Modal
+  const [settings] = useState({
+    companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
+    taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
+    address: localStorage.getItem('sov_address') || 'King Fahd Rd, Riyadh, SA',
+    logo: localStorage.getItem('sov_logo') || './logo.png'
+  });
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [manualForm, setManualForm] = useState({
     title: '',
@@ -75,7 +83,6 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       setExpenses(totalExpenses);
       setNetProfit(totalRevenue - totalExpenses);
 
-      // Aggregating data for the chart from actual transactions
       const last6Months: {name: string, revenue: number, expenses: number}[] = [];
       const now = new Date();
       for (let i = 5; i >= 0; i--) {
@@ -177,6 +184,9 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33', border: 'none' }}>
+             <Printer size={18} /> {t.lang === 'ar' ? 'طباعة القائمة الرسمية' : 'Official Print'}
+          </button>
           <button onClick={exportReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
              <Download size={18} /> {t.export || 'تصدير'}
           </button>
@@ -260,7 +270,6 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
          </div>
       </div>
 
-      {/* Manual Entry Modal */}
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
@@ -306,6 +315,111 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {showOfficialModal && (
+        <div className="modal-overlay invoice-print-overlay" style={{ background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(15px)', zIndex: 3000, overflowY: 'auto' }}>
+           <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'center', gap: '1rem', padding: '1rem', background: 'rgba(0,26,51,0.9)' }}>
+              <button onClick={() => window.print()} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33', border: 'none' }}>
+                 <Printer size={18} /> {t.lang === 'ar' ? 'طباعة المستند' : 'Print Document'}
+              </button>
+              <button onClick={() => setShowOfficialModal(false)} className="btn-executive" style={{ background: '#ba1a1a', color: 'white', border: 'none' }}>
+                 <X size={18} /> {t.lang === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+           </div>
+
+           <div className="print-content" dir="rtl" style={{
+              width: '210mm', minHeight: '297mm', background: 'white',
+              margin: '0 auto 4rem', padding: '20mm 20mm',
+              boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+              fontFamily: "'Tajawal','Cairo',sans-serif", color: '#111'
+           }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #001a33', paddingBottom: '10mm', marginBottom: '10mm' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '5mm' }}>
+                    {settings.logo ? <img src={settings.logo} style={{ width: '25mm', height: '25mm', objectFit: 'contain' }} /> : <div style={{ width: '20mm', height: '20mm', background: '#001a33' }} />}
+                    <div>
+                       <h1 style={{ fontSize: '18pt', margin: 0, color: '#001a33', fontWeight: 900 }}>{settings.companyName}</h1>
+                       <p style={{ fontSize: '9pt', margin: '1mm 0', color: '#555' }}>تخليص جمركي - استشارات لوجستية</p>
+                       <p style={{ fontSize: '8pt', margin: 0, opacity: 0.7 }}>الرقم الضريبي: {settings.taxNumber}</p>
+                    </div>
+                 </div>
+                 <div style={{ textAlign: 'left', direction: 'ltr' }}>
+                    <div style={{ fontSize: '14pt', fontWeight: 900, color: '#001a33' }}>FINANCIAL STATEMENT</div>
+                    <div style={{ fontSize: '10pt', color: '#d4a76a', fontWeight: 700 }}>FISCAL YEAR 2026</div>
+                    <p style={{ fontSize: '8pt', marginTop: '2mm', color: '#888' }}>تاريخ الإصدار: {new Date().toLocaleDateString('ar-SA')}</p>
+                 </div>
+              </div>
+
+              <div style={{ textAlign: 'center', marginBottom: '12mm' }}>
+                 <h2 style={{ fontSize: '22pt', fontWeight: 900, color: '#001a33', textDecoration: 'underline', textUnderlineOffset: '4mm' }}>القوائم المالية الختامية</h2>
+                 <p style={{ fontSize: '10pt', color: '#666', marginTop: '2mm' }}>للفترة المنتهية في {new Date().toLocaleDateString('ar-SA')}</p>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15mm' }}>
+                 <thead>
+                    <tr style={{ background: '#f8f9fa' }}>
+                       <th style={{ border: '1px solid #ddd', padding: '4mm', textAlign: 'right', fontSize: '11pt' }}>البند المالي / Description</th>
+                       <th style={{ border: '1px solid #ddd', padding: '4mm', textAlign: 'center', width: '40mm', fontSize: '11pt' }}>القيمة (ر.س) / Value</th>
+                       <th style={{ border: '1px solid #ddd', padding: '4mm', textAlign: 'center', width: '25mm', fontSize: '11pt' }}>الحالة</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    <tr>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', fontWeight: 700 }}>إجمالي الإيرادات الجمركية والخدمية</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', fontWeight: 900 }}>{revenue.toLocaleString()}</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', color: '#1b5e20', fontWeight: 900 }}>CR</td>
+                    </tr>
+                    <tr>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', fontWeight: 700 }}>إجمالي المصروفات التشغيلية والرواتب</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', fontWeight: 900 }}>{expenses.toLocaleString()}</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', color: '#ba1a1a', fontWeight: 900 }}>DR</td>
+                    </tr>
+                    <tr>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', fontWeight: 700 }}>المستحقات الضريبية والزكاة (المقدرة)</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', fontWeight: 900 }}>{(revenue * 0.15).toLocaleString()}</td>
+                       <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', color: '#b45309', fontWeight: 900 }}>EST</td>
+                    </tr>
+                    <tr style={{ background: '#001a33', color: 'white' }}>
+                       <td style={{ border: '1px solid #001a33', padding: '6mm', fontWeight: 900, fontSize: '13pt' }}>صافي المركز المالي للمؤسسة</td>
+                       <td style={{ border: '1px solid #001a33', padding: '6mm', textAlign: 'center', fontWeight: 950, fontSize: '15pt' }}>{netProfit.toLocaleString()}</td>
+                       <td style={{ border: '1px solid #001a33', padding: '6mm', textAlign: 'center', fontWeight: 900 }}>SAR</td>
+                    </tr>
+                 </tbody>
+              </table>
+
+              <div style={{ padding: '6mm', border: '1px dashed #001a33', borderRadius: '4mm', marginBottom: '15mm', background: '#fcfcfc' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '4mm', marginBottom: '3mm' }}>
+                    <CheckCircle2 size={24} color="#1b5e20" />
+                    <h4 style={{ margin: 0, fontSize: '11pt', fontWeight: 900 }}>إقرار الامتثال والتدقيق</h4>
+                 </div>
+                 <p style={{ margin: 0, fontSize: '9pt', lineHeight: '1.6', color: '#444' }}>
+                    تشهد إدارة الشؤون المالية بمؤسسة الغويري للتخليص الجمركي بأن كافة الأرقام الموضحة أعلاه مستخرجة من سجلات النظام الموحد وتتفق مع الموازين المالية السيادية والفواتير الضريبية المرحلة لهيئة الزكاة والضريبة والجمارك للمرحلة الثانية.
+                 </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5mm', marginTop: '20mm' }}>
+                 <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '40mm', height: '1px', background: '#001a33', margin: '0 auto 3mm' }}></div>
+                    <p style={{ fontSize: '9pt', fontWeight: 900 }}>إعداد: الشؤون المالية</p>
+                    <p style={{ fontSize: '7pt', color: '#888' }}>Electronic Sign: AC-229</p>
+                 </div>
+                 <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '30mm', height: '30mm', border: '2px solid rgba(0,26,51,0.1)', borderRadius: '50%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,26,51,0.1)', fontWeight: 900, fontSize: '8pt' }}>ختم المؤسسة</div>
+                 </div>
+                 <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '40mm', height: '1px', background: '#001a33', margin: '0 auto 3mm' }}></div>
+                    <p style={{ fontSize: '9pt', fontWeight: 900 }}>تعميد: المدير العام</p>
+                    <p style={{ fontSize: '7pt', color: '#888' }}>Management Approval Required</p>
+                 </div>
+              </div>
+
+              <div style={{ position: 'absolute', bottom: '15mm', left: '20mm', right: '20mm', borderTop: '1px solid #eee', paddingTop: '5mm', display: 'flex', justifyContent: 'space-between', fontSize: '7pt', color: '#aaa' }}>
+                 <span>Sovereign Ledger System v1.0.0</span>
+                 <span>Alghwairy Institution • Confidential Document</span>
+                 <span>Page 1 of 1</span>
+              </div>
+           </div>
         </div>
       )}
     </div>

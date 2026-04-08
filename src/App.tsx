@@ -31,9 +31,11 @@ import {
   Banknote,
   BarChart3,
   FileSpreadsheet,
-  Trash2
+  Trash2,
+  Share2
 } from 'lucide-react';
 import { localDB } from './lib/localDB';
+import { hasPermission, type AppModule } from './lib/permissions';
 
 // --- Views ---
 import DashboardView from './components/DashboardView';
@@ -55,6 +57,7 @@ import PettyCashView from './components/PettyCashView';
 import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
+import CommunicationsView from './components/CommunicationsView';
 
 
 const translations = {
@@ -1403,6 +1406,11 @@ export default function App() {
   }
 
   const renderView = () => {
+    // Permission Guard
+    if (activeTab !== 'dashboard' && !hasPermission(userRole, activeTab as AppModule)) {
+       return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
+    }
+
     switch(activeTab) {
       case 'dashboard': return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
       case 'customers': return <CustomersView showToast={showToast} logActivity={logActivity} t={{...t.customers, lang}} />;
@@ -1421,6 +1429,7 @@ export default function App() {
       case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} t={{...t.settings, lang}} userName={userName} />;
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
+      case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1473,45 +1482,45 @@ export default function App() {
         </div>
 
         <nav className="sidebar-scroll-area" style={{ paddingBottom: '2.5rem' }}>
-          {(userRole === 'admin' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'dashboard') || hasPermission(userRole, 'customers')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
-              <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />
+              {hasPermission(userRole, 'dashboard') && <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'customers') && <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'accountant' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'accounting') || hasPermission(userRole, 'invoices') || hasPermission(userRole, 'prepayments') || hasPermission(userRole, 'expenses') || hasPermission(userRole, 'petty_cash') || hasPermission(userRole, 'tax')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
-              <NavItem icon={<Wallet size={16} />} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<FileText size={16} />} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<HistoryIcon size={16} />} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<TrendingDown size={16} />} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Banknote size={16} />} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Zap size={16} />} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />
+              {hasPermission(userRole, 'accounting') && <NavItem icon={<Wallet size={16} />} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'invoices') && <NavItem icon={<FileText size={16} />} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'prepayments') && <NavItem icon={<HistoryIcon size={16} />} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'expenses') && <NavItem icon={<TrendingDown size={16} />} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'petty_cash') && <NavItem icon={<Banknote size={16} />} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'tax') && <NavItem icon={<Zap size={16} />} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
-              <NavItem icon={<Users size={16} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />
-
-              <NavItem icon={<BarChart3 size={16} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<FileSpreadsheet size={16} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />
+              {hasPermission(userRole, 'payroll') && <NavItem icon={<Users size={16} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'reports') && <NavItem icon={<BarChart3 size={16} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'statements') && <NavItem icon={<FileSpreadsheet size={16} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
+              <NavItem icon={<Share2 size={16} />} label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} active={activeTab === 'communications'} onClick={() => setActiveTab('communications')} lang={lang} isCollapsed={isCollapsed} />
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'security') || hasPermission(userRole, 'roles') || hasPermission(userRole, 'audit_logs') || hasPermission(userRole, 'data_import') || hasPermission(userRole, 'settings') || hasPermission(userRole, 'trash')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
-              <NavItem icon={<ShieldCheck size={16} />} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<UserPlus size={16} />} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Activity size={16} />} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Download size={16} />} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Settings size={16} />} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Trash2 size={16} />} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />
+              {hasPermission(userRole, 'security') && <NavItem icon={<ShieldCheck size={16} />} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'roles') && <NavItem icon={<UserPlus size={16} />} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'audit_logs') && <NavItem icon={<Activity size={16} />} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'data_import') && <NavItem icon={<Download size={16} />} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'settings') && <NavItem icon={<Settings size={16} />} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'trash') && <NavItem icon={<Trash2 size={16} />} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
         </nav>

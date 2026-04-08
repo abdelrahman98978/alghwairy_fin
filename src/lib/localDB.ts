@@ -21,6 +21,15 @@ interface DBSchema {
   tax_returns: any[];
   audit_logs: any[];
   shipments: any[];
+  role_permissions: any[];
+  sovereign_messages: any[];
+  sovereign_files: any[];
+  sync_settings: {
+    last_sync: string;
+    sync_folder: string;
+    device_id: string;
+    auto_sync: boolean;
+  };
 }
 
 const DEFAULT_DB: DBSchema = {
@@ -37,7 +46,21 @@ const DEFAULT_DB: DBSchema = {
   backups: [],
   tax_returns: [],
   audit_logs: [],
-  shipments: []
+  shipments: [],
+  role_permissions: [
+    { id: 'rp-admin', role: 'Admin', permissions: ['dashboard', 'customers', 'accounting', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'tax', 'payroll', 'reports', 'statements', 'security', 'roles', 'audit_logs', 'data_import', 'settings', 'trash'] },
+    { id: 'rp-cfo', role: 'CFO', permissions: ['dashboard', 'customers', 'accounting', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'payroll', 'reports', 'statements', 'audit_logs', 'settings'] },
+    { id: 'rp-accountant', role: 'Accountant', permissions: ['dashboard', 'customers', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'tax'] },
+    { id: 'rp-auditor', role: 'Auditor', permissions: ['dashboard', 'customers', 'accounting', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'tax', 'payroll', 'reports', 'statements', 'audit_logs'] }
+  ],
+  sovereign_messages: [],
+  sovereign_files: [],
+  sync_settings: {
+    last_sync: new Date().toISOString(),
+    sync_folder: '',
+    device_id: 'NODE-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    auto_sync: false
+  }
 };
 
 // Paths for Electron fs access
@@ -101,6 +124,11 @@ export const localDB = {
   // --- CORE READ/WRITE ---
   _save() {
     writeToDisk(_db);
+  },
+
+  // Get a specific table or property
+  get(table: keyof DBSchema): any {
+    return _db[table];
   },
 
   // Get all records from a table
