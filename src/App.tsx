@@ -1154,6 +1154,7 @@ export default function App() {
   const [notifHistory, setNotifHistory] = useState<NotificationItem[]>([]);
   const [showNotifDrawer, setShowNotifDrawer] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(new Date().toLocaleTimeString());
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const [isActivated, setIsActivated] = useState(() => {
     const saved = localStorage.getItem('sovereign_activation_key');
     const expiry = localStorage.getItem('sovereign_activation_expiry');
@@ -1253,6 +1254,14 @@ export default function App() {
     const data = localDB.getActive('transactions');
     setTransactions(data as Transaction[]);
     setLastSyncTime(new Date().toLocaleTimeString());
+    
+    // Check for unread Sovereign Messages
+    const settings = localDB.get('sync_settings');
+    const myId = settings?.device_id;
+    if (myId) {
+      const unread = localDB.getAll('sovereign_messages').filter(m => m.recipient === myId && !m.read).length;
+      setUnreadMsgCount(unread);
+    }
   }, []);
 
   useEffect(() => {
@@ -1508,7 +1517,15 @@ export default function App() {
               {hasPermission(userRole, 'payroll') && <NavItem icon={<Users size={16} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'reports') && <NavItem icon={<BarChart3 size={16} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'statements') && <NavItem icon={<FileSpreadsheet size={16} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
-              <NavItem icon={<Share2 size={16} />} label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} active={activeTab === 'communications'} onClick={() => setActiveTab('communications')} lang={lang} isCollapsed={isCollapsed} />
+              <NavItem 
+                 icon={<Share2 size={16} />} 
+                 label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} 
+                 active={activeTab === 'communications'} 
+                 onClick={() => setActiveTab('communications')} 
+                 lang={lang} 
+                 isCollapsed={isCollapsed} 
+                 badge={unreadMsgCount > 0 ? unreadMsgCount : undefined}
+               />
             </>
           )}
 
@@ -1757,13 +1774,15 @@ interface NavItemProps {
   onClick: () => void;
   lang: string;
   isCollapsed: boolean;
+  badge?: number | string;
 }
 
-function NavItem({ icon, label, active, onClick, lang, isCollapsed }: NavItemProps) {
+function NavItem({ icon, label, active, onClick, lang, isCollapsed, badge }: NavItemProps) {
   return (
     <button 
       onClick={onClick} 
       className={`nav-item ${active ? 'active' : ''}`}
+      style={{ position: 'relative' }}
     >
       {icon}
       {!isCollapsed && <span style={{ transition: 'opacity 0.2s' }}>{label}</span>}

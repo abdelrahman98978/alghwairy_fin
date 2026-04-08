@@ -58,10 +58,11 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
     if (!messageInput.trim() || !selectedUser) return;
     
     const newMsg = {
-      sender: 'current_user',
+      sender: syncSettings.device_id,
       recipient: selectedUser.id,
       content: messageInput,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      read: false
     };
     
     localDB.insert('sovereign_messages', newMsg);
@@ -77,9 +78,26 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
   };
 
   const filteredMessages = messages.filter(m => 
-    (m.sender === 'current_user' && m.recipient === selectedUser?.id) ||
-    (m.sender === selectedUser?.id && m.recipient === 'current_user')
+    (m.sender === syncSettings?.device_id && m.recipient === selectedUser?.id) ||
+    (m.sender === selectedUser?.id && m.recipient === syncSettings?.device_id)
   );
+
+  useEffect(() => {
+    if (activeTab === 'chat' && selectedUser && syncSettings?.device_id) {
+        const unreadFromThisUser = messages.filter(m => 
+            m.sender === selectedUser.id && 
+            m.recipient === syncSettings.device_id && 
+            !m.read
+        );
+        
+        if (unreadFromThisUser.length > 0) {
+            unreadFromThisUser.forEach(m => {
+                localDB.update('sovereign_messages', m.id, { read: true });
+            });
+            fetchData();
+        }
+    }
+  }, [activeTab, selectedUser, messages, syncSettings, fetchData]);
 
   return (
     <div className="slide-in" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
@@ -135,32 +153,44 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                {lang === 'ar' ? 'العقد النشطة (الموظفون)' : 'Active Nodes (Staff)'}
             </h4>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-               {employees.map(emp => (
-                 <button 
-                   key={emp.id}
-                   onClick={() => setSelectedUser(emp)}
-                   style={{ 
-                     display: 'flex', 
-                     alignItems: 'center', 
-                     gap: '1rem', 
-                     padding: '1rem', 
-                     border: 'none', 
-                     borderRadius: '14px', 
-                     background: selectedUser?.id === emp.id ? 'var(--surface-container-high)' : 'transparent',
-                     cursor: 'pointer',
-                     textAlign: 'right'
-                   }}
-                 >
-                    <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'var(--primary)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
-                       {emp.role.charAt(0)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                       <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: 'var(--on-surface)' }}>{emp.name || emp.role}</p>
-                       <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', opacity: 0.7 }}>{emp.role}</span>
-                    </div>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }}></div>
-                 </button>
-               ))}
+               {employees.map(emp => {
+                 const lastMsg = messages.filter(m => (m.sender === emp.id && m.recipient === syncSettings?.device_id) || (m.sender === syncSettings?.device_id && m.recipient === emp.id)).pop();
+                 const unreadCount = messages.filter(m => m.sender === emp.id && m.recipient === syncSettings?.device_id && !m.read).length;
+
+                 return (
+                  <button 
+                    key={emp.id}
+                    onClick={() => setSelectedUser(emp)}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '1rem', 
+                      padding: '1rem', 
+                      border: 'none', 
+                      borderRadius: '14px', 
+                      background: selectedUser?.id === emp.id ? 'var(--surface-container-high)' : 'transparent',
+                      cursor: 'pointer',
+                      textAlign: lang === 'ar' ? 'right' : 'left',
+                      width: '100%',
+                      position: 'relative',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                     <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'var(--primary)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, flexShrink: 0 }}>
+                        {emp.role.charAt(0)}
+                     </div>
+                     <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.85rem', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name || emp.role}</p>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--on-surface-variant)', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {lastMsg ? lastMsg.content : emp.role}
+                        </p>
+                     </div>
+                     {unreadCount > 0 && (
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 10px var(--secondary)' }}></div>
+                     )}
+                  </button>
+                 );
+               })}
             </div>
          </div>
 
@@ -184,15 +214,15 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                      </div>
                    ) : (
                      filteredMessages.map((m, idx) => (
-                       <div key={idx} style={{ 
-                         alignSelf: m.sender === 'current_user' ? 'flex-end' : 'flex-start',
-                         maxWidth: '70%',
-                         padding: '1rem 1.5rem',
-                         borderRadius: m.sender === 'current_user' ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
-                         background: m.sender === 'current_user' ? 'var(--primary)' : 'var(--surface-container-high)',
-                         color: m.sender === 'current_user' ? 'white' : 'var(--on-surface)',
-                         boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
-                       }}>
+                        <div key={idx} style={{ 
+                          alignSelf: m.sender === syncSettings?.device_id ? 'flex-end' : 'flex-start',
+                          maxWidth: '70%',
+                          padding: '1rem 1.5rem',
+                          borderRadius: m.sender === syncSettings?.device_id ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
+                          background: m.sender === syncSettings?.device_id ? 'var(--primary)' : 'var(--surface-container-high)',
+                          color: m.sender === syncSettings?.device_id ? 'white' : 'var(--on-surface)',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+                        }}>
                           <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem', lineHeight: '1.5' }}>{m.content}</p>
                           <span style={{ fontSize: '0.65rem', opacity: 0.6, display: 'block', marginTop: '0.4rem', textAlign: 'left' }}>
                              {new Date(m.timestamp).toLocaleTimeString()}
