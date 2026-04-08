@@ -142,8 +142,25 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     } catch { window.print(); }
   };
 
-  const handleWhatsApp = () => {
-    const text = `عزيزي العميل،\nنرفق لكم تفاصيل الفاتورة الضريبية:\nالعميل: ${clientName}\nالمبلغ: ${calculateTotal().toLocaleString()} ${currency}\nمؤسسة الغويري للتخليص الجمركي`;
+  const handleWhatsApp = async () => {
+    let messageSuffix = '';
+    
+    if ((window as any).require) {
+      try {
+        const { ipcRenderer } = (window as any).require('electron');
+        // Guide the user
+        showToast(t.lang === 'ar' ? 'يرجى حفظ الفاتورة أولاً لإرفاقها في الواتساب' : 'Please save the invoice first to attach it to WhatsApp', 'info');
+        
+        const result = await ipcRenderer.invoke('print-to-pdf');
+        if (result.success) {
+          messageSuffix = t.lang === 'ar' ? '\n\n(تم حفظ نسخة PDF في المجلد المفتوح أمامك حالياً، يرجى سحبها إلى نافذة الواتساب لإرسالها كمرفق)' : '\n\n(PDF copy saved in the opened folder, please drag it to the WhatsApp window to send as attachment)';
+        }
+      } catch (e) {
+        console.error('WhatsApp PDF logic error:', e);
+      }
+    }
+
+    const text = `عزيزي العميل،\nنرفق لكم تفاصيل الفاتورة الضريبية:\nالعميل: ${clientName}\nالمبلغ: ${calculateTotal().toLocaleString()} ${currency}\nمؤسسة الغويري للتخليص الجمركي${messageSuffix}`;
     openExternal(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
@@ -522,10 +539,10 @@ function InvoicePreviewModal({ clientName, taxId, items, subtotal, vat, total, c
                      <span style={{ fontWeight: 800 }}>{vat.toLocaleString()} {currency}</span>
                    </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15pt 0', borderTop: '4px solid #001a33', marginTop: '10pt' }}>
-                   <span style={{ fontWeight: 950, fontSize: '14pt', color: '#001a33' }}>الإجمالي / Grand Total</span>
-                   <span style={{ fontWeight: 950, fontSize: '16pt', color: '#001a33' }}>{total.toLocaleString()} {currency}</span>
-                </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15pt 20pt', background: '#001a33', borderRadius: '12px', marginTop: '10pt' }}>
+                    <span style={{ fontWeight: 950, fontSize: '14pt', color: '#fff' }}>الإجمالي المستحق / Grand Total</span>
+                    <span style={{ fontWeight: 950, fontSize: '18pt', color: '#d4a76a' }}>{total.toLocaleString()} {currency}</span>
+                 </div>
              </div>
           </div>
 
