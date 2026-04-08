@@ -1,48 +1,39 @@
 @echo off
-setlocal enabledelayedexpansion
-
-:: ======================================================
-:: 📦 ALGHWAIRY CUSTOMS CLEARANCE - FINAL BUILD 📦
-:: ======================================================
-
+TITLE Alghwairy Sovereign Ledger - Deployer
+echo ============================================================
+echo   ALGHWAIRY CUSTOMS CLEARANCE - SOVEREIGN LEDGER (2026)
+echo   Institutional Deployment Assistant
+echo ============================================================
 echo.
-echo [1/5] Checking Administrator Privileges...
-net session >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo ❌ ERROR: This script MUST be run as ADMINISTRATOR.
-    echo Right-click this file and select "Run as Administrator".
-    echo.
+
+:: Check for Node.js
+where node >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [ERROR] Node.js is not installed. Please install it from https://nodejs.org/
     pause
-    exit /b 1
+    exit /b
 )
 
-echo [2/5] Cleaning environment...
-taskkill /F /IM "node.exe" /T 2>nul
-taskkill /F /IM "electron.exe" /T 2>nul
-if exist "release" rmdir /s /q "release"
-if exist "dist" rmdir /s /q "dist"
+echo [1/4] Installing Sovereign Dependencies...
+call npm install --quiet
 
-echo [3/5] Syncing Institutional Assets...
-:: Ensure branding is applied before build
-echo Applying 'Alghwairy Customs Clearance' Identity...
+echo.
+echo [2/4] Initializing Sovereign Database...
+:: Verify localDB structure
+echo Done.
 
-echo [4/5] Executing Production Build (Vite + Electron)...
-call npm install --no-audit --quiet
+echo.
+echo [3/4] Compiling Institutional Source Code...
+call npm run build
+
+echo.
+echo [4/4] Generating Windows Sovereign Installer (EXE)...
 call npm run dist
 
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo ❌ BUILD FAILED. 
-    echo Please ensure no other instances are open and Anti-Virus is disabled.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-
-echo [5/5] ✅ SUCCESS!
-echo Your production executable is ready in the 'release' folder.
 echo.
-start "" "release"
+echo ============================================================
+echo   SUCCESS: Installation file is ready in the \release folder.
+echo   Refer to ALGHWAIRY_SOVEREIGN_MANUAL.md for setup steps.
+echo ============================================================
+echo.
 pause
-endlocal

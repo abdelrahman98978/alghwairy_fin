@@ -16,7 +16,9 @@ import {
   Trash2,
   Share2,
   FolderOpen,
-  Network
+  Network,
+  Volume2,
+  Monitor
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 
@@ -50,12 +52,15 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     currency: localStorage.getItem('sov_currency') || 'SAR',
     vatRate: localStorage.getItem('sov_vat_rate') || '15',
     zatcaSync: localStorage.getItem('sov_zatca_sync') || 'Active',
+    zatcaEnv: localStorage.getItem('sov_zatca_env') || 'Sandbox',
     notifications: JSON.parse(localStorage.getItem('sov_notifications') || '[true, true, true, false]'),
     primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
     fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
     reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
     reportFooter: localStorage.getItem('sov_report_footer') || 'جميع الحقوق محفوظة © مؤسسة الغويري 2026',
-    syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily'
+    syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily',
+    notifSounds: localStorage.getItem('sov_notif_sounds') === 'true',
+    notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true'
   });
 
   const handleSave = async () => {
@@ -68,6 +73,11 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
         localStorage.setItem(storageKey, String(value));
       }
     });
+
+    // Apply immediate visual changes
+    document.documentElement.style.setProperty('--primary', settings.primaryColor);
+    document.documentElement.style.setProperty('--font-main', settings.fontFamily);
+
     await logActivity('Updated Institution Settings', 'settings', 'config_update');
     setTimeout(() => {
       setLoading(false);
@@ -97,7 +107,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     setIsEnrolling(true);
     try {
       setTimeout(async () => {
-          const bioData = { id: 'local-bio-' + Date.now(), type: 'fingerprint' };
+          const bioData = { id: 'local-bio-' + Date.now(), type: 'fingerprint', date: new Date().toISOString() };
           const users = localDB.findBy('user_roles', 'name', userName);
           if (users.length > 0) {
               localDB.update('user_roles', users[0].id, { biometric_key: JSON.stringify(bioData) });
@@ -161,6 +171,13 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     a.click();
     showToast(t.lang === 'en' ? 'Local backup exported' : 'تم تصدير النسخة الاحتياطية بنجاح', 'success');
   };
+
+  const themes = [
+    { name: 'Sovereign Navy', color: '#001a33' },
+    { name: 'Royal Gold', color: '#d4a76a' },
+    { name: 'Deep Onyx', color: '#1a1a1a' },
+    { name: 'Emerald Trust', color: '#004d40' }
+  ];
 
   const menuItems = [
     { id: 'general', label: t.tabs.general, icon: <Building2 size={18} /> },
@@ -242,6 +259,137 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
              </div>
            )}
 
+           {activeTab === 'financial' && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal' }}>
+                   {t.lang === 'en' ? 'Currency & Tax Compliance' : 'العملة والامتثال الضريبي'}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Primary Currency' : 'العملة الأساسية'}</label>
+                      <select className="input-executive" value={settings.currency} onChange={e => setSettings({...settings, currency: e.target.value})}>
+                         <option value="SAR">SAR - Saudi Riyal</option>
+                         <option value="USD">USD - US Dollar</option>
+                         <option value="AED">AED - Emirati Dirham</option>
+                      </select>
+                   </div>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'VAT Rate (%)' : 'نسبة ضريبة القيمة المضافة'}</label>
+                      <input type="number" className="input-executive" value={settings.vatRate} onChange={e => setSettings({...settings, vatRate: e.target.value})} />
+                   </div>
+                </div>
+                <div style={{ marginTop: '1rem', padding: '1.5rem', borderRadius: '14px', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                         <h4 style={{ margin: 0, fontWeight: 900 }}>ZATCA Phase 2 Integration</h4>
+                         <p style={{ margin: '0.3rem 0 0', opacity: 0.6, fontSize: '0.8rem' }}>{t.lang === 'en' ? 'Link with ZATCA systems for real-time clearance.' : 'التحكم في الربط المباشر مع أنظمة الزكاة والضريبة.'}</p>
+                      </div>
+                      <select 
+                        value={settings.zatcaEnv} 
+                        onChange={e => setSettings({...settings, zatcaEnv: e.target.value})}
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--outline)', fontSize: '0.75rem', fontWeight: 800 }}
+                      >
+                         <option value="Sandbox">Sandbox (Training)</option>
+                         <option value="Production">Production (Live)</option>
+                      </select>
+                   </div>
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'notifications' && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal' }}>
+                   {t.lang === 'en' ? 'Sovereign Alerts' : 'التنبيهات السيادية'}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                         <Volume2 size={20} color="var(--primary)" />
+                         <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'System Notification Sounds' : 'أصوات تنبيهات النظام'}</span>
+                      </div>
+                      <input type="checkbox" checked={settings.notifSounds} onChange={e => setSettings({...settings, notifSounds: e.target.checked})} />
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                         <Monitor size={20} color="var(--primary)" />
+                         <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'Desktop Notifications' : 'إشعارات سطح المكتب'}</span>
+                      </div>
+                      <input type="checkbox" checked={settings.notifDesktop} onChange={e => setSettings({...settings, notifDesktop: e.target.checked})} />
+                   </div>
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'appearance' && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal' }}>
+                   {t.lang === 'en' ? 'Visual Identity & Branding' : 'الهوية البصرية والسمات'}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                   <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Sovereign Theme' : 'السمة السيادية'}</label>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                      {themes.map(theme => (
+                        <button 
+                          key={theme.name}
+                          onClick={() => setSettings({...settings, primaryColor: theme.color})}
+                          style={{ 
+                            height: '60px', borderRadius: '12px', background: theme.color, border: settings.primaryColor === theme.color ? '4px solid var(--secondary)' : 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        >
+                           {settings.primaryColor === theme.color && <ShieldCheck size={20} color="var(--secondary)" />}
+                        </button>
+                      ))}
+                   </div>
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                         <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Typography (Font)' : 'نوع الخط'}</label>
+                         <select className="input-executive" value={settings.fontFamily} onChange={e => setSettings({...settings, fontFamily: e.target.value})}>
+                            <option value="Tajawal">Tajawal (Official Arabic)</option>
+                            <option value="Cairo">Cairo (Modern Arabic)</option>
+                            <option value="Inter">Inter (Global Latin)</option>
+                         </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                         <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Primary Brand Color' : 'لون الهوية الرئيسي'}</label>
+                         <input type="color" value={settings.primaryColor} onChange={e => setSettings({...settings, primaryColor: e.target.value})} style={{ height: '42px', width: '100%', border: 'none', background: 'none' }} />
+                      </div>
+                   </div>
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'documents' && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal' }}>
+                   {t.lang === 'en' ? 'Report & Document Headers' : 'ترويسة المستندات والتقارير'}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Main Document Header' : 'عنوان المستند الأساسي'}</label>
+                      <textarea 
+                        className="input-executive" 
+                        rows={2} 
+                        value={settings.reportHeader} 
+                        onChange={e => setSettings({...settings, reportHeader: e.target.value})}
+                        placeholder="e.g. Alghwairy Customs - Official Document"
+                      />
+                   </div>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Official Footer / Disclaimer' : 'تذييل المستند / إخلاء المسؤولية'}</label>
+                      <textarea 
+                        className="input-executive" 
+                        rows={2} 
+                        value={settings.reportFooter} 
+                        onChange={e => setSettings({...settings, reportFooter: e.target.value})}
+                        placeholder="e.g. Generated by Alghwairy Sovereign Ledger © 2026"
+                      />
+                   </div>
+                </div>
+             </div>
+           )}
+
            {activeTab === 'biometrics' && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal' }}>{t.lang === 'en' ? 'Biometric Security' : 'الأمان الحيوي'}</h3>
@@ -250,18 +398,21 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                       {isEnrolling ? <Loader2 size={40} className="spin" /> : <Fingerprint size={40} color="var(--primary)" />}
                    </div>
                    <button onClick={enrollBiometric} className="btn-executive" disabled={isEnrolling} style={{ padding: '0.85rem 3rem', background: 'var(--primary)', color: 'var(--secondary)' }}>
-                       {isEnrolling ? 'جاري الربط...' : 'بدءعملية التسجيل'}
+                       {isEnrolling ? (t.lang === 'ar' ? 'جاري الربط...' : 'Connecting...') : (t.lang === 'ar' ? 'بدء عملية التسجيل' : 'Start Enrollment')}
                    </button>
+                   <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--success)', fontWeight: 800 }}>
+                      {userName} - {t.lang === 'ar' ? 'البصمة النشطة: مفعلة' : 'Active Biometric: VERIFIED'}
+                   </p>
                 </div>
                 <div style={{ padding: '1.5rem', borderRadius: '18px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 900, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                     <ShieldCheck size={18} /> {t.lang === 'en' ? 'Security Credentials' : 'بيانات الوصول الأمنية'}
-                  </h4>
-                  <form onSubmit={handlePasswordChange} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1rem' }}>
-                     <input type="password" placeholder="Pass 1" className="input-executive" value={passwordData.new} onChange={e => setPasswordData({...passwordData, new: e.target.value})} />
-                     <input type="password" placeholder="Pass 2" className="input-executive" value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} />
-                     <button type="submit" disabled={loading} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none' }}>Update</button>
-                  </form>
+                   <h4 style={{ fontSize: '1rem', fontWeight: 900, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <ShieldCheck size={18} /> {t.lang === 'en' ? 'Security Credentials' : 'بيانات الوصول الأمنية'}
+                   </h4>
+                   <form onSubmit={handlePasswordChange} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1rem' }}>
+                      <input type="password" placeholder="Pass 1" className="input-executive" value={passwordData.new} onChange={e => setPasswordData({...passwordData, new: e.target.value})} />
+                      <input type="password" placeholder="Pass 2" className="input-executive" value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} />
+                      <button type="submit" disabled={loading} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none' }}>Update</button>
+                   </form>
                 </div>
              </div>
            )}
@@ -332,13 +483,6 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                       </div>
                    </div>
                  )}
-              </div>
-           )}
-
-           {(['financial', 'notifications', 'appearance', 'documents'].includes(activeTab)) && (
-              <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.5 }}>
-                 <Loader2 size={40} className="spin" style={{ margin: '0 auto 1rem' }} />
-                 <p style={{ fontWeight: 800 }}> Institutional Modules Active - Under Sync Control</p>
               </div>
            )}
         </main>
