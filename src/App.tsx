@@ -192,6 +192,12 @@ const translations = {
       base_label: 'الراتب الأساسي',
       plus_label: 'إجمالي البدلات',
       ded_label: 'إجمالي الاستقطاعات',
+      iban_label: 'رقم الآيبان (IBAN)',
+      bank_label: 'اسم البنك',
+      gosi_deduction: 'استقطاع التأمينات (GOSI)',
+      print_slip: 'طباعة مسير راتب فردي',
+      period_label: 'فترة استحقاق الراتب',
+      sif_export: 'تصدير ملف حماية الأجور (SIF)',
       secure_record: 'حفظ السجل الآمن',
       cancel: 'إلغاء'
     },
@@ -318,7 +324,13 @@ const translations = {
       input_vat: 'ضريبة المدخلات (المشتريات)',
       net_vat: 'صافي الضريبة المستحقة',
       certified_history: 'أرشيف الإقرارات المعتمدة سيادياً',
-      ai_audit: 'التدقيق الذكي للبيانات الضريبية'
+      ai_audit: 'التدقيق الذكي للبيانات الضريبية',
+      customs_fees: 'الرسوم الجمركية الجارية',
+      municipal_fees: 'الضرائب والرسوم البلدية',
+      total_clearance: 'إجمالي قيمة التخليص',
+      declaration_count: 'عدد البيانات الجمركية (بيان)',
+      platform_fees: 'رسوم المنصات (فسح/تبادل)',
+      lang: 'ar'
     },
     prepayments: {
       title: 'الاعتمادات المالية المسبقة',
@@ -505,6 +517,10 @@ const translations = {
       subtitle: 'إدارة السلف، المسحوبات الشخصية، والمصروفات المكتبية العاجلة.',
       total_active: 'إجمالي العهد النشطة',
       add_request: 'طلب عهدة جديدة',
+      allocation_label: 'قناة الصرف / التخصيص',
+      disburse_btn: 'صرف وتسوية سيادية',
+      settled_status: 'تمت التسوية بنجاح',
+      employee_picker: 'اختيار الموظف المسؤول',
       lang: 'ar'
     },
     marketing: {
@@ -739,6 +755,12 @@ const translations = {
       base_label: 'Base Pay',
       plus_label: 'Total Allowances',
       ded_label: 'Total Deductions',
+      iban_label: 'IBAN Number',
+      bank_label: 'Bank Name',
+      gosi_deduction: 'GOSI Deduction',
+      print_slip: 'Print Salary Slip',
+      period_label: 'Payroll Period',
+      sif_export: 'Export WPS SIF File',
       secure_record: 'Save Secure Record',
       cancel: 'Cancel'
     },
@@ -878,7 +900,13 @@ const translations = {
        input_vat: 'Input VAT (Expenses)',
        net_vat: 'Net VAT Payable',
        certified_history: 'Certified Tax Return Archive',
-       ai_audit: 'AI Tax Compliance Audit'
+       ai_audit: 'AI Tax Compliance Audit',
+       customs_fees: 'Current Customs Duties',
+       municipal_fees: 'Municipal Taxes & Fees',
+       total_clearance: 'Total Clearance Value',
+       declaration_count: 'Customs Declarations (Bayen)',
+       platform_fees: 'Platform Fees (Fasah/Tabadul)',
+       lang: 'en'
     },
     prepayments: {
       title: 'Prepayments & Deposits',
@@ -1064,7 +1092,12 @@ const translations = {
       title: 'Petty Cash & Draws',
       subtitle: 'Managing office expenses, staff advances, and cash withdrawals.',
       total_active: 'Total Active Petty Cash',
-      add_request: 'Request Petty Cash'
+      add_request: 'Request Petty Cash',
+      allocation_label: 'Expense Allocation',
+      disburse_btn: 'Disburse & Settle',
+      settled_status: 'Settled Successfully',
+      employee_picker: 'Responsible Staff Member',
+      lang: 'en'
     },
   }
 };

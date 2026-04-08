@@ -149,6 +149,11 @@ export interface Translations {
     net_vat: string;
     certified_history: string;
     ai_audit: string;
+    customs_fees: string;
+    municipal_fees: string;
+    platform_fees: string;
+    declaration_count: string;
+    total_clearance: string;
     lang: string;
   };
   payroll: {
@@ -178,6 +183,12 @@ export interface Translations {
     base_label: string;
     plus_label: string;
     ded_label: string;
+    iban_label: string;
+    bank_label: string;
+    gosi_deduction: string;
+    print_slip: string;
+    period_label: string;
+    sif_export: string;
     secure_record: string;
     cancel: string;
   };
@@ -312,6 +323,10 @@ export interface Translations {
     subtitle: string;
     add_request: string;
     total_active?: string;
+    allocation_label: string;
+    disburse_btn: string;
+    settled_status: string;
+    employee_picker: string;
   };
   prepayments: {
     lang: string;

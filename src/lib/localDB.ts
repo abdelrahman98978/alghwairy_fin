@@ -20,6 +20,7 @@ interface DBSchema {
   backups: any[];
   tax_returns: any[];
   audit_logs: any[];
+  shipments: any[];
 }
 
 const DEFAULT_DB: DBSchema = {
@@ -35,7 +36,8 @@ const DEFAULT_DB: DBSchema = {
   petty_cash: [],
   backups: [],
   tax_returns: [],
-  audit_logs: []
+  audit_logs: [],
+  shipments: []
 };
 
 // Paths for Electron fs access

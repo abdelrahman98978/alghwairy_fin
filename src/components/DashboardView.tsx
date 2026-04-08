@@ -94,6 +94,8 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
          <SnapshotItem label={isArabic ? 'إجمالي السيولة' : 'Total Liquidity'} value={`${(availableLiquidity/1000).toFixed(0)}K`} color="var(--primary)" />
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
+         <SnapshotItem label={isArabic ? 'قيمة التخليص' : 'Customs Throughput'} value="1.2M" color="#3182ce" />
+         <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
          <SnapshotItem label={isArabic ? 'العملاء النشطون' : 'Active Partners'} value={partnerCount.toString()} color="var(--secondary)" />
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
          <SnapshotItem label={isArabic ? 'الأداء العام' : 'Performance'} value={totalRevenue > 0 ? `+${((netProfit/totalRevenue)*100).toFixed(1)}%` : '0%'} color="var(--success)" />
