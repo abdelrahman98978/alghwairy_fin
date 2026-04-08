@@ -8,18 +8,9 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Transaction } from '../App';
 import type { Translations } from '../types/translations';
-
-interface Salary {
-  net: number;
-}
-
-interface Expense {
-  amount: number;
-  category: string;
-}
 
 interface StatementsProps {
   transactions: Transaction[];
@@ -32,31 +23,27 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRealDeepStats = async () => {
+    const fetchDeepStats = () => {
       setLoading(true);
       try {
         // 1. Get Payroll Total
-        const { data: salaryData } = await supabase.from('salaries').select('net');
-        if (salaryData) {
-          const total = (salaryData as Salary[]).reduce((acc: number, curr: Salary) => acc + (Number(curr.net) || 0), 0);
-          setSalariesTotal(total);
-        }
+        const payrollData = localDB.getActive('payroll');
+        const salaryTotal = (payrollData as any[]).reduce((acc: number, curr: any) => acc + (Number(curr.net) || 0), 0);
+        setSalariesTotal(salaryTotal);
 
-        // 2. Get COGS (Expenses categorized as 'Operational' or 'COGS')
-        const { data: expenseData } = await supabase.from('expenses').select('amount, category');
-        if (expenseData) {
-          const total = (expenseData as Expense[])
-            .filter((exp: Expense) => exp.category === 'Operational' || exp.category === 'تجاري' || exp.category === 'COGS')
-            .reduce((acc: number, curr: Expense) => acc + (Number(curr.amount) || 0), 0);
-          setCogsTotal(total);
-        }
+        // 2. Get COGS (Expenses categorized as 'Operational', 'تجاري', or 'COGS')
+        const expenseData = localDB.getActive('expenses');
+        const operationalTotal = (expenseData as any[])
+            .filter((exp: any) => exp.category === 'Operational' || exp.category === 'تجاري' || exp.category === 'COGS')
+            .reduce((acc: number, curr: any) => acc + (Number(curr.amount) || 0), 0);
+        setCogsTotal(operationalTotal);
       } catch (err) {
-        console.error("Deep stats fetch error", err);
+        console.error("Deep stats cache error", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchRealDeepStats();
+    fetchDeepStats();
   }, [transactions]);
 
   // Real Calculations
@@ -120,7 +107,7 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
            <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '1rem', color: 'var(--primary)' }}>{netIncome.toLocaleString()} SAR</div>
            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
               <CheckCircle2 size={12} color="var(--success)" />
-              <span style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 800 }}>{t.sovereign_verified}</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 800 }}>{t.lang === 'ar' ? 'اعتماد مؤسسة الغويري' : 'Institutional Verification'}</span>
            </div>
         </div>
 
@@ -131,7 +118,7 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
                  <DollarSign size={20} />
               </div>
            </div>
-           <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '1rem', color: 'var(--primary)' }}>{(totalRevenue + (Number(localStorage.getItem('sov_opening_balance')) || 500000) - totalExpenses).toLocaleString()} SAR</div>
+           <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '1rem', color: 'var(--primary)' }}>{(totalRevenue + 500000 - totalExpenses).toLocaleString()} SAR</div>
            <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', marginTop: '0.5rem', fontWeight: 700 }}>{t.real_time_update}</div>
         </div>
 
@@ -153,7 +140,7 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
               <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.6rem', borderRadius: '10px' }}><FileSpreadsheet size={24} /></div>
               <div>
                  <h3 style={{ margin: 0, fontWeight: 900, fontSize: '1.25rem', fontFamily: 'Tajawal' }}>{t.income_statement_title}</h3>
-                 <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 700 }}>SOVEREIGN LEDGER AI VERIFIED CORE v4.1</p>
+                 <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 700 }}>ALGHWAIRY INSTITUTION LEDGER v2026</p>
               </div>
            </div>
            <div style={{ textAlign: 'right' }}>
@@ -186,14 +173,14 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
                      {item.category}
                    </td>
                    <td style={{ 
-                       textAlign: 'right', 
-                       fontWeight: 950, 
-                       fontSize: item.type === 'final' ? '1.3rem' : '1.1rem',
-                       color: item.type === 'final' ? 'var(--secondary)' : (item.type === 'expense' ? 'var(--error)' : 'var(--primary)'),
-                       borderBottom: '1px solid var(--surface-container-high)',
-                       direction: 'ltr'
-                    }}>
-                       {item.type === 'expense' && item.amount > 0 ? '-' : ''}{item.amount.toLocaleString()}.00 SAR
+                        textAlign: 'right', 
+                        fontWeight: 950, 
+                        fontSize: item.type === 'final' ? '1.3rem' : '1.1rem',
+                        color: item.type === 'final' ? 'var(--secondary)' : (item.type === 'expense' ? 'var(--error)' : 'var(--primary)'),
+                        borderBottom: '1px solid var(--surface-container-high)',
+                        direction: 'ltr'
+                     }}>
+                        {item.type === 'expense' && item.amount > 0 ? '-' : ''}{item.amount.toLocaleString()}.00 SAR
                    </td>
                    <td style={{ textAlign: 'center', borderBottom: '1px solid var(--surface-container-high)', paddingInlineEnd: '2.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -204,7 +191,7 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
                             color: item.type === 'final' ? 'var(--secondary)' : (item.type === 'expense' ? 'var(--error)' : 'var(--success)'),
                             textTransform: 'uppercase'
                          }}>
-                            {t.calculated_tag}
+                            {t.lang === 'ar' ? 'محسوب' : 'Calculated'}
                          </span>
                       </div>
                    </td>
@@ -221,20 +208,6 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
             <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.6rem', fontWeight: 700, lineHeight: '1.5' }}>{t.actions.balance_sheet_desc}</p>
             <button className="btn-executive" style={{ width: '100%', marginTop: '1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.8rem' }}>
                {t.actions.balance_sheet_btn}
-            </button>
-         </div>
-         <div className="card" style={{ padding: '2rem', border: '1px dashed var(--outline)', background: 'var(--surface-container-low)' }}>
-            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 950, color: 'var(--primary)' }}>{t.actions.archive_title}</h4>
-            <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.6rem', fontWeight: 700, lineHeight: '1.5' }}>{t.actions.archive_desc}</p>
-            <button className="btn-executive" style={{ width: '100%', marginTop: '1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.8rem' }}>
-               {t.actions.archive_btn}
-            </button>
-         </div>
-         <div className="card" style={{ padding: '2rem', border: '1px dashed var(--outline)', background: 'var(--surface-container-low)' }}>
-            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 950, color: 'var(--primary)' }}>{t.actions.compliance_title}</h4>
-            <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.6rem', fontWeight: 700, lineHeight: '1.5' }}>{t.actions.compliance_desc}</p>
-            <button className="btn-executive" style={{ width: '100%', marginTop: '1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.8rem' }}>
-               {t.actions.compliance_btn}
             </button>
          </div>
       </div>

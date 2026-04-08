@@ -1,6 +1,6 @@
 import { Banknote, Plus, Download, Search, X, User, Receipt, Trash2, Edit3 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface PettyCashRecord {
@@ -11,6 +11,7 @@ interface PettyCashRecord {
   requester: string;
   status: string;
   created_at: string;
+  deleted_at?: string;
 }
 
 interface PettyCashProps {
@@ -41,65 +42,56 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
     status: 'pending'
   });
 
-  const fetchRecords = useCallback(async (isInitial = false) => {
-    if (!isInitial) setLoading(true);
-    const { data, error } = await supabase
-      .from('petty_cash')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      showToast(lang === 'ar' ? 'فشل تحميل العهد' : 'Failed to load petty cash', 'error');
-    } else {
-      setRecords((data as PettyCashRecord[]) || []);
+  const fetchRecords = useCallback(() => {
+    setLoading(true);
+    try {
+        const data = localDB.getActive('petty_cash').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setRecords((data as PettyCashRecord[]) || []);
+    } catch (err: any) {
+        showToast(lang === 'ar' ? 'فشل تحميل العهد' : 'Failed to load petty cash', 'error');
     }
     setLoading(false);
   }, [lang, showToast]);
 
   useEffect(() => {
-    const initialize = async () => {
-      await fetchRecords(true);
-    };
-    initialize();
+    fetchRecords();
   }, [fetchRecords]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const ref = `PC-${new Date().getFullYear()}-${Math.floor(Math.random() * 900) + 100}`;
-    const { error } = await supabase.from('petty_cash').insert([{
-      reference_number: ref,
-      title: formData.title,
-      amount: parseFloat(formData.amount),
-      requester: formData.requester,
-      status: 'pending'
-    }]);
-
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      showToast(lang === 'ar' ? 'تم تسجيل طلب العهدة بنجاح' : 'Petty cash requested successfully', 'success');
-      setShowAddModal(false);
-      setFormData({ title: '', amount: '', requester: '', status: 'pending' });
-      fetchRecords();
+    
+    try {
+        localDB.insert('petty_cash', {
+          reference_number: ref,
+          title: formData.title,
+          amount: parseFloat(formData.amount),
+          requester: formData.requester,
+          status: 'pending'
+        });
+        showToast(lang === 'ar' ? 'تم تسجيل طلب العهدة بنجاح' : 'Petty cash requested successfully', 'success');
+        setShowAddModal(false);
+        setFormData({ title: '', amount: '', requester: '', status: 'pending' });
+        fetchRecords();
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
   };
 
   const handleUpdateRecord = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from('petty_cash').update({
-      title: editData.title,
-      amount: parseFloat(editData.amount),
-      requester: editData.requester,
-      status: editData.status
-    }).eq('id', editData.id);
-
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      showToast(lang === 'ar' ? 'تم تحديث العهدة بنجاح' : 'Record updated successfully', 'success');
-      setShowEditModal(false);
-      fetchRecords();
+    try {
+        localDB.update('petty_cash', editData.id, {
+          title: editData.title,
+          amount: parseFloat(editData.amount),
+          requester: editData.requester,
+          status: editData.status
+        });
+        showToast(lang === 'ar' ? 'تم تحديث العهدة بنجاح' : 'Record updated successfully', 'success');
+        setShowEditModal(false);
+        fetchRecords();
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
   };
 
@@ -116,12 +108,12 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه العهدة؟' : 'Are you sure you want to delete this petty cash record?')) return;
-    const { error } = await supabase.from('petty_cash').update({ deleted_at: new Date().toISOString() }).eq('id', id);
-    if (error) {
-       showToast(error.message, 'error');
-    } else {
-       showToast(lang === 'ar' ? 'تم نقل العهدة لسلة المهملات' : 'Record moved to trash', 'success');
-       fetchRecords();
+    try {
+        localDB.softDelete('petty_cash', id);
+        showToast(lang === 'ar' ? 'تم نقل العهدة لسلة المهملات' : 'Record moved to trash', 'success');
+        fetchRecords();
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
   };
 
@@ -155,7 +147,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
          <div className="card" style={{ borderInlineStart: '5px solid var(--secondary)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{lang === 'ar' ? 'إجمالي عهد 2026' : 'Total 2026 Advances'}</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{lang === 'ar' ? 'إجمالي عهد المؤسسة 2026' : 'Total Institution Advances 2026'}</span>
             <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
                <Banknote size={24} color="var(--secondary)" />
                {totalAmount.toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.6 }}>SAR</span>
@@ -189,12 +181,12 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
             </div>
           </div>
           <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--primary)', opacity: 0.7 }}>
-             SECURE LEDGER RECORD: {currentYear}
+             LOCAL LEDGER RECORD: {currentYear}
           </div>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '5rem', fontWeight: 800, color: 'var(--on-surface-variant)' }}>{lang === 'ar' ? 'جاري تحميل السجلات السيادية...' : 'Syncing Sovereign Records...'}</div>
+          <div style={{ textAlign: 'center', padding: '5rem', fontWeight: 800, color: 'var(--on-surface-variant)' }}>{lang === 'ar' ? 'جاري تحميل سجلات العهد...' : 'Loading cash records...'}</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="sovereign-table" style={{ margin: 0 }}>
@@ -224,7 +216,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
                        {new Date(record.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className="badge-sovereign" style={{ 
+                      <span style={{ 
                         padding: '0.4rem 1rem', fontSize: '0.7rem', fontWeight: 900, borderRadius: '20px',
                         background: record.status === 'approved' ? 'rgba(27, 94, 32, 0.1)' : 'rgba(212, 167, 106, 0.1)',
                         color: record.status === 'approved' ? 'var(--success)' : 'var(--secondary)'
@@ -244,6 +236,11 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
                     </td>
                   </tr>
                 ))}
+                {filteredRecords.length === 0 && (
+                   <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>{lang === 'ar' ? 'لم يتم العثور على سجلات' : 'No records found'}</td>
+                   </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -252,8 +249,8 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'طلب عهدة نقدية جديدة' : 'New Petty Cash Request'}</h3>
              
@@ -291,8 +288,8 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'تعديل بيانات العهدة' : 'Edit Petty Cash Record'}</h3>
              

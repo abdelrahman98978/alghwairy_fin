@@ -33,8 +33,7 @@ import {
   FileSpreadsheet,
   Trash2
 } from 'lucide-react';
-import { supabase } from './lib/supabase';
-import { offlineSync } from './lib/offlineSync';
+import { localDB } from './lib/localDB';
 
 // --- Views ---
 import DashboardView from './components/DashboardView';
@@ -1214,9 +1213,9 @@ export default function App() {
     };
   }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
 
-  const fetchData = useCallback(async () => {
-    const data = await offlineSync.read('transactions');
-    if (data) setTransactions(data as Transaction[]);
+  const fetchData = useCallback(() => {
+    const data = localDB.getActive('transactions');
+    setTransactions(data as Transaction[]);
     setLastSyncTime(new Date().toLocaleTimeString());
   }, []);
 
@@ -1245,11 +1244,9 @@ export default function App() {
 
         if (shouldBackup) {
           (async () => {
-             const tables = ['invoices', 'customers', 'transactions', 'expenses'];
              const backupData: any = {};
-             for (const table of tables) {
-               const { data } = await supabase.from(table).select('*');
-               backupData[table] = data;
+             for (const table of (['invoices', 'customers', 'transactions', 'expenses'] as const)) {
+               backupData[table] = localDB.getAll(table);
              }
              
              try {
@@ -1273,10 +1270,7 @@ export default function App() {
                    showToast(lang === 'ar' ? 'تم تنزيل النسخة الاحتياطية' : 'Backup downloaded', 'success');
                 }
                 
-                // Add Offline sync flush here based on sync frequency!
-                await offlineSync.processSyncQueue();
-                
-                localStorage.setItem('sov_last_backup_date', now.toISOString());
+                 localStorage.setItem('sov_last_backup_date', now.toISOString());
              } catch (e) {
                 console.error("Backup failed", e);
              }
@@ -1298,12 +1292,12 @@ export default function App() {
   }, [isLoggedIn, publicInvoiceId, fetchData]);
 
   const logActivity = async (action: string, entity: string, entity_id?: string, overrideUser?: string) => {
-     await supabase.from('activity_logs').insert([{
+     localDB.insert('activity_logs', {
        user_email: overrideUser || userName,
        action,
        entity,
        entity_id
-     }]);
+     });
   };
 
   const handleManualAdd = async (e: React.FormEvent) => {
@@ -1323,7 +1317,7 @@ export default function App() {
           status: 'مكتمل',
           created_at: new Date().toISOString()
       };
-      await offlineSync.insert('transactions', newRecord);
+      localDB.insert('transactions', newRecord);
       
       await logActivity('Added New Sovereign TRX (Offline/Queue)', 'transactions', newRecord.trx_number);
       showToast(t.notifications.success, 'success');
@@ -1391,7 +1385,7 @@ export default function App() {
       case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} />;
       case 'petty_cash': return <PettyCashView t={{...t.petty_cash, lang}} lang={lang} showToast={showToast} />;
       case 'audit_logs': return <AuditLogsView showToast={showToast} t={{...t.audit_logs, lang}} />;
-      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} isDark={isDark} toggleTheme={toggleTheme} t={{...t.settings, lang}} userName={userName} systemSettings={systemSettings} />;
+      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} t={{...t.settings, lang}} userName={userName} />;
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;

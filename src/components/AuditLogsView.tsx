@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 import { 
-  User, 
+  User as UserIcon, 
   Database, 
   Activity, 
   RefreshCw, 
@@ -34,19 +34,13 @@ export default function AuditLogsView({ showToast, t }: Props) {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(() => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('activity_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setLogs((data as unknown as Log[]) || []);
+        const data = localDB.getAll('activity_logs').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 100);
+        setLogs(data as Log[]);
     } catch {
-      showToast('Error syncing logs', 'error');
+        showToast('Error loading local activity logs', 'error');
     }
     setLoading(false);
   }, [showToast]);
@@ -87,18 +81,18 @@ export default function AuditLogsView({ showToast, t }: Props) {
         </button>
       </header>
 
-      {/* Sovereign Audit Stats */}
+      {/* Audit Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-         <AuditStat cardTitle={t.lang === 'en' ? 'Total Activities' : 'إجمالي الحركات المفحوصة'} value={logs.length} icon={<Activity size={22} />} color="var(--primary)" />
-         <AuditStat cardTitle={t.lang === 'en' ? 'Security Alerts' : 'تنبيهات الأمان النشطة'} value="0" subText="No breaches" icon={<Lock size={22} />} color="var(--secondary)" />
-         <AuditStat cardTitle={t.lang === 'en' ? 'System Sync Health' : 'سلامة المزامنة السيادية'} value="100%" subText="All nodes" icon={<Globe size={22} />} color="var(--success)" />
+         <AuditStat cardTitle={t.lang === 'en' ? 'Total Internal Events' : 'إجمالي العمليات المفحوصة'} value={logs.length} icon={<Activity size={22} />} color="var(--primary)" />
+         <AuditStat cardTitle={t.lang === 'en' ? 'Local Integrity' : 'سلامة السجل المحلي'} value="100%" subText="Active" icon={<Lock size={22} />} color="var(--secondary)" />
+         <AuditStat cardTitle={t.lang === 'en' ? 'Data Sovereignty' : 'سيادة البيانات'} value="Active" subText="Local Only" icon={<Globe size={22} />} color="var(--success)" />
       </div>
 
       <div className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
         <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-           <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.lang === 'en' ? 'Unified Activity Ledger' : 'سجل النشاطات السيادي الموحد'}</h3>
+           <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.lang === 'en' ? 'Institutional Activity Ledger' : 'سجل النشاطات المؤسسي الموحد'}</h3>
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>SECURE LOG V4.0</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>INTERNAL AUDIT v4.1</span>
            </div>
         </div>
         
@@ -110,23 +104,18 @@ export default function AuditLogsView({ showToast, t }: Props) {
                 <th>{t.th_user}</th>
                 <th>{t.th_action}</th>
                 <th>{t.th_entity}</th>
-                <th style={{ textAlign: 'center' }}>{t.lang === 'en' ? 'Integrity' : 'الموثوقية'}</th>
+                <th style={{ textAlign: 'center' }}>{t.lang === 'en' ? 'Verification' : 'التوثيق'}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: '6rem' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', opacity: 0.5 }}>
-                    <RefreshCw size={32} className="spin" />
-                    <span style={{ fontWeight: 800 }}>Syncing Audit Ledger...</span>
-                  </div>
+                   <RefreshCw size={32} className="spin" style={{ margin: '0 auto' }} />
                 </td></tr>
               ) : logs.length === 0 ? (
                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: '6rem', opacity: 0.5 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                    <AlertCircle size={32} />
-                    <span style={{ fontWeight: 800 }}>{t.empty}</span>
-                  </div>
+                   <AlertCircle size={32} style={{ margin: '0 auto 1rem' }} />
+                   <p style={{ fontWeight: 800 }}>{t.empty}</p>
                 </td></tr>
               ) : (
                 logs.map((log) => (
@@ -140,9 +129,9 @@ export default function AuditLogsView({ showToast, t }: Props) {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
                         <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--surface-container-high)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <User size={14} color="var(--primary)" />
+                          <UserIcon size={14} color="var(--primary)" />
                         </div>
-                        <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--on-surface)' }}>{log.user_email || 'System'}</span>
+                        <span style={{ fontWeight: 800, fontSize: '0.85rem' }}>{log.user_email || 'System'}</span>
                       </div>
                     </td>
                     <td style={{ fontWeight: 900, color: 'var(--primary)', fontSize: '0.9rem' }}>
@@ -152,14 +141,14 @@ export default function AuditLogsView({ showToast, t }: Props) {
                       </div>
                     </td>
                     <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--secondary-container)', color: 'var(--on-secondary-container)', padding: '0.3rem 0.7rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--secondary-container)', color: 'var(--on-secondary-container)', padding: '0.3rem 0.7rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 950 }}>
                         <Database size={12} /> {TranslateEntity(log.entity)}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--success)' }}>SIGNED</span>
+                        <ShieldCheck size={16} color="var(--success)" />
+                        <span style={{ fontSize: '0.7rem', fontWeight: 950, color: 'var(--success)' }}>VERIFIED</span>
                       </div>
                     </td>
                   </tr>
@@ -171,7 +160,7 @@ export default function AuditLogsView({ showToast, t }: Props) {
 
         <div style={{ padding: '1.2rem 2rem', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>
           <ShieldCheck size={16} color="var(--success)" />
-          <span>كل العمليات المسجلة في هذا السجل موثقة بنظام التوقيع الرقمي (Sovereign Digital Signature) وغير قابلة للتعديل.</span>
+          <span>كل العمليات المسجلة في هذا السجل المؤسسي يتم حفظها محلياً في مسار مشفر ولا يمكن تعديلها يدوياً.</span>
         </div>
       </div>
     </div>
@@ -188,9 +177,9 @@ interface AuditStatProps {
 
 function AuditStat({ cardTitle, value, subText, icon, color }: AuditStatProps) {
   return (
-    <div className="card" style={{ padding: '1.5rem 2.2rem', borderInlineStart: `6px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: 'none', border: '1px solid var(--surface-container-high)', borderInlineStartWidth: '6px' }}>
+    <div className="card" style={{ padding: '1.5rem 2.2rem', borderInlineStart: `6px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
        <div>
-          <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{cardTitle}</p>
+          <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 900, textTransform: 'uppercase' }}>{cardTitle}</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.7rem' }}>
              <h3 style={{ margin: 0, fontSize: '2.5rem', fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--primary)' }}>{value}</h3>
              {subText && <span style={{ fontSize: '0.75rem', color: color, fontWeight: 900, opacity: 0.9 }}>{subText}</span>}

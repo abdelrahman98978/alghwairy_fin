@@ -1,7 +1,9 @@
 const electron = require('electron');
 const path = require('path');
 const url = require('url');
-const { app, BrowserWindow, protocol } = electron;
+const fs = require('fs');
+const os = require('os');
+const { app, BrowserWindow, protocol, ipcMain, shell, dialog } = electron;
 
 // Defensive check for app object
 if (!app) {
@@ -15,7 +17,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    title: 'الميزان السيادي | Alghwairy Ledger',
+    title: 'مؤسسة الغويري للتخليص الجمركي',
     icon: path.join(__dirname, isDev ? 'public/favicon.svg' : 'assets/icon.png'),
     autoHideMenuBar: true,
     backgroundColor: '#001a33',
@@ -30,20 +32,59 @@ function createWindow() {
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
-    // win.webContents.openDevTools(); // Optional: uncomment if needed
   } else {
-    // Definitive path resolution for packaged apps
     const indexPath = path.join(__dirname, 'dist/index.html');
     win.loadFile(indexPath);
-    
-    // Auto-hide devtools in production unless explicitly wanted
-    // win.webContents.openDevTools();
   }
+
+  // === IPC: Print to PDF ===
+  ipcMain.handle('print-to-pdf', async () => {
+    try {
+      const pdfData = await win.webContents.printToPDF({
+        printBackground: true,
+        pageSize: 'A4',
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }
+      });
+      
+      const docsDir = path.join(os.homedir(), 'Documents', 'Alghwairy_Invoices');
+      if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+      
+      const fileName = `Invoice_${Date.now()}.pdf`;
+      const filePath = path.join(docsDir, fileName);
+      
+      // Show save dialog with default path
+      const { canceled, filePath: chosenPath } = await dialog.showSaveDialog(win, {
+        defaultPath: filePath,
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+        title: 'حفظ الفاتورة كـ PDF'
+      });
+      
+      if (!canceled && chosenPath) {
+        fs.writeFileSync(chosenPath, pdfData);
+        shell.showItemInFolder(chosenPath);
+        return { success: true, path: chosenPath };
+      }
+      return { success: false, canceled: true };
+    } catch (err) {
+      console.error('PDF Error:', err);
+      return { success: false, error: err.message };
+    }
+  });
+
+  // === IPC: Open External URL (WhatsApp, Email, etc.) ===
+  ipcMain.handle('open-external', async (_event, url) => {
+    try {
+      await shell.openExternal(url);
+      return { success: true };
+    } catch (err) {
+      console.error('Open External Error:', err);
+      return { success: false, error: err.message };
+    }
+  });
 }
 
 app.whenReady().then(() => {
   try {
-    // Handle some scheme issues in newer Electron
     if (protocol && typeof protocol.registerFileProtocol === 'function') {
       protocol.registerFileProtocol('app', (request, callback) => {
         const url = request.url.substr(6);

@@ -4,7 +4,7 @@ import {
   FileText, Users, Receipt, 
   Trash, Database, AlertTriangle
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 
 import type { Translations } from '../types/translations';
 
@@ -30,55 +30,41 @@ export function TrashView({ showToast, lang, t }: Props) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchDeletedItems = useCallback(async () => {
-    let query = supabase.from(activeTab).select('*').not('deleted_at', 'is', null);
-    
-    // For invoices, we need customer name
-    if (activeTab === 'invoices') {
-      query = supabase.from('invoices').select('*, customers(name)').not('deleted_at', 'is', null);
-    }
-
-    const { data, error } = await query.order('deleted_at', { ascending: false });
-    
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      setItems(Array.isArray(data) ? (data as TrashItem[]) : []);
+  const fetchDeletedItems = useCallback(() => {
+    setLoading(true);
+    try {
+        const allItems = localDB.getAll(activeTab);
+        const deletedItems = allItems.filter((item: any) => item.deleted_at).sort((a: any, b: any) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime());
+        setItems(deletedItems as TrashItem[]);
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
     setLoading(false);
   }, [activeTab, showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchDeletedItems();
-    };
-    init();
+    fetchDeletedItems();
   }, [fetchDeletedItems]);
 
   const handleRestore = async (id: string) => {
-    const { error } = await supabase
-      .from(activeTab)
-      .update({ deleted_at: null })
-      .eq('id', id);
-
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      showToast(lang === 'ar' ? 'تمت استعادة السجل بنجاح' : 'Record restored successfully', 'success');
-      fetchDeletedItems();
+    try {
+        localDB.update(activeTab, id, { deleted_at: null });
+        showToast(lang === 'ar' ? 'تمت استعادة السجل بنجاح' : 'Record restored successfully', 'success');
+        fetchDeletedItems();
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
   };
 
   const handlePermanentDelete = async (id: string) => {
-    if (!window.confirm(lang === 'ar' ? 'تحذير: سيتم حذف السجل نهائياً من قاعدة البيانات. هل أنت متأكد؟' : 'Warning: This will permanently delete the record. Continue?')) return;
+    if (!window.confirm(lang === 'ar' ? 'تحذير: سيتم حذف السجل نهائياً من قاعدة البيانات المحلية. هل أنت متأكد؟' : 'Warning: This will permanently delete the record from local database. Continue?')) return;
     
-    const { error } = await supabase.from(activeTab).delete().eq('id', id);
-
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      showToast(lang === 'ar' ? 'تم الحذف النهائي' : 'Permanently deleted', 'success');
-      fetchDeletedItems();
+    try {
+        localDB.delete(activeTab, id);
+        showToast(lang === 'ar' ? 'تم الحذف النهائي' : 'Permanently deleted', 'success');
+        fetchDeletedItems();
+    } catch (err: any) {
+        showToast(err.message, 'error');
     }
   };
 
@@ -144,7 +130,7 @@ export function TrashView({ showToast, lang, t }: Props) {
        </div>
 
        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', gap: '1rem', alignItems: 'center', background: 'var(--surface-container-low)' }}>
              <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={18} style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
                 <input 
@@ -158,7 +144,7 @@ export function TrashView({ showToast, lang, t }: Props) {
              </div>
              <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--error)' }}>
                 <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginInlineEnd: '0.3rem' }} />
-                DELETED OBJECTS CACHE
+                OFFLINE OBJECTS CACHE
              </div>
           </div>
 
@@ -174,7 +160,7 @@ export function TrashView({ showToast, lang, t }: Props) {
                 </thead>
                 <tbody>
                    {loading ? (
-                     <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', fontWeight: 700 }}>Syncing...</td></tr>
+                     <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', fontWeight: 700 }}>Checking Cache...</td></tr>
                    ) : items.length === 0 ? (
                      <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', fontWeight: 700, opacity: 0.5 }}>{lang === 'ar' ? 'سلة المهملات فارغة' : 'Trash is empty'}</td></tr>
                    ) : items.filter(i => 
@@ -220,7 +206,7 @@ export function TrashView({ showToast, lang, t }: Props) {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1.5rem', borderRadius: '12px', background: 'var(--surface-container-high)', border: '1px dashed var(--error)' }}>
              <Database size={16} color="var(--error)" />
              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--on-surface-variant)' }}>
-                {lang === 'ar' ? 'يتم تنظيف سلة المهملات تلقائياً كل 30 يوم' : 'Trash is automatically cleared every 30 days'}
+                {lang === 'ar' ? 'يتم تنظيف سلة المهملات تلقائياً كل 30 يوم من ملف قاعدة البيانات المحلي' : 'Trash is automatically cleared every 30 days from the local database file'}
              </span>
           </div>
        </div>

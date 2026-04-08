@@ -8,8 +8,7 @@ import {
   Lock,
   Download
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface Props {
@@ -45,28 +44,25 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
     deductions: ''
   });
 
-  const fetchSalaries = useCallback(async () => {
+  const fetchSalaries = useCallback(() => {
     setLoading(true);
-    const { data, error } = await supabase.from('salaries').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      setSalaries((data as Salary[]) || []);
+    try {
+        const data = localDB.getActive('payroll').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setSalaries((data as Salary[]) || []);
+    } catch (err: any) {
+        showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchSalaries();
-    };
-    init();
+    fetchSalaries();
   }, [fetchSalaries]);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.base) {
-      showToast('Name and base salary required', 'error');
+      showToast(t.lang === 'ar' ? 'يرجى إدخال الاسم والراتب الأساسي' : 'Name and base salary required', 'error');
       return;
     }
 
@@ -86,37 +82,39 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
       status: 'pending'
     };
     
-    const { error } = await supabase.from('salaries').insert([newSalary]);
-    if (error) {
-      showToast('Error adding employee', 'error');
-    } else {
-      await logActivity('Enrolled New Staff: ' + formData.name, 'salaries');
-      showToast('Sovereign record saved', 'success');
-      setShowAddModal(false);
-      setFormData({ name: '', role: 'Accountant', base: '', allowances: '', deductions: '' });
-      fetchSalaries();
+    try {
+        const record = localDB.insert('payroll', newSalary);
+        await logActivity('Enrolled New Staff: ' + formData.name, 'payroll', record.id);
+        showToast(t.lang === 'ar' ? 'تم تسجيل الموظف محلياً' : 'Staff record secured locally.', 'success');
+        setShowAddModal(false);
+        setFormData({ name: '', role: 'Accountant', base: '', allowances: '', deductions: '' });
+        fetchSalaries();
+    } catch (err: any) {
+        showToast('Error adding employee', 'error');
     }
   };
 
   const approveAllPending = async () => {
-    const pendingExists = salaries.some(s => s.status === 'pending');
-    if (!pendingExists) {
-       showToast('No pending payrolls', 'error');
+    const pendingSalaries = salaries.filter(s => s.status === 'pending');
+    if (pendingSalaries.length === 0) {
+       showToast(t.lang === 'ar' ? 'لا توجد مسيرات رواتب معلقة' : 'No pending payrolls', 'error');
        return;
     }
 
-    showToast('Encrypting and certifying records (WPS)...', 'success');
+    showToast(t.lang === 'ar' ? 'جاري توثيق مسيرات الرواتب (WPS)...' : 'Certifying records (WPS)...', 'success');
 
     setTimeout(async () => {
-       const { error } = await supabase.from('salaries').update({ status: 'paid' }).eq('status', 'pending');
-       if (error) {
-          showToast('Sync error with server', 'error');
-       } else {
-          await logActivity('WPS Payroll Certification Completed', 'salaries');
-          showToast('Sovereign WPS certification successful', 'success');
-          fetchSalaries();
+       try {
+           pendingSalaries.forEach(s => {
+               localDB.update('payroll', s.id, { status: 'paid' });
+           });
+           await logActivity('WPS Payroll Certification Completed', 'payroll');
+           showToast(t.lang === 'ar' ? 'بنجاح (WPS) تم اعتماد رواتب المؤسسة' : 'Payroll WPS certification successful', 'success');
+           fetchSalaries();
+       } catch (err: any) {
+           showToast('Error: ' + err.message, 'error');
        }
-    }, 2000);
+    }, 1500);
   };
 
   const exportToExcel = () => {
@@ -138,10 +136,10 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `payroll_export_${Date.now()}.csv`);
+    link.setAttribute("download", `alghwairy_payroll_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
-    showToast('Payroll data exported', 'success');
+    showToast(t.lang === 'ar' ? 'تم تصدير تقرير الرواتب' : 'Payroll data exported', 'success');
   };
 
   const totalNet = salaries.reduce((acc, current) => acc + Number(current.net || 0), 0);
@@ -158,7 +156,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={exportToExcel} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-            <Download size={18} /> Excel Report
+            <Download size={18} /> {t.lang === 'ar' ? 'تصدير إكسل' : 'Excel Report'}
           </button>
           <button 
              onClick={() => setShowAddModal(true)}
@@ -173,7 +171,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
              className="btn-executive" 
              style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', opacity: isPending ? 1 : 0.6, border: 'none' }}
           >
-             <Lock size={18} /> {isPending ? 'Certify WPS' : 'All Certified'}
+             <Lock size={18} /> {isPending ? (t.lang === 'ar' ? 'اعتماد WPS' : 'Certify WPS') : (t.lang === 'ar' ? 'تم الاعتماد' : 'All Certified')}
           </button>
         </div>
       </header>
@@ -183,7 +181,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
         <div className="card" style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Building2 size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', borderRadius: '10px', textTransform: 'uppercase' }}>Royal Budget</span>
+               <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', borderRadius: '10px', textTransform: 'uppercase' }}>{t.lang === 'ar' ? 'ميزانية الرواتب' : 'Payroll Budget'}</span>
            </div>
            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.total_salaries}</p>
            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>
@@ -203,12 +201,12 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
            </h2>
         </div>
 
-        <div className="card" style={{ padding: '2.5rem', background: 'var(--secondary)', border: 'none', color: 'white' }}>
+        <div className="card" style={{ padding: '2.5rem', background: 'var(--secondary)', border: 'none', color: 'var(--primary)' }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.2)', color: 'white' }}><CreditCard size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(0,0,0,0.1)', color: 'white', borderRadius: '10px' }}>PENDING</span>
+               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(0,0,0,0.05)', color: 'var(--primary)' }}><CreditCard size={28} /></div>
+               <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(0,0,0,0.05)', color: 'var(--primary)', borderRadius: '10px' }}>PENDING</span>
            </div>
-           <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', fontWeight: 700, marginBottom: '0.5rem' }}>{t.pending_payments}</p>
+           <p style={{ fontSize: '0.95rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '0.5rem', opacity: 0.8 }}>{t.pending_payments}</p>
            <h2 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', color: 'var(--primary)', fontWeight: 900 }}>
              {delayedTotal.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.7 }}>SAR</span>
            </h2>
@@ -218,9 +216,9 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
       {/* Main Table Area */}
       <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
         <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
-           <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0, fontWeight: 900 }}>Sovereign Payroll Ledger</h3>
+           <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0, fontWeight: 900 }}>{t.lang === 'ar' ? 'سجل رواتب مؤسسة الغويري' : 'Alghwairy Payroll Ledger'}</h3>
            {salaries.length > 0 && (
-             <button onClick={() => showToast('Exporting SIF file...', 'success')} style={{ background: 'var(--surface)', border: '1px solid var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+             <button onClick={() => showToast(t.lang === 'ar' ? 'جاري تصدير ملف SIF...' : 'Exporting SIF file...', 'success')} style={{ background: 'white', border: '1px solid var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '8px' }}>
                 <Download size={18}/> WPS SIF Export
              </button>
            )}
@@ -233,12 +231,12 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
             <table className="sovereign-table">
               <thead>
                 <tr>
-                  <th style={{ paddingInlineStart: '2.5rem' }}>Employee Profile</th>
-                  <th style={{ textAlign: 'right' }}>Base</th>
-                  <th style={{ textAlign: 'right' }}>Plus (+)</th>
-                  <th style={{ textAlign: 'right' }}>Ded (-)</th>
-                  <th style={{ textAlign: 'right', background: 'rgba(0,0,0,0.02)' }}>Net Amount</th>
-                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ paddingInlineStart: '2.5rem' }}>{t.lang === 'ar' ? 'بيانات الموظف' : 'Employee Profile'}</th>
+                  <th style={{ textAlign: 'right' }}>{t.lang === 'ar' ? 'الأساسي' : 'Base'}</th>
+                  <th style={{ textAlign: 'right' }}>{t.lang === 'ar' ? 'البدلات (+)' : 'Plus (+)'}</th>
+                  <th style={{ textAlign: 'right' }}>{t.lang === 'ar' ? 'الاستقطاع (-)' : 'Ded (-)'}</th>
+                  <th style={{ textAlign: 'right', background: 'rgba(0,0,0,0.02)' }}>{t.lang === 'ar' ? 'الصافي' : 'Net Amount'}</th>
+                  <th style={{ textAlign: 'center' }}>{t.lang === 'ar' ? 'الحالة' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,11 +259,16 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                     <td style={{ fontWeight: 900, fontSize: '1.2rem', background: 'rgba(0,0,0,0.02)', color: 'var(--primary)', textAlign: 'right' }}>{Number(salary.net).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></td>
                     <td style={{ textAlign: 'center' }}>
                       <span style={{ fontSize: '0.7rem', fontWeight: 900, padding: '0.4rem 1rem', borderRadius: '20px', background: salary.status === 'paid' ? 'rgba(27, 94, 32, 0.1)' : 'rgba(212, 167, 106, 0.1)', color: salary.status === 'paid' ? 'var(--success)' : 'var(--secondary)', textTransform: 'uppercase' }}>
-                         {salary.status === 'paid' ? 'CERTIFIED' : 'PENDING'}
+                         {salary.status === 'paid' ? (t.lang === 'ar' ? 'تم الصرف' : 'CERTIFIED') : (t.lang === 'ar' ? 'معلق' : 'PENDING')}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {salaries.length === 0 && (
+                   <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>لم يتم تسجيل أي موظفين حتى الآن</td>
+                   </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -274,10 +277,10 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '520px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '520px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
-             <h3 style={{ fontSize: '1.8rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>{t.lang === 'en' ? 'Add Sovereign Staff' : 'إضافة موظف سيادي'}</h3>
+             <h3 style={{ fontSize: '1.8rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>{t.lang === 'en' ? 'Add Alghwairy Staff' : 'إضافة موظف للمؤسسة'}</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Full Legal Name' : 'الاسم القانوني الكامل'}</label>
@@ -287,22 +290,23 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Role' : 'الوظيفة / الدور'}</label>
                    <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="input-executive" style={{ fontWeight: 800 }}>
                       <option>Accountant</option>
-                      <option>Financial Analyst</option>
-                      <option>Auditor</option>
+                      <option>Customs Specialist</option>
+                      <option>Logistics Coordinator</option>
+                      <option>Public Relations</option>
                       <option>Ops Manager</option>
                    </select>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>Base</label>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'الأساسي' : 'Base'}</label>
                       <input required type="number" value={formData.base} onChange={e => setFormData({...formData, base: e.target.value})} className="input-executive" style={{ fontWeight: 900, textAlign: 'center', fontSize: '1.1rem' }} />
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>Add (+)</label>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'بدلات (+)' : 'Add (+)'}</label>
                       <input type="number" value={formData.allowances} onChange={e => setFormData({...formData, allowances: e.target.value})} className="input-executive" style={{ color: 'var(--success)', fontWeight: 900, textAlign: 'center', fontSize: '1.1rem' }} />
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>Ded (-)</label>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'خصم (-)' : 'Ded (-)'}</label>
                       <input type="number" value={formData.deductions} onChange={e => setFormData({...formData, deductions: e.target.value})} className="input-executive" style={{ color: 'var(--error)', fontWeight: 900, textAlign: 'center', fontSize: '1.1rem' }} />
                    </div>
                 </div>

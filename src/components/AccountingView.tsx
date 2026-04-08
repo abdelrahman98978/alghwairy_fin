@@ -5,13 +5,15 @@ import {
   Trash2,
   Printer,
   X,
-  QrCode,
   ShieldCheck,
   CheckCircle2,
   ArrowUpRight,
-  Send
+  Mail,
+  MessageCircle
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { QRCodeSVG } from 'qrcode.react';
+import { localDB } from '../lib/localDB';
+import type { Translations } from '../types/translations';
 
 interface Invoice {
   id: string;
@@ -22,8 +24,6 @@ interface Invoice {
   status: string;
   created_at: string;
 }
-
-import type { Translations } from '../types/translations';
 
 interface Props {
   showToast: (msg: string, type?: string) => void;
@@ -43,28 +43,28 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   const [items, setItems] = useState<{desc: string, amount: number}[]>([]);
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemAmount, setNewItemAmount] = useState('');
+  
+  const [settings] = useState({
+    companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
+    taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
+    address: localStorage.getItem('sov_address') || 'King Fahd Rd, Riyadh, SA',
+    logo: localStorage.getItem('sov_logo') || './logo.png'
+  });
+
   const [vatRate] = useState(() => {
     const savedRate = localStorage.getItem('sov_vat_rate');
     return savedRate ? parseFloat(savedRate) : 15;
   });
 
-  const fetchRecentInvoices = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    if (!error && data) {
-      setRecentInvoices(data as Invoice[]);
-    }
+  const fetchRecentInvoices = useCallback(() => {
+    const data = localDB.getActive('transactions')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+    setRecentInvoices(data as Invoice[]);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchRecentInvoices();
-    }, 0);
-    return () => clearTimeout(timer);
+    fetchRecentInvoices();
   }, [fetchRecentInvoices]);
 
   const addItem = () => {
@@ -84,40 +84,73 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
 
   const handleIssueInvoice = async () => {
     if (!clientName || items.length === 0) {
-      showToast('Validation Error: Client name and items required', 'error');
+      showToast(t.lang === 'ar' ? 'خطأ: يرجى إدخال اسم العميل والبنود' : 'Validation Error: Client name and items required', 'error');
       return;
     }
 
     setLoading(true);
     const totalAmount = calculateTotal();
     
-    const { error } = await supabase.from('transactions').insert([{
+    const newTrx = {
       trx_number: (mode === 'settlement' ? 'SET-' : 'INV-') + Math.random().toString(36).substr(2, 6).toUpperCase(),
       description: clientName,
       type: mode === 'settlement' ? 'settlement' : 'income',
       amount: totalAmount,
       status: 'مكتمل'
-    }]);
+    };
 
-    if (error) {
-      showToast('Error issuing: ' + error.message, 'error');
-    } else {
-      const logAction = mode === 'settlement' ? 'Posted Sovereign Settlement: ' : 'Issued Sovereign Tax Invoice to ';
-      await logActivity(logAction + clientName, 'transactions');
-      showToast(mode === 'settlement' ? 'Sovereign Settlement entry secured and posted.' : 'Sovereign Tax Invoice issued and ZATCA certified.', 'success');
+    try {
+      const record = localDB.insert('transactions', newTrx);
+      const logAction = mode === 'settlement' ? 'Posted Settlement Entry: ' : 'Issued Tax Invoice to ';
+      await logActivity(logAction + clientName, 'transactions', record.id);
+      showToast(mode === 'settlement' ? (t.lang === 'ar' ? 'تم تسجيل قيد التسوية بنجاح' : 'Settlement entry secured and posted.') : (t.lang === 'ar' ? 'تم إصدار الفاتورة الضريبية بنجاح' : 'Tax Invoice issued successfully.'), 'success');
       setClientName('');
       setTaxId('');
       setServiceType('');
       setItems([]);
       fetchRecentInvoices();
+    } catch (err: any) {
+      showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   };
 
-  const copyPublicLink = (id: string) => {
-    const url = window.location.origin + window.location.pathname + '?invoice_id=' + id;
-    navigator.clipboard.writeText(url);
-    showToast(t.lang === 'ar' ? 'تم نسخ رابط المشاركة بنجاح' : 'Shareable link copied successfully', 'success');
+  const openExternal = async (url: string) => {
+    try {
+      if ((window as any).require) {
+        const { ipcRenderer } = (window as any).require('electron');
+        await ipcRenderer.invoke('open-external', url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch { window.open(url, '_blank'); }
+  };
+
+  const handlePrintPDF = async () => {
+    try {
+      if ((window as any).require) {
+        const { ipcRenderer } = (window as any).require('electron');
+        const result = await ipcRenderer.invoke('print-to-pdf');
+        if (result.success) {
+          showToast(t.lang === 'ar' ? 'تم حفظ الفاتورة كـ PDF بنجاح' : 'Invoice saved as PDF', 'success');
+        } else if (!result.canceled) {
+          showToast('PDF Error: ' + (result.error || 'Unknown'), 'error');
+        }
+      } else {
+        window.print();
+      }
+    } catch { window.print(); }
+  };
+
+  const handleWhatsApp = () => {
+    const text = `عزيزي العميل،\nنرفق لكم تفاصيل الفاتورة الضريبية:\nالعميل: ${clientName}\nالمبلغ: ${calculateTotal().toLocaleString()} ${currency}\nمؤسسة الغويري للتخليص الجمركي`;
+    openExternal(`https://wa.me/?text=${encodeURIComponent(text)}`);
+  };
+
+  const handleEmail = () => {
+    const subject = encodeURIComponent(`فاتورة من مؤسسة الغويري - ${clientName}`);
+    const body = encodeURIComponent(`عزيزي العميل،\nنرفق لكم تفاصيل الفاتورة الضريبية بقيمة ${calculateTotal().toLocaleString()} ${currency}.\nشكراً لتعاملكم معنا.\nمؤسسة الغويري للتخليص الجمركي`);
+    openExternal(`mailto:?subject=${subject}&body=${body}`);
   };
 
   return (
@@ -175,13 +208,13 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
 
              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {items.map((item, index) => (
-                  <div key={index} className="slide-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--surface-container-high)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-                     <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)' }}>{item.desc}</span>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <span style={{ fontWeight: 900, color: 'var(--primary)', fontSize: '1.1rem' }}>{item.amount.toLocaleString()} <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{currency}</span></span>
-                        <button onClick={() => removeItem(index)} style={{ background: 'rgba(211, 47, 47, 0.1)', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.4rem', borderRadius: '8px' }}><Trash2 size={18} /></button>
-                     </div>
-                  </div>
+                   <div key={index} className="slide-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--surface-container-high)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)' }}>{item.desc}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                         <span style={{ fontWeight: 900, color: 'var(--primary)', fontSize: '1.1rem' }}>{item.amount.toLocaleString()} <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{currency}</span></span>
+                         <button onClick={() => removeItem(index)} style={{ background: 'rgba(211, 47, 47, 0.1)', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.4rem', borderRadius: '8px' }}><Trash2 size={18} /></button>
+                      </div>
+                   </div>
                 ))}
              </div>
           </div>
@@ -193,12 +226,12 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
               className="btn-executive"
               style={{ flex: 2, padding: '1.4rem', fontSize: '1.2rem', fontWeight: 900, border: 'none' }}
             >
-               <CheckCircle2 size={24} /> {loading ? '...' : (mode === 'invoice' ? (t.lang === 'ar' ? 'إصدار فاتورة سيادية' : 'Issue Sovereign Invoice') : (t.lang === 'ar' ? 'ترحيل قيد تسوية' : 'Post Settlement Entry'))}
+               <CheckCircle2 size={24} /> {loading ? '...' : (mode === 'invoice' ? (t.lang === 'ar' ? 'إصدار فاتورة ضريبية' : 'Issue Tax Invoice') : (t.lang === 'ar' ? 'ترحيل قيد تسوية' : 'Post Settlement Entry'))}
             </button>
             <button 
               onClick={() => {
                 if (items.length > 0) setShowPreview(true);
-                else showToast(t.no_recent, 'error');
+                else showToast(t.lang === 'ar' ? 'يجب إضافة بنود للمعاينة' : 'Add items first to preview', 'error');
               }}
               className="btn-executive"
               style={{ flex: 1, padding: '1.4rem', fontSize: '1.1rem', background: 'var(--surface-container-high)', color: 'var(--primary)', fontWeight: 800, border: 'none' }}
@@ -229,13 +262,17 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 800 }}>{t.recent_title}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                {recentInvoices.map((inv) => (
-                 <RecentTrx 
-                   key={inv.id} 
-                   id={`INV-${inv.id.toString().slice(-4).toUpperCase()}`} 
-                   client={inv.description} 
-                   amount={inv.amount.toLocaleString()} 
-                   onShare={() => copyPublicLink(inv.id)}
-                 />
+                  <RecentTrx 
+                    key={inv.id} 
+                    id={inv.trx_number} 
+                    client={inv.description} 
+                    amount={inv.amount.toLocaleString()} 
+                    onShare={() => {
+                        const subject = encodeURIComponent(`فاتورة من مؤسسة الغويري - ${inv.description}`);
+                        const body = encodeURIComponent(`تفاصيل المعاملة رقم ${inv.trx_number}\nالقيمة: ${inv.amount.toLocaleString()} SAR`);
+                        openExternal(`mailto:?subject=${subject}&body=${body}`);
+                    }}
+                  />
                ))}
                {recentInvoices.length === 0 && <p style={{ fontSize: '0.9rem', opacity: 0.6, textAlign: 'center', padding: '2rem' }}>{t.no_recent}</p>}
             </div>
@@ -246,18 +283,8 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
                 <ShieldCheck size={20} />
              </div>
              <div>
-                <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: 'var(--primary)' }}>{t.lang === 'en' ? 'Sovereign Compliance' : 'الامتثال السيادي'}</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.7, fontWeight: 700 }}>{t.lang === 'en' ? 'ZATCA Phase 2 (Integration) Active' : 'المرحلة الثانية (الربط والإحكام) نشطة'}</p>
-             </div>
-          </div>
-
-          <div className="card" style={{ background: 'var(--surface-container-low)', padding: '1.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-             <div style={{ width: 40, height: 40, background: 'var(--success)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(var(--success-rgb), 0.3)' }}>
-                <CheckCircle2 size={20} />
-             </div>
-             <div>
-                <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: 'var(--primary)' }}>{t.lang === 'en' ? 'Ledger Status' : 'حالة الأستاذ العام'}</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--success)', fontWeight: 800 }}>{t.lang === 'en' ? 'INTEGRITY VERIFIED' : 'تم التحقق من النزاهة'}</p>
+                <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: 'var(--primary)' }}>{t.lang === 'en' ? 'Customs Compliance' : 'الامتثال الجمركي'}</p>
+                <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.7, fontWeight: 700 }}>{t.lang === 'en' ? 'ZATCA Stage 2 Integrated' : 'المرحلة الثانية من الفوترة الإلكترونية'}</p>
              </div>
           </div>
         </div>
@@ -275,6 +302,11 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
           currency={currency}
           isSettlement={mode === 'settlement'}
           onDismiss={() => setShowPreview(false)}
+          onPrint={handlePrintPDF}
+          onWhatsApp={handleWhatsApp}
+          onEmail={handleEmail}
+          settings={settings}
+          t={t}
         />
       )}
     </div>
@@ -321,7 +353,7 @@ function RecentTrx({ id, client, amount, onShare }: RecentTrxProps) {
        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--primary)', margin: 0 }}>{amount} <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>SAR</span></p>
           <button onClick={(e) => { e.stopPropagation(); onShare(); }} className="btn-executive" style={{ padding: '0.4rem', background: 'var(--surface-container-high)', border: 'none', color: 'var(--primary)' }}>
-             <Send size={14} />
+             <Mail size={14} />
           </button>
        </div>
     </div>
@@ -344,124 +376,170 @@ interface InvoicePreviewModalProps {
   currency: string;
   isSettlement: boolean;
   onDismiss: () => void;
+  onPrint: () => void;
+  onWhatsApp: () => void;
+  onEmail: () => void;
+  settings: any;
+  t: any;
 }
 
-function InvoicePreviewModal({ clientName, taxId, items, subtotal, vat, vatRate, total, currency, isSettlement, onDismiss }: InvoicePreviewModalProps) {
+function InvoicePreviewModal({ clientName, taxId, items, subtotal, vat, total, currency, isSettlement, onDismiss, onPrint, onWhatsApp, onEmail, settings, t }: InvoicePreviewModalProps) {
   const invoiceId = useState(() => Math.random().toString(36).substr(2, 6).toUpperCase())[0];
-  const dateStr = useState(() => new Date().toLocaleDateString())[0];
+  const isAr = t.lang === 'ar';
+
+  const generateZatcaQR = (seller: string, taxNo: string, date: string, total: string, vat: string) => {
+    const encoder = new TextEncoder();
+    
+    const encodeTLV = (tag: number, value: string) => {
+      const valueBuffer = encoder.encode(value);
+      const tagBuffer = new Uint8Array([tag, valueBuffer.length]);
+      const combined = new Uint8Array(tagBuffer.length + valueBuffer.length);
+      combined.set(tagBuffer);
+      combined.set(valueBuffer, tagBuffer.length);
+      return combined;
+    };
+
+    const parts = [
+      encodeTLV(1, seller),
+      encodeTLV(2, taxNo),
+      encodeTLV(3, date),
+      encodeTLV(4, total),
+      encodeTLV(5, vat),
+    ];
+    
+    const totalLength = parts.reduce((acc, p) => acc + p.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const p of parts) {
+      combined.set(p, offset);
+      offset += p.length;
+    }
+    
+    // Convert Uint8Array to binary string for btoa
+    let binary = '';
+    const bytes = new Uint8Array(combined);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  const qrValue = generateZatcaQR(settings.companyName, settings.taxNumber, new Date().toISOString(), total.toString(), vat.toString());
 
   return (
-    <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.9)', zIndex: 3000, backdropFilter: 'blur(10px)' }}>
-       <div className="print-content slide-in" style={{ background: '#fff', width: '210mm', minHeight: '297mm', padding: '20mm', position: 'relative', boxShadow: '0 25px 80px rgba(0,0,0,0.4)', overflowY: 'auto', maxHeight: '95vh', color: '#000', borderRadius: '4px' }}>
-          <button onClick={onDismiss} className="no-print" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: '#ba1a1a', color: '#fff', border: 'none', padding: '0.8rem', borderRadius: '50%', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={24} /></button>
+    <div className="modal-overlay invoice-print-overlay" style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)', zIndex: 3050, overflowY: 'auto' }}>
+       {/* Action Bar */}
+       <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'center', gap: '0.8rem', padding: '0.8rem 2rem', background: 'rgba(0,26,51,0.97)', backdropFilter: 'blur(8px)', flexWrap: 'wrap', borderBottom: '2px solid rgba(212,167,106,0.3)' }}>
+        <button onClick={onPrint} style={{ padding: '0.65rem 1.5rem', background: '#d4a76a', color: '#001a33', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Printer size={18} /> {isAr ? 'تحميل PDF' : 'Download PDF'}
+        </button>
+        <button onClick={onWhatsApp} style={{ padding: '0.65rem 1.5rem', background: '#25D366', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <MessageCircle size={18} /> {isAr ? 'واتساب' : 'WhatsApp'}
+        </button>
+        <button onClick={onEmail} style={{ padding: '0.65rem 1.5rem', background: '#005ab5', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Mail size={18} /> {isAr ? 'بريد إلكتروني' : 'Email'}
+        </button>
+        <button onClick={onDismiss} style={{ padding: '0.65rem 1rem', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <X size={18} /> {isAr ? 'إغلاق' : 'Close'}
+        </button>
+      </div>
+
+       <div className="print-content" dir="rtl" style={{ background: '#fff', width: '210mm', minHeight: '297mm', padding: '14mm 16mm', margin: '1.5rem auto 4rem', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', color: '#111', boxSizing: 'border-box' as const, fontFamily: "'Tajawal','Cairo',sans-serif" }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '5px solid #001a33', paddingBottom: '2.5rem', marginBottom: '3rem' }}>
-             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                <div style={{ width: 70, height: 70, background: '#001a33', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={40} color="#d4a76a" />
-                </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '5px solid #001a33', paddingBottom: '10mm', marginBottom: '8mm' }}>
+             <div style={{ display: 'flex', gap: '4mm', alignItems: 'center' }}>
+                {settings.logo 
+                  ? <img src={settings.logo} alt="logo" style={{ width: '22mm', height: '22mm', objectFit: 'contain' }} />
+                  : <div style={{ width: '20mm', height: '20mm', background: '#001a33', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontWeight: 900, fontSize: '1.5rem' }}>{settings.companyName.charAt(0)}</div>
+                }
                 <div>
-                  <h1 style={{ fontSize: '2.2rem', fontWeight: 900, margin: 0, letterSpacing: '-1.5px', color: '#001a33' }}>SOVEREIGN LEDGER</h1>
-                  <p style={{ margin: 0, opacity: 0.8, fontSize: '0.9rem', fontWeight: 700 }}>High-Level Financial & Royal Services Authority</p>
-                  <p style={{ margin: 0, opacity: 0.6, fontSize: '0.8rem' }}>Kingdom of Saudi Arabia • Authorized Digital Institution</p>
+                   <h1 style={{ fontSize: '16pt', fontWeight: 900, margin: 0, color: '#001a33' }}>{settings.companyName}</h1>
+                   <p style={{ margin: 0, opacity: 0.8, fontSize: '8pt', fontWeight: 700 }}>للتخليص الجمركي والخدمات اللوجستية</p>
+                   <p style={{ margin: 0, opacity: 0.6, fontSize: '7pt' }}>الرقم الضريبي: {settings.taxNumber}</p>
                 </div>
              </div>
-             <div style={{ textAlign: 'right' }}>
-                <h2 style={{ fontSize: '1.8rem', color: '#001a33', margin: 0, fontWeight: 900 }}>{isSettlement ? 'SETTLEMENT ENTRY' : 'TAX INVOICE'}</h2>
-                <div style={{ marginTop: '0.5rem' }}>
-                   <p style={{ margin: 0, fontWeight: 900, fontSize: '1.1rem', color: '#d4a76a' }}>#{isSettlement ? 'SET' : 'SL'}-{invoiceId}</p>
-                   <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>DATE: {dateStr}</p>
+             <div style={{ textAlign: 'left', direction: 'ltr' }}>
+                <h2 style={{ fontSize: '20pt', color: '#001a33', margin: 0, fontWeight: 900 }}>{isSettlement ? 'SETTLEMENT' : 'TAX INVOICE'}</h2>
+                <div style={{ marginTop: '2mm' }}>
+                   <p style={{ margin: 0, fontWeight: 900, fontSize: '11pt', color: '#d4a76a' }}>#{isSettlement ? 'SET' : 'INV'}-{invoiceId}</p>
+                   <p style={{ margin: 0, fontSize: '9pt', fontWeight: 700 }}>DATE: {new Date().toLocaleDateString('en-GB')}</p>
                 </div>
              </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '4rem', marginBottom: '4rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20mm', marginBottom: '15mm' }}>
              <div>
-                <h3 style={{ fontSize: '1rem', borderBottom: '2px solid #f1f3f5', paddingBottom: '0.8rem', marginBottom: '1.2rem', fontWeight: 900, color: '#001a33' }}>CLIENT INFORMATION</h3>
-                <p style={{ margin: '0.4rem 0', fontWeight: 900, fontSize: '1.3rem' }}>{clientName || 'Valued Custodian'}</p>
-                {taxId && <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>VAT REGISTRATION: <span style={{ letterSpacing: '1px' }}>{taxId}</span></p>}
-                <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', opacity: 0.7 }}>Secure Partner Transaction Portal</p>
+                <h3 style={{ fontSize: '10pt', borderBottom: '2px solid #001a33', paddingBottom: '2mm', marginBottom: '3mm', fontWeight: 900, color: '#001a33' }}>بيانات العميل / CLIENT</h3>
+                <p style={{ margin: '2mm 0', fontWeight: 900, fontSize: '12pt' }}>{clientName || 'عميل نقدي'}</p>
+                {taxId && <p style={{ margin: 0, fontSize: '9pt', fontWeight: 700 }}>الرقم الضريبي: {taxId}</p>}
+                <p style={{ margin: '2mm 0', fontSize: '8pt', opacity: 0.7 }}>عملية جمركية موثقة</p>
              </div>
-             <div style={{ textAlign: 'right' }}>
-                <h3 style={{ fontSize: '1rem', borderBottom: '2px solid #f1f3f5', paddingBottom: '0.8rem', marginBottom: '1.2rem', fontWeight: 900, color: '#001a33' }}>ISSUING AUTHORITY</h3>
-                <p style={{ margin: '0.4rem 0', fontWeight: 900, fontSize: '1.1rem' }}>Alghwairy Financial Hub</p>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>Commercial Tower, Riyadh, KSA</p>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>OFFICIAL VAT: 310122345600003</p>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>CONTACT: info@alghwairy.fin</p>
+             <div style={{ textAlign: 'left', direction: 'ltr' }}>
+                <h3 style={{ fontSize: '10pt', borderBottom: '2px solid #001a33', paddingBottom: '2mm', marginBottom: '3mm', fontWeight: 900, color: '#001a33' }}>ISSUER</h3>
+                <p style={{ margin: '2mm 0', fontWeight: 900, fontSize: '11pt' }}>Alghwairy Customs</p>
+                <p style={{ margin: 0, fontSize: '8pt', fontWeight: 600 }}>Riyadh, KSA</p>
+                <p style={{ margin: 0, fontSize: '8pt', fontWeight: 600 }}>VAT: {settings.taxNumber}</p>
              </div>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15mm' }}>
              <thead>
                 <tr style={{ background: '#f8f9fa' }}>
-                   <th style={{ textAlign: 'left', padding: '1.2rem', fontWeight: 900, fontSize: '0.9rem', borderBottom: '2px solid #001a33' }}>{isSettlement ? 'SETTLEMENT DESCRIPTION / REASONS' : 'DESCRIPTION OF SERVICES / GOODS'}</th>
-                   <th style={{ textAlign: 'right', padding: '1.2rem', fontWeight: 900, fontSize: '0.9rem', borderBottom: '2px solid #001a33' }}>AMOUNT ({currency})</th>
+                   <th style={{ textAlign: 'right', padding: '12pt', fontWeight: 900, fontSize: '9pt', borderBottom: '2px solid #001a33' }}>الوصف / Description</th>
+                   <th style={{ textAlign: 'left', padding: '12pt', fontWeight: 900, fontSize: '9pt', borderBottom: '2px solid #001a33' }}>المبلغ / Amount</th>
                 </tr>
              </thead>
              <tbody>
                 {items.map((item: Item, i: number) => (
                   <tr key={i} style={{ borderBottom: '1px solid #f1f3f5' }}>
-                     <td style={{ padding: '1.2rem', fontWeight: 700, fontSize: '1rem' }}>{item.desc}</td>
-                     <td style={{ padding: '1.2rem', textAlign: 'right', fontWeight: 900, fontSize: '1.1rem' }}>{item.amount.toLocaleString()}</td>
+                     <td style={{ padding: '12pt', fontWeight: 700, fontSize: '10pt' }}>{item.desc}</td>
+                     <td style={{ padding: '12pt', textAlign: 'left', fontWeight: 900, fontSize: '11pt' }}>{item.amount.toLocaleString()} {currency}</td>
                   </tr>
                 ))}
              </tbody>
           </table>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#fcfdfe', padding: '3rem', borderRadius: '16px', border: '1px solid #f1f3f5' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#fcfdfe', padding: '10mm', borderRadius: '12px', border: '1px solid #f1f3f5' }}>
              <div>
-                <div style={{ background: 'white', padding: '1rem', borderRadius: '12px', border: '1px solid #eee', display: 'inline-block' }}>
-                   <QrCode size={130} />
+                <div style={{ background: 'white', padding: '2mm', borderRadius: '8px', border: '1px solid #eee', display: 'inline-block' }}>
+                   <QRCodeSVG value={qrValue} size={110} />
                 </div>
-                <div style={{ marginTop: '1.2rem' }}>
-                   <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#1b5e20', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <CheckCircle2 size={14} /> ZATCA PHASE 2 COMPLIANCE VERIFIED
+                <div style={{ marginTop: '4mm' }}>
+                   <p style={{ fontSize: '7pt', fontWeight: 900, color: '#1b5e20', display: 'flex', alignItems: 'center', gap: '2mm' }}>
+                      <CheckCircle2 size={12} /> متوافق مع هيئة الزكاة والضريبة والجمارك (ZATCA)
                    </p>
-                   <p style={{ fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.6, width: '200px', lineHeight: '1.4' }}>This QR code contains serialized ledger data for tax validation across all GCC networks.</p>
+                   <p style={{ fontSize: '6.5pt', marginTop: '2mm', opacity: 0.6, width: '180px', lineHeight: '1.4' }}>فاتورة إلكترونية معتمدة للمرحلة الثانية من الربط والإحكام.</p>
                 </div>
              </div>
-             <div style={{ width: '350px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem 0', borderBottom: '1px solid #eee' }}>
-                   <span style={{ fontWeight: 700, opacity: 0.7 }}>{isSettlement ? 'ADJUSTMENT TOTAL' : 'SUBTOTAL (GROSS)'}</span>
+             <div style={{ width: '300px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6pt 0', borderBottom: '1px solid #eee' }}>
+                   <span style={{ fontWeight: 700, opacity: 0.7 }}>الإجمالي الفرعي / Subtotal</span>
                    <span style={{ fontWeight: 800 }}>{subtotal.toLocaleString()} {currency}</span>
                 </div>
                 {!isSettlement && (
-                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem 0', borderBottom: '1px solid #eee' }}>
-                     <span style={{ fontWeight: 700, opacity: 0.7 }}>TAX (VAT {vatRate}%)</span>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6pt 0', borderBottom: '1px solid #eee' }}>
+                     <span style={{ fontWeight: 700, opacity: 0.7 }}>الضريبة 15% / VAT</span>
                      <span style={{ fontWeight: 800 }}>{vat.toLocaleString()} {currency}</span>
                    </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2rem 0', borderTop: '4px solid #001a33', marginTop: '1.5rem' }}>
-                   <span style={{ fontWeight: 950, fontSize: '1.5rem', color: '#001a33' }}>{isSettlement ? 'FINAL SETTLEMENT' : 'GRAND TOTAL'}</span>
-                   <span style={{ fontWeight: 950, fontSize: '1.8rem', color: '#001a33' }}>{total.toLocaleString()} <span style={{ fontSize: '0.8rem' }}>{currency}</span></span>
-                </div>
-                <div style={{ textAlign: 'right', marginTop: '1rem' }}>
-                   <p style={{ fontSize: '0.8rem', fontWeight: 900, color: '#d4a76a', textTransform: 'uppercase' }}>Amount in words:</p>
-                   <p style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.6 }}>Certified Sovereign Transaction Record</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15pt 0', borderTop: '4px solid #001a33', marginTop: '10pt' }}>
+                   <span style={{ fontWeight: 950, fontSize: '14pt', color: '#001a33' }}>الإجمالي / Grand Total</span>
+                   <span style={{ fontWeight: 950, fontSize: '16pt', color: '#001a33' }}>{total.toLocaleString()} {currency}</span>
                 </div>
              </div>
           </div>
 
-          <div style={{ marginTop: '6rem', paddingTop: '3rem', borderTop: '2px solid #f1f3f5', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem', textAlign: 'center' }}>
+          <div style={{ marginTop: '20mm', paddingTop: '10mm', borderTop: '2px solid #f1f3f5', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10mm', textAlign: 'center' }}>
              <div>
-                <p style={{ fontSize: '0.7rem', opacity: 0.5, marginBottom: '2.5rem' }}>Issued By</p>
-                <div style={{ borderBottom: '1px solid #000', width: '80%', margin: '0 auto' }}></div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 900, marginTop: '0.5rem' }}>Digital Signature</p>
+                <p style={{ fontSize: '7pt', opacity: 0.5, marginBottom: '15mm' }}>توقيع المؤسسة / Issuer Signature</p>
+                <div style={{ borderBottom: '1px solid #000', width: '60%', margin: '0 auto' }}></div>
+                <p style={{ fontSize: '8pt', fontWeight: 900, marginTop: '2mm' }}>ختم المؤسسة الرسمي</p>
              </div>
              <div>
-                <p style={{ fontSize: '0.7rem', opacity: 0.5, marginBottom: '2.5rem' }}>Authority Verification</p>
-                <div style={{ borderBottom: '1px solid #000', width: '80%', margin: '0 auto' }}></div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 900, marginTop: '0.5rem' }}>Sovereign Stamp</p>
+                <p style={{ fontSize: '7pt', opacity: 0.5, marginBottom: '15mm' }}>استلام العميل / Client Recipient</p>
+                <div style={{ borderBottom: '1px solid #000', width: '60%', margin: '0 auto' }}></div>
+                <p style={{ fontSize: '8pt', fontWeight: 900, marginTop: '2mm' }}>توقيع العميل</p>
              </div>
-             <div>
-                <p style={{ fontSize: '0.7rem', opacity: 0.5, marginBottom: '2.5rem' }}>Receiver Acknowledgment</p>
-                <div style={{ borderBottom: '1px solid #000', width: '80%', margin: '0 auto' }}></div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 900, marginTop: '0.5rem' }}>Client Signature</p>
-             </div>
-          </div>
-          
-          <div className="no-print" style={{ marginTop: '3rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-             <button onClick={() => window.print()} style={{ background: '#001a33', color: '#fff', border: 'none', padding: '1.2rem 4rem', borderRadius: '12px', cursor: 'pointer', fontWeight: 900, fontSize: '1.2rem', boxShadow: '0 10px 30px rgba(0,26,51,0.3)' }}>GENERATE OFFICIAL PDF</button>
           </div>
        </div>
     </div>

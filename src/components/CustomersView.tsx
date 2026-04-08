@@ -15,7 +15,7 @@ import {
   Trash2,
   Edit3
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 
 interface Customer {
   id: string;
@@ -68,31 +68,30 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('customers').select('*').is('deleted_at', null).order('created_at', { ascending: false });
-    if (error) {
-       showToast('Error: ' + error.message, 'error');
-    } else {
-       const enhancedData = (data as Customer[])?.map((c) => ({
-         ...c,
-         usage: Math.floor(Math.random() * 85) + 5,
-         lastOperation: new Date(c.created_at || new Date()).toISOString().split('T')[0]
-       }));
-       setCustomers(enhancedData || []);
-     }
+    try {
+      const data = localDB.getActive('customers');
+      const enhancedData = data.map((c: any) => ({
+        ...c,
+        usage: Math.floor(Math.random() * 85) + 5,
+        lastOperation: new Date(c.created_at || new Date()).toISOString().split('T')[0]
+      }));
+      // Sort by created_at descending
+      enhancedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setCustomers(enhancedData || []);
+    } catch (err) {
+      showToast('Error loading customers', 'error');
+    }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchCustomers();
-    };
-    init();
+    fetchCustomers();
   }, [fetchCustomers]);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      showToast('Name required', 'error');
+      showToast(t.lang === 'ar' ? 'اسم العميل مطلوب' : 'Name required', 'error');
       return;
     }
 
@@ -107,36 +106,35 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       balance: 0
     };
     
-    const { error } = await supabase.from('customers').insert([newCustomer]);
-    if (error) {
-        showToast('Error: ' + error.message, 'error');
-    } else {
-        await logActivity('Added New Customer: ' + formData.name, 'customers');
-        showToast(t.modal.submit, 'success');
-        setShowAddModal(false);
-        setFormData({ name: '', type: 'Corporate Client', sector: 'General Trade', phone: '', email: '', creditLimit: 0 });
-        fetchCustomers();
+    try {
+      const record = localDB.insert('customers', newCustomer);
+      await logActivity('Added New Customer: ' + formData.name, 'customers', record.id);
+      showToast(t.modal.submit, 'success');
+      setShowAddModal(false);
+      setFormData({ name: '', type: 'Corporate Client', sector: 'General Trade', phone: '', email: '', creditLimit: 0 });
+      fetchCustomers();
+    } catch (err) {
+      showToast('Error saving client', 'error');
     }
   };
 
   const handleUpdateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from('customers').update({
-      name: editData.name,
-      type: editData.type,
-      sector: editData.sector,
-      phone: editData.phone,
-      email: editData.email,
-      credit_limit: editData.creditLimit
-    }).eq('id', editData.id);
-
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
+    try {
+      localDB.update('customers', editData.id, {
+        name: editData.name,
+        type: editData.type,
+        sector: editData.sector,
+        phone: editData.phone,
+        email: editData.email,
+        credit_limit: editData.creditLimit
+      });
       await logActivity('Updated Customer Profile: ' + editData.name, 'customers', editData.id);
       showToast(t.lang === 'ar' ? 'تم تحديث بيانات العميل' : 'Customer updated successfully', 'success');
       setShowEditModal(false);
       fetchCustomers();
+    } catch (err) {
+      showToast('Error updating client', 'error');
     }
   };
 
@@ -155,13 +153,13 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t.lang === 'ar' ? 'هل أنت متأكد من حذف هذا العميل؟' : 'Are you sure you want to delete this customer?')) return;
-    const { error } = await supabase.from('customers').update({ deleted_at: new Date().toISOString() }).eq('id', id);
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
+    try {
+      localDB.softDelete('customers', id);
       await logActivity('Moved Customer to Trash', 'customers', id);
       showToast(t.lang === 'ar' ? 'تم نقل العميل لسلة المهملات' : 'Customer moved to trash', 'success');
       fetchCustomers();
+    } catch (err) {
+      showToast('Error deleting client', 'error');
     }
   };
 
@@ -176,18 +174,18 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "sovereign_customers.csv");
+    link.setAttribute("download", "alghwairy_customers.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleWhatsAppShare = (customer: Customer) => {
-    const text = `*تحديث من نظام الغويري المالي*\n\n` +
-                 `العميل: ${customer.name}\n` +
-                 `الحالة: ${customer.status === 'نشط' ? 'نشط' : 'Active'}\n` +
-                 `الرصيد الحالي: ${customer.balance?.toLocaleString() || 0} ر.س\n\n` +
-                 `نسعد بخدمتكم.`;
+    const text = `*مؤسسة الغويري للتخليص الجمركي*\n\n` +
+                 `عزيزنا العميل: ${customer.name}\n` +
+                 `الحالة: نشط\n` +
+                 `الرصيد المتاح: ${customer.credit_limit?.toLocaleString() || 0} ر.س\n\n` +
+                 `نسعد بخدمتكم دائماً.`;
     
     let phone = customer.phone?.replace(/\D/g, '') || '';
     if (phone && !phone.startsWith('966')) {
@@ -209,7 +207,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
             <button onClick={handlePrint} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
                <Printer size={16} /> {t.print}
             </button>
-            <button onClick={handleExportCSV} className="btn-executive" style={{ background: 'var(--secondary)', color: 'white', border: 'none' }}>
+            <button onClick={handleExportCSV} className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none' }}>
                <Download size={16} /> {t.export}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-executive" style={{ border: 'none' }}>
@@ -295,6 +293,11 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                         </td>
                       </tr>
                     ))}
+                    {customers.length === 0 && (
+                        <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>لم يتم العثور على عملاء حالياً</td>
+                        </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -317,14 +320,14 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
               <div style={{ position: 'relative', zIndex: 2 }}>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.2rem' }}>
                     <ShieldCheck size={28} color="var(--secondary)" />
-                    <h4 style={{ fontFamily: 'Tajawal', color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Sovereign Hub</h4>
+                    <h4 style={{ fontFamily: 'Tajawal', color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>مؤسسة الغويري - مركز البيانات</h4>
                  </div>
                  <p style={{ fontSize: '0.9rem', opacity: 0.9, color: 'white', lineHeight: '1.6', fontWeight: 500 }}>
-                    All partner data is protected under the Sovereign Ledger protocol and ZATCA Phase 2 compliance standards.
-                    Automatic backups and encryption enabled.
+                    جميع بيانات الشركاء محمية بموجب بروتوكول السيادة المحلية ومعايير المرحلة الثانية لهيئة الزكاة والضريبة والجمارك (ZATCA).
+                    النسخ الاحتياطي والتشفير يعملان محلياً بالكامل.
                  </p>
                  <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem' }}>
-                    <CheckCircle2 size={16} /> Fully Certified (2026)
+                    <CheckCircle2 size={16} /> نظام معتمد بالكامل (2026)
                  </div>
               </div>
               {/* Decorative Circle */}
@@ -335,23 +338,23 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.modal.title}</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.name}</label>
-                   <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontSize: '1rem', fontWeight: 600 }} />
+                   <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-executive" style={{ fontSize: '1rem', fontWeight: 600 }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                        <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.phone}</label>
-                       <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} dir="ltr" style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontWeight: 600 }} />
+                       <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} dir="ltr" className="input-executive" style={{ fontWeight: 600 }} />
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                        <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.category}</label>
-                       <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontWeight: 600 }}>
+                       <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="input-executive" style={{ fontWeight: 600 }}>
                           <option>Corporate</option>
                           <option>Strategic</option>
                           <option>Vendor</option>
@@ -363,7 +366,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                    <input type="number" value={formData.creditLimit} onChange={e => setFormData({...formData, creditLimit: Number(e.target.value)})} style={{ padding: '1rem', borderRadius: '12px', border: '2px solid var(--secondary)', background: 'var(--surface)', color: 'var(--primary)', outline: 'none', fontFamily: 'Cairo', fontSize: '1.4rem', fontWeight: 900, textAlign: 'center' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                   <button type="button" onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '1rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--on-surface)', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}>{t.modal.cancel}</button>
+                   <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none', fontWeight: 800 }}>{t.modal.cancel}</button>
                    <button type="submit" className="btn-executive" style={{ flex: 2, padding: '1rem', fontSize: '1.1rem', border: 'none' }}>{t.modal.submit}</button>
                 </div>
              </form>
@@ -373,23 +376,23 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.lang === 'ar' ? 'تعديل بيانات العميل' : 'Edit Customer'}</h3>
              <form onSubmit={handleUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.name}</label>
-                   <input required type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontSize: '1rem', fontWeight: 600 }} />
+                   <input required type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input-executive" style={{ fontSize: '1rem', fontWeight: 600 }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                        <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.phone}</label>
-                       <input type="text" value={editData.phone} onChange={e => setEditData({...editData, phone: e.target.value})} dir="ltr" style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontWeight: 600 }} />
+                       <input type="text" value={editData.phone} onChange={e => setEditData({...editData, phone: e.target.value})} dir="ltr" className="input-executive" style={{ fontWeight: 600 }} />
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                        <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.modal.category}</label>
-                       <select value={editData.type} onChange={e => setEditData({...editData, type: e.target.value})} style={{ padding: '0.9rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)', color: 'var(--on-surface)', outline: 'none', fontFamily: 'Cairo', fontWeight: 600 }}>
+                       <select value={editData.type} onChange={e => setEditData({...editData, type: e.target.value})} className="input-executive" style={{ fontWeight: 600 }}>
                           <option>Corporate</option>
                           <option>Strategic</option>
                           <option>Vendor</option>
@@ -401,7 +404,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                    <input type="number" value={editData.creditLimit} onChange={e => setEditData({...editData, creditLimit: Number(e.target.value)})} style={{ padding: '1rem', borderRadius: '12px', border: '2px solid var(--secondary)', background: 'var(--surface)', color: 'var(--primary)', outline: 'none', fontFamily: 'Cairo', fontSize: '1.4rem', fontWeight: 900, textAlign: 'center' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                   <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '1rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--on-surface)', borderRadius: '12px', fontWeight: 800 }}>{t.modal.cancel}</button>
+                   <button type="button" onClick={() => setShowEditModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none', fontWeight: 800 }}>{t.modal.cancel}</button>
                    <button type="submit" className="btn-executive" style={{ flex: 2, padding: '1rem', fontSize: '1.1rem', border: 'none' }}>{t.lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}</button>
                 </div>
              </form>
@@ -412,15 +415,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
   );
 }
 
-interface KPIBoxProps {
-  title: string;
-  value: string | number;
-  unit: string;
-  icon: React.ReactNode;
-  color?: string;
-}
-
-function KPIBox({ title, value, unit, icon, color }: KPIBoxProps) {
+function KPIBox({ title, value, unit, icon, color }: any) {
   return (
     <div className="card" style={{ padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderInlineStart: `5px solid ${color || 'var(--primary)'}` }}>
        <div>
@@ -432,14 +427,7 @@ function KPIBox({ title, value, unit, icon, color }: KPIBoxProps) {
   );
 }
 
-interface TimelineEventProps {
-  title: string;
-  status: string;
-  time: string;
-  color: string;
-}
-
-function TimelineEvent({ title, status, time, color }: TimelineEventProps) {
+function TimelineEvent({ title, status, time, color }: any) {
   return (
     <div style={{ display: 'flex', gap: '1.2rem', padding: '0.8rem 0', borderBottom: '1px solid var(--surface-container-low)' }}>
        <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, marginTop: '6px', flexShrink: 0, boxShadow: `0 0 8px ${color}` }}></div>

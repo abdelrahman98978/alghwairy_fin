@@ -8,7 +8,7 @@ import {
   AlertCircle,
   Download
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Transaction } from '../App';
 
 import type { Translations } from '../types/translations';
@@ -24,12 +24,12 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
   const [partnerCount, setPartnerCount] = useState(0);
 
   useEffect(() => {
-    const fetchPartners = async () => {
-      const { data } = await supabase.from('customers').select('*');
-      if (data) setPartnerCount(data.length);
+    const fetchPartners = () => {
+      const data = localDB.getActive('customers');
+      setPartnerCount(data.length);
     };
     fetchPartners();
-  }, []);
+  }, [transactions]); // Update when transactions change (common refresh point)
 
   const exportToExcel = () => {
     const headers = [t.table.id, t.table.description, t.table.type, t.table.value, "Currency", t.table.status];
@@ -49,14 +49,14 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sovereign_dashboard_export_${Date.now()}.csv`);
+    link.setAttribute("download", `alghwairy_dashboard_export_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     showToast(t.export_report, 'success');
   };
 
   const totalRevenue = (transactions || [])
-    .filter(t_trx => t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش')
+    .filter(t_trx => t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income')
     .reduce((acc, t_trx) => acc + Number(t_trx.amount || 0), 0);
   
   const totalExpenses = (transactions || [])
@@ -65,11 +65,9 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
   
   const netProfit = totalRevenue - totalExpenses;
   
-  // Real Logic: Opening Balance & Liquidity
   const openingBalance = Number(localStorage.getItem('sov_opening_balance')) || 500000;
   const availableLiquidity = openingBalance - totalExpenses + totalRevenue; 
 
-  // Real Logic: Tax Deadline
   const getTaxDeadline = () => {
     const now = new Date();
     const quarter = Math.floor(now.getMonth() / 3);
@@ -86,46 +84,46 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
   };
   const taxDays = getTaxDeadline();
   
-  const isArabic = t.lang === 'ar' || t.income?.includes('إيراد');
+  const isArabic = t.lang === 'ar';
 
   return (
     <div className="slide-in no-print">
-      {/* Sovereign Intelligence Snapshot */}
+      {/* Institution Snapshot */}
       <div style={{ display: 'flex', gap: '1.2rem', marginBottom: '2.5rem', background: 'var(--surface-container-low)', padding: '0.8rem 1.5rem', borderRadius: '18px', border: '1px solid var(--surface-container-high)', alignItems: 'center', overflowX: 'auto' }}>
-         <SnapshotItem label={isArabic ? 'حالة توثيق زاتكا' : 'ZATCA Clearance'} value="100%" color="var(--success)" />
+         <SnapshotItem label={isArabic ? 'حالة الامتثال' : 'Compliance'} value="100%" color="var(--success)" />
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'الاحتياطي السيادي' : 'Sovereign Reserves'} value={`${(availableLiquidity/1000000).toFixed(2)}M`} color="var(--primary)" />
+         <SnapshotItem label={isArabic ? 'إجمالي السيولة' : 'Total Liquidity'} value={`${(availableLiquidity/1000).toFixed(0)}K`} color="var(--primary)" />
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'الشركاء النشطون' : 'Active Partners'} value={partnerCount.toString()} color="var(--secondary)" />
+         <SnapshotItem label={isArabic ? 'العملاء النشطون' : 'Active Partners'} value={partnerCount.toString()} color="var(--secondary)" />
          <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'النمو الحقيقي' : 'Real Growth'} value={totalRevenue > 0 ? `+${((netProfit/totalRevenue)*100).toFixed(1)}%` : '0%'} color="var(--success)" />
+         <SnapshotItem label={isArabic ? 'الأداء العام' : 'Performance'} value={totalRevenue > 0 ? `+${((netProfit/totalRevenue)*100).toFixed(1)}%` : '0%'} color="var(--success)" />
          <div style={{ flex: 1 }}></div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', opacity: 0.7 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 10px var(--success)' }}></div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--on-surface-variant)' }}>WPS NODE ACTIVE</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--on-surface-variant)' }}>OFFLINE STORAGE SECURED</span>
          </div>
       </div>
 
-      {/* ZATKA Compliance Executive Tracker */}
+      {/* Compliance Shield */}
       <div 
-        onClick={() => showToast('ZATKA-CERT-A2026. Sovereign Compliance Verified.', 'success')}
+        onClick={() => showToast(isArabic ? 'تم التحقق من الامتثال لمتطلبات زاتكا' : 'ZATCA Compliance Verified.', 'success')}
         className="compliance-shield" 
-        style={{ cursor: 'pointer', border: 'none', marginBottom: '2.5rem' }}
+        style={{ cursor: 'pointer', border: 'none', marginBottom: '2.5rem', background: 'var(--primary)' }}
       >
         <div style={{ background: 'var(--secondary)', padding: '0.85rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', boxShadow: '0 6px 12px rgba(0,0,0,0.15)' }}>
           <CheckCircle2 size={24} />
         </div>
         <div style={{ flex: 1, paddingInlineStart: '1.5rem' }}>
           <h3 style={{ color: 'var(--secondary)', marginBottom: '0.2rem', fontFamily: 'Tajawal', fontWeight: 900, fontSize: '1.2rem' }}>{t.compliance_title}</h3>
-          <p style={{ opacity: 0.85, fontSize: '0.9rem', fontWeight: 500 }}>{t.compliance_desc}</p>
+          <p style={{ opacity: 0.85, fontSize: '0.9rem', fontWeight: 500, color: 'white' }}>{t.compliance_desc}</p>
         </div>
         <div style={{ textAlign: 'center', paddingInlineStart: '1.5rem', borderInlineStart: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="status-indicator" style={{ width: '10px', height: '10px', background: '#4caf50', margin: '0 auto 0.4rem' }}></div>
-            <span style={{ fontWeight: 800, fontSize: '0.65rem', opacity: 0.7 }}>VERSION 2.1.0</span>
+            <span style={{ fontWeight: 800, fontSize: '0.65rem', opacity: 0.7, color: 'white' }}>LOCAL MODE</span>
         </div>
       </div>
 
-      {/* Core Executive Metrics */}
+      {/* Core Metrics */}
       <div className="metric-grid" style={{ marginBottom: '2.5rem' }}>
         <StatCard title={t.total_balance} value={netProfit.toLocaleString()} trend="+Real-time" trendType="up" icon={<TrendingUp size={22} />} />
         <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<Building2 size={22} />} />
@@ -162,12 +160,12 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
               <tbody>
                 {(transactions || []).slice(0, 8).map(t_trx => (
                   <tr key={t_trx.id}>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, textAlign: 'center' }}>#{t_trx.id.toString().slice(-6).toUpperCase()}</td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, textAlign: 'center' }}>{t_trx.trx_number || `#${t_trx.id.toString().slice(-6).toUpperCase()}`}</td>
                     <td style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--on-surface)' }}>{t_trx.description}</td>
-                    <td style={{ textAlign: 'center' }}><span style={{ padding: '0.35rem 0.8rem', background: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش') ? 'rgba(27, 94, 32, 0.1)' : 'rgba(211, 47, 47, 0.1)', color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش') ? 'var(--success)' : 'var(--error)', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش') ? t.income : t.expense}</span></td>
+                    <td style={{ textAlign: 'center' }}><span style={{ padding: '0.35rem 0.8rem', background: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'rgba(27, 94, 32, 0.1)' : 'rgba(211, 47, 47, 0.1)', color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'var(--success)' : 'var(--error)', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? t.income : t.expense}</span></td>
                     <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 950, fontSize: '1rem', color: 'var(--primary)' }}>
-                      <span style={{ color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش') ? 'var(--success)' : 'var(--error)' }}>
-                        {(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش') ? '+' : '-'}{t_trx.amount.toLocaleString()}
+                      <span style={{ color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'var(--success)' : 'var(--error)' }}>
+                        {(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? '+' : '-'}{t_trx.amount.toLocaleString()}
                       </span>
                     </td>
                     <td>
@@ -197,13 +195,13 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
               desc={isArabic ? 'يتم مراقبة كافة العهود البنكية المصروفة لحظياً.' : 'Monitoring real-time bank petty cash draws.'} 
             />
             <div style={{ padding: '1.5rem', background: 'var(--primary)', color: 'white', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
-               <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary)', fontWeight: 950 }}>SOVEREIGN AI FORENSIC</h4>
-               <p style={{ margin: '0.5rem 0', fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>Analyzing ledgers based on real recorded transactions. All nodes healthy.</p>
+               <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary)', fontWeight: 950 }}>LOCAL-FIRST STORAGE</h4>
+               <p style={{ margin: '0.5rem 0', fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>بياناتك محفوظة محلياً على جهازك في مجلد المستندات. خصوصية كاملة وتحكم تام.</p>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.8rem' }}>
                   <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
                      <div style={{ width: '100%', height: '100%', background: 'var(--secondary)', borderRadius: '2px' }}></div>
                   </div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 900 }}>100% REAL DATA</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 900 }}>100% OFFLINE SECURED</span>
                </div>
                <div style={{ position: 'absolute', right: '-10%', bottom: '-10%', opacity: 0.1 }}><TrendingUp size={60} /></div>
             </div>
@@ -219,7 +217,6 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
   );
 }
 
-/* Helper Components */
 function SnapshotItem({ label, value, color }: { label: string, value: string, color: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', whiteSpace: 'nowrap' }}>

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   FileText, Plus, Search, 
-  Download, QrCode, X, AlertCircle, CheckCircle2,
-  Filter, MessageCircle, Trash2, Send, Edit3, Eye, Mail
+  Download, X, AlertCircle, CheckCircle2,
+  Filter, MessageCircle, Trash2, Send, Edit3, Eye, Mail, Printer
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import { generateZatcaQR } from '../lib/zatca';
 
 interface Customer {
@@ -52,24 +52,24 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
   const [waPhone, setWaPhone] = useState('');
   
   const [settings, setSettings] = useState({
-    companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+    companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
     taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
     address: localStorage.getItem('sov_address') || 'King Fahd Rd, Riyadh, SA',
-    logo: localStorage.getItem('sov_logo') || '',
-    reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+    logo: localStorage.getItem('sov_logo') || './logo.png',
+    reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+    reportFooter: localStorage.getItem('sov_report_footer') || 'مؤسسة الغويري للتخليص الجمركي - سري'
   });
   
   useEffect(() => {
     // Refresh settings whenever the view is focused or mounted
     const loadSettings = () => {
       setSettings({
-        companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+        companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
         taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
         address: localStorage.getItem('sov_address') || 'King Fahd Rd, Riyadh, SA',
-        logo: localStorage.getItem('sov_logo') || '',
-        reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+        logo: localStorage.getItem('sov_logo') || './logo.png',
+        reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+        reportFooter: localStorage.getItem('sov_report_footer') || 'مؤسسة الغويري للتخليص الجمركي - سري'
       });
     };
     loadSettings();
@@ -92,22 +92,26 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
     isSettlement: false
   });
 
-  const fetchInvoices = useCallback(async () => {
-    const { data } = await supabase.from('invoices').select('*, customers(*)').is('deleted_at', null).order('created_at', { ascending: false });
-    if (data) setInvoices(data as Invoice[]);
+  const fetchInvoices = useCallback(() => {
+    const invs = localDB.getActive('invoices');
+    const allCustomers = localDB.getActive('customers');
+    // Join customers manually
+    const joined = invs.map((inv: any) => ({
+      ...inv,
+      customers: allCustomers.find((c: any) => c.id === inv.customer_id) || null
+    }));
+    joined.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setInvoices(joined as Invoice[]);
   }, []);
 
-  const fetchCustomers = useCallback(async () => {
-    const { data } = await supabase.from('customers').select('*').is('deleted_at', null);
-    if (data) setCustomers(data as Customer[]);
+  const fetchCustomers = useCallback(() => {
+    const data = localDB.getActive('customers');
+    setCustomers(data as Customer[]);
   }, []);
 
   useEffect(() => {
-    const initialize = async () => {
-      await fetchInvoices();
-      await fetchCustomers();
-    };
-    initialize();
+    fetchInvoices();
+    fetchCustomers();
   }, [fetchInvoices, fetchCustomers]);
 
   const handleIssueInvoice = async (e: React.FormEvent) => {
@@ -117,7 +121,7 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
     const taxVal = formData.isSettlement ? 0 : amountVal * vatRateSetting;
     const totalVal = amountVal + taxVal;
 
-    const { error } = await supabase.from('invoices').insert([{
+    const newInvoice = {
       customer_id: formData.customerId,
       amount: amountVal,
       vat: taxVal,
@@ -125,17 +129,13 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
       status: 'pending',
       reference_number: formData.reference || `INV-${Date.now()}`,
       is_settlement: formData.isSettlement
-    }]);
-
-    if (error) {
-      showToast('Error issuing: ' + error.message, 'error');
-    } else {
-      await logActivity('Issued Sovereign ' + (formData.isSettlement ? 'Settlement Entry ' : 'Tax Invoice ') + (formData.reference || 'Draft'), 'invoices');
-      showToast(formData.isSettlement ? 'Sovereign Settlement posted correctly.' : 'Sovereign Tax Invoice issued securely (ZATCA Phase 2 Certified).', 'success');
-      setShowAddModal(false);
-      setFormData({ customerId: '', amount: '', reference: '', status: 'pending', isSettlement: false });
-      fetchInvoices();
-    }
+    };
+    localDB.insert('invoices', newInvoice);
+    await logActivity('Issued Sovereign ' + (formData.isSettlement ? 'Settlement Entry ' : 'Tax Invoice ') + (formData.reference || 'Draft'), 'invoices');
+    showToast(formData.isSettlement ? 'Sovereign Settlement posted correctly.' : 'تم إصدار الفاتورة الضريبية بنجاح (ZATCA).', 'success');
+    setShowAddModal(false);
+    setFormData({ customerId: '', amount: '', reference: '', status: 'pending', isSettlement: false });
+    fetchInvoices();
   };
 
   const handleUpdateInvoice = async (e: React.FormEvent) => {
@@ -145,23 +145,18 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
     const taxVal = editData.isSettlement ? 0 : amountVal * vatRateSetting;
     const totalVal = amountVal + taxVal;
 
-    const { error } = await supabase.from('invoices').update({
+    localDB.update('invoices', editData.id, {
       customer_id: editData.customerId,
       amount: amountVal,
       vat: taxVal,
       total: totalVal,
       status: editData.status,
       reference_number: editData.reference
-    }).eq('id', editData.id);
-
-    if (error) {
-      showToast('Error updating invoice: ' + error.message, 'error');
-    } else {
-      await logActivity('Updated Invoice ' + editData.reference, 'invoices', editData.id);
-      showToast('Invoice updated successfully', 'success');
-      setShowEditModal(false);
-      fetchInvoices();
-    }
+    });
+    await logActivity('Updated Invoice ' + editData.reference, 'invoices', editData.id);
+    showToast('Invoice updated successfully', 'success');
+    setShowEditModal(false);
+    fetchInvoices();
   };
 
   const openEditModal = (inv: Invoice) => {
@@ -204,18 +199,10 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
   const handleDelete = async (id: string) => {
     if (!window.confirm(t.lang === 'ar' ? 'هل أنت متأكد من حذف هذه الفاتورة؟ ستنتقل إلى سلة المهملات.' : 'Are you sure you want to delete this invoice? It will be moved to trash.')) return;
     
-    const { error } = await supabase
-      .from('invoices')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) {
-      showToast(error.message, 'error');
-    } else {
-      await logActivity('Moved Invoice to Trash', 'invoices', id);
-      showToast(t.lang === 'ar' ? 'تم نقل الفاتورة لسلة المهملات' : 'Invoice moved to trash', 'success');
-      fetchInvoices();
-    }
+    localDB.softDelete('invoices', id);
+    await logActivity('Moved Invoice to Trash', 'invoices', id);
+    showToast(t.lang === 'ar' ? 'تم نقل الفاتورة لسلة المهملات' : 'Invoice moved to trash', 'success');
+    fetchInvoices();
   };
 
   const handleWhatsAppInvoice = (inv: Invoice) => {
@@ -236,9 +223,20 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
     setShowWAPreview(true);
   };
 
+  const openExternal = async (url: string) => {
+    try {
+      if ((window as any).require) {
+        const { ipcRenderer } = (window as any).require('electron');
+        await ipcRenderer.invoke('open-external', url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch { window.open(url, '_blank'); }
+  };
+
   const sendWhatsApp = () => {
     const url = `https://wa.me/${waPhone}?text=${encodeURIComponent(waText)}`;
-    window.open(url, '_blank');
+    openExternal(url);
     setShowWAPreview(false);
   };
 
@@ -250,8 +248,24 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
 
   const handleEmailInvoice = (inv: Invoice) => {
     const subject = encodeURIComponent(`فاتورة ضريبية من ${settings.companyName} - رقم ${inv.reference_number}`);
-    const body = encodeURIComponent(`عزيزي العميل،\n\nنرفق لكم تفاصيل الفاتورة الضريبية:\nرقم الفاتورة: ${inv.reference_number}\nالمبلغ الإجمالي: ${(inv.total || inv.total_amount || 0).toLocaleString()} ر.س\nالحالة: ${inv.status === 'paid' ? 'مدفوعة' : 'بانتظار السداد'}\n\nيمكنكم معاينة الفاتورة من خلال الرابط التالي:\n${window.location.origin + window.location.pathname + '?invoice_id=' + inv.id}\n\nمع تحيات،\n${settings.companyName}`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const body = encodeURIComponent(`عزيزي العميل،\n\nنرفق لكم تفاصيل الفاتورة الضريبية:\nرقم الفاتورة: ${inv.reference_number}\nالمبلغ الإجمالي: ${(inv.total || inv.total_amount || 0).toLocaleString()} ر.س\nالحالة: ${inv.status === 'paid' ? 'مدفوعة' : 'بانتظار السداد'}\n\nمع تحيات،\n${settings.companyName}`);
+    openExternal(`mailto:?subject=${subject}&body=${body}`);
+  };
+
+  const handlePrintPDF = async () => {
+    try {
+      if ((window as any).require) {
+        const { ipcRenderer } = (window as any).require('electron');
+        const result = await ipcRenderer.invoke('print-to-pdf');
+        if (result.success) {
+          showToast(t.lang === 'ar' ? 'تم حفظ الفاتورة كـ PDF بنجاح' : 'Invoice saved as PDF', 'success');
+        } else if (!result.canceled) {
+          showToast('PDF Error: ' + (result.error || 'Unknown'), 'error');
+        }
+      } else {
+        window.print();
+      }
+    } catch { window.print(); }
   };
 
   return (
@@ -449,6 +463,7 @@ export function InvoicesView({ showToast, logActivity, t }: Props) {
           onClose={() => setShowPreviewModal(false)}
           onWhatsApp={() => handleWhatsAppInvoice(selectedInvoice)}
           onEmail={() => handleEmailInvoice(selectedInvoice)}
+          onPrint={handlePrintPDF}
           t={t}
           settings={settings}
         />
@@ -533,6 +548,7 @@ interface PreviewModalProps {
   onClose: () => void;
   onWhatsApp: () => void;
   onEmail: () => void;
+  onPrint: () => void;
   t: Translations['invoices'];
   settings: {
     companyName: string;
@@ -544,7 +560,8 @@ interface PreviewModalProps {
   };
 }
 
-function InvoicePreviewModal({ invoice, onClose, onWhatsApp, onEmail, t, settings }: PreviewModalProps) {
+function InvoicePreviewModal({ invoice, onClose, onWhatsApp, onEmail, onPrint, t, settings }: PreviewModalProps) {
+  const vatRate = parseFloat(localStorage.getItem('sov_vat_rate') || '15');
   const qrData = generateZatcaQR(
     settings.companyName,
     settings.taxNumber,
@@ -552,110 +569,161 @@ function InvoicePreviewModal({ invoice, onClose, onWhatsApp, onEmail, t, setting
     (invoice.total || invoice.total_amount || 0).toString(),
     (invoice.vat || invoice.tax_amount || 0).toString()
   );
+  const isAr = t.lang === 'ar';
+  const invoiceDate = new Date(invoice.created_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+  const gross = invoice.amount || 0;
+  const vat = invoice.vat || invoice.tax_amount || 0;
+  const total = invoice.total || invoice.total_amount || 0;
+  const companyName = settings.companyName || 'مؤسسة الغويري للتخليص الجمركي';
 
   return (
-    <div className="modal-overlay no-print" style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 3050 }}>
-       <div className="print-content slide-in" style={{ padding: '20mm', width: '210mm', minHeight: '297mm', background: 'white', borderRadius: '4px', boxShadow: '0 25px 80px rgba(0,0,0,0.4)', position: 'relative', overflowY: 'auto', maxHeight: '95vh', color: '#000', display: 'flex', flexDirection: 'column' }}>
-          {/* Institutional Header Watermark */}
-          {settings.reportHeader && (
-            <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '1px solid #e1e4e8', paddingBottom: '0.8rem' }}>
-              <p style={{ margin: 0, fontSize: '0.7rem', color: '#666', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Inter, sans-serif' }}>{settings.reportHeader}</p>
+    <div className="modal-overlay invoice-print-overlay" style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)', zIndex: 3050, overflowY: 'auto' }}>
+      {/* Action Bar */}
+      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'center', gap: '0.8rem', padding: '0.8rem 2rem', background: 'rgba(0,26,51,0.97)', backdropFilter: 'blur(8px)', flexWrap: 'wrap', borderBottom: '2px solid rgba(212,167,106,0.3)' }}>
+        <button onClick={onPrint} style={{ padding: '0.65rem 1.5rem', background: '#d4a76a', color: '#001a33', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Printer size={18} /> {isAr ? 'تحميل PDF' : 'Download PDF'}
+        </button>
+        <button onClick={onWhatsApp} style={{ padding: '0.65rem 1.5rem', background: '#25D366', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <MessageCircle size={18} /> {isAr ? 'واتساب' : 'WhatsApp'}
+        </button>
+        <button onClick={onEmail} style={{ padding: '0.65rem 1.5rem', background: '#005ab5', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Mail size={18} /> {isAr ? 'بريد إلكتروني' : 'Email'}
+        </button>
+        <button onClick={onClose} style={{ padding: '0.65rem 1rem', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <X size={18} /> {isAr ? 'إغلاق' : 'Close'}
+        </button>
+      </div>
+
+      {/* A4 Invoice */}
+      <div className="print-content" dir="rtl" style={{
+        width: '210mm', minHeight: '297mm', background: 'white',
+        margin: '1.5rem auto 4rem', padding: '14mm 16mm',
+        boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
+        fontFamily: "'Tajawal','Cairo',sans-serif", color: '#111',
+        boxSizing: 'border-box' as const
+      }}>
+
+        {/* HEADER */}
+        <div style={{ borderBottom: '5px solid #001a33', paddingBottom: '10mm', marginBottom: '8mm', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4mm' }}>
+            {settings.logo
+              ? <img src={settings.logo} alt="logo" style={{ width: '20mm', height: '20mm', objectFit: 'contain' }} />
+              : <div style={{ width: '20mm', height: '20mm', background: '#001a33', borderRadius: '4mm', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontWeight: 900, fontSize: '1.3rem' }}>{companyName.charAt(0)}</div>
+            }
+            <div>
+              <div style={{ fontSize: '15pt', fontWeight: 900, color: '#001a33' }}>{companyName}</div>
+              <div style={{ fontSize: '7.5pt', color: '#555', marginTop: '1mm' }}>الرقم الضريبي: {settings.taxNumber}</div>
+              <div style={{ fontSize: '7.5pt', color: '#555' }}>{settings.address}</div>
             </div>
-          )}
-
-          <button onClick={onClose} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: '#ba1a1a', color: '#fff', border: 'none', padding: '0.8rem', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }} className="no-print"><X size={24} /></button>
-          
-          <div style={{ borderBottom: '5px solid #001a33', paddingBottom: '2.5rem', marginBottom: '3.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                <div style={{ width: 85, height: 85, border: '2px solid #001a33', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '5px' }}>
-                   {settings.logo ? (
-                     <img src={settings.logo} alt="entity logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                   ) : (
-                     <QrCode size={45} color="#d4a76a" />
-                   )}
-                </div>
-                <div>
-                   <h1 style={{ color: '#001a33', margin: 0, fontSize: '2rem', fontWeight: 900, letterSpacing: '-1.5px', fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'فاتورة ضريبية مبسطة' : 'Simplified Tax Invoice'}</h1>
-                   <h2 style={{ fontSize: '1rem', color: '#666', margin: '5px 0', textTransform: 'uppercase', fontWeight: 800 }}>Sovereign Tax Ledger</h2>
-                </div>
-             </div>
-             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 900, fontSize: '1.6rem', color: '#d4a76a' }}>{invoice.reference_number}</div>
-                <div style={{ opacity: 0.8, fontSize: '0.9rem', fontWeight: 700 }}>DATE: {new Date(invoice.created_at).toLocaleString()}</div>
-             </div>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '4rem' }}>
-             <div style={{ padding: '2rem', background: '#fcfdfe', borderRadius: '16px', border: '1px solid #f1f3f5' }}>
-                <div style={{ fontWeight: 900, color: '#666', borderBottom: '2px solid #eee', paddingBottom: '1rem', marginBottom: '1.2rem', fontSize: '0.85rem' }}>مورد (Supplier)</div>
-                <div style={{ fontWeight: 900, fontSize: '1.2rem', marginBottom: '0.5rem', color: '#001a33' }}>{settings.companyName}</div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>الرقم الضريبي: {settings.taxNumber}</div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', opacity: 0.8 }}>{settings.address}</div>
-             </div>
-             <div style={{ padding: '2rem', background: '#fcfdfe', borderRadius: '16px', border: '1px solid #f1f3f5' }}>
-                <div style={{ fontWeight: 900, color: '#666', borderBottom: '2px solid #eee', paddingBottom: '1rem', marginBottom: '1.2rem', fontSize: '0.85rem' }}>عميل (Client)</div>
-                <div style={{ fontWeight: 900, fontSize: '1.2rem', marginBottom: '0.5rem' }}>{invoice.customers?.name}</div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>الرقم الضريبي: {invoice.customers?.cr_number || 'N/A'}</div>
-             </div>
+          <div style={{ textAlign: 'left', direction: 'ltr' }}>
+            <div style={{ fontSize: '18pt', fontWeight: 900, color: '#001a33', fontFamily: 'Tajawal' }}>
+              {invoice.is_settlement ? 'قيد تسوية' : 'فاتورة ضريبية مبسطة'}
+            </div>
+            <div style={{ fontSize: '8pt', color: '#888', fontWeight: 700 }}>
+              {invoice.is_settlement ? 'SETTLEMENT ENTRY' : 'SIMPLIFIED TAX INVOICE'}
+            </div>
+            <div style={{ marginTop: '3mm', padding: '2mm 5mm', background: '#001a33', borderRadius: '3mm', color: '#d4a76a', fontWeight: 900, fontSize: '11pt', textAlign: 'center', direction: 'ltr' }}>
+              {invoice.reference_number}
+            </div>
           </div>
+        </div>
 
-          <table style={{ width: '100%', marginBottom: '4rem', borderCollapse: 'collapse' }}>
-             <thead>
-                <tr style={{ background: '#f8f9fa' }}>
-                   <th style={{ textAlign: 'right', padding: '1.5rem', fontWeight: 900, borderBottom: '2px solid #001a33' }}>الوصف (Description)</th>
-                   <th style={{ textAlign: 'right', padding: '1.5rem', fontWeight: 900, borderBottom: '2px solid #001a33' }}>المبلغ (Net)</th>
-                   <th style={{ textAlign: 'right', padding: '1.5rem', fontWeight: 900, borderBottom: '2px solid #001a33' }}>الضريبة (VAT)</th>
-                   <th style={{ textAlign: 'right', padding: '1.5rem', fontWeight: 900, borderBottom: '2px solid #001a33' }}>الإجمالي (Total)</th>
-                </tr>
-             </thead>
-             <tbody>
-                <tr style={{ borderBottom: '1px solid #eee' }}>
-                   <td style={{ padding: '1.5rem', fontWeight: 700 }}>الخدمات المالية السيادية الاستشارية والتقنية</td>
-                   <td style={{ padding: '1.5rem', fontWeight: 700, textAlign: 'right' }}>{(invoice.amount || 0).toLocaleString()} ر.س</td>
-                   <td style={{ padding: '1.5rem', fontWeight: 700, textAlign: 'right', color: '#d4a76a' }}>{(invoice.vat || invoice.tax_amount || 0).toLocaleString()} ر.س</td>
-                   <td style={{ padding: '1.5rem', fontWeight: 900, textAlign: 'right', fontSize: '1.2rem' }}>{(invoice.total || invoice.total_amount || 0).toLocaleString()} ر.س</td>
-                </tr>
-             </tbody>
-          </table>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', background: '#fcfdfe', padding: '3rem', borderRadius: '16px', border: '1px solid #f1f3f5' }}>
-             <div style={{ display: 'flex', gap: '2rem' }}>
-                <div style={{ width: '180px', background: 'white', padding: '1.2rem', borderRadius: '16px', border: '1px solid #eee', textAlign: 'center' }}>
-                    <QRCodeSVG value={qrData} size={150} level="M" />
-                    <div style={{ fontSize: '0.65rem', fontWeight: 900, marginTop: '1rem', color: '#1b5e20' }}>ZATCA COMPLIANT QR</div>
-                </div>
-                <div style={{ width: '180px', background: '#001a33', padding: '1.2rem', borderRadius: '16px', border: '1px solid #eee', textAlign: 'center' }}>
-                    <QRCodeSVG value={window.location.origin + window.location.pathname + '?invoice_id=' + invoice.id} size={150} level="M" fgColor="#d4a76a" bgColor="#001a33" />
-                    <div style={{ fontSize: '0.65rem', fontWeight: 900, marginTop: '1rem', color: '#d4a76a' }}>PUBLIC SHAREABLE QR</div>
-                </div>
-             </div>
-             <div style={{ width: '350px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontWeight: 700, opacity: 0.7 }}>
-                   <span>الإجمالي الصافي (Gross):</span>
-                   <span>{(invoice.amount || 0).toLocaleString()} ر.س</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontWeight: 700, opacity: 0.7 }}>
-                   <span>ضريبة القيمة المضافة (15%):</span>
-                   <span>{(invoice.vat || invoice.tax_amount || 0).toLocaleString()} ر.س</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.8rem', fontWeight: 950, borderTop: '4px solid #001a33', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                   <span style={{ color: '#001a33' }}>الإجمالي المستحق:</span>
-                   <span style={{ color: '#001a33' }}>{(invoice.total || invoice.total_amount || 0).toLocaleString()} <span style={{ fontSize: '1rem' }}>ر.س</span></span>
-                </div>
-             </div>
+        {/* META GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6mm', marginBottom: '8mm' }}>
+          {/* Supplier */}
+          <div style={{ border: '1px solid #ddd', borderRadius: '3mm', padding: '4mm', background: '#fafafa' }}>
+            <div style={{ fontSize: '7pt', fontWeight: 900, color: '#666', borderBottom: '1px solid #eee', paddingBottom: '2mm', marginBottom: '2mm' }}>المورد / Supplier</div>
+            <div style={{ fontSize: '10pt', fontWeight: 900, color: '#001a33' }}>{companyName}</div>
+            <div style={{ fontSize: '7.5pt', color: '#444', marginTop: '1mm' }}>الرقم الضريبي: <strong>{settings.taxNumber}</strong></div>
+            <div style={{ fontSize: '7.5pt', color: '#444' }}>{settings.address}</div>
           </div>
-
-          <div className="no-print" style={{ marginTop: '50px', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
-             <button onClick={() => window.print()} className="btn-executive" style={{ width: '250px', padding: '1.2rem', fontSize: '1.2rem', fontWeight: 900, border: 'none', boxShadow: '0 10px 30px rgba(0,26,51,0.2)' }}>{t.lang === 'ar' ? 'طباعة الفاتورة (PDF)' : 'Print Invoice'}</button>
-             <button onClick={onWhatsApp} className="btn-executive" style={{ width: '200px', padding: '1.2rem', background: '#25D366', color: 'white', fontWeight: 900, border: 'none' }}>
-                {t.lang === 'ar' ? 'إرسال واتساب' : 'WhatsApp'}
-             </button>
-             <button onClick={onEmail} className="btn-executive" style={{ width: '200px', padding: '1.2rem', background: '#005ab5', color: 'white', fontWeight: 900, border: 'none' }}>
-                {t.lang === 'ar' ? 'إرسال بريد' : 'Email'}
-             </button>
-             <button onClick={onClose} className="btn-executive" style={{ width: '150px', padding: '1.2rem', background: '#f1f3f5', color: '#001a33', fontWeight: 800, border: 'none' }}>{t.lang === 'ar' ? 'إغلاق' : 'Close'}</button>
+          {/* Client */}
+          <div style={{ border: '1px solid #ddd', borderRadius: '3mm', padding: '4mm', background: '#fafafa' }}>
+            <div style={{ fontSize: '7pt', fontWeight: 900, color: '#666', borderBottom: '1px solid #eee', paddingBottom: '2mm', marginBottom: '2mm' }}>العميل / Client</div>
+            <div style={{ fontSize: '10pt', fontWeight: 900, color: '#001a33' }}>{invoice.customers?.name || 'غير محدد'}</div>
+            {invoice.customers?.phone && <div style={{ fontSize: '7.5pt', color: '#444', direction: 'ltr', textAlign: 'right' }}>{invoice.customers.phone}</div>}
           </div>
-       </div>
+          {/* Invoice Info */}
+          <div style={{ border: '1px solid #ddd', borderRadius: '3mm', padding: '4mm', background: '#fafafa' }}>
+            <div style={{ fontSize: '7pt', fontWeight: 900, color: '#666', borderBottom: '1px solid #eee', paddingBottom: '2mm', marginBottom: '2mm' }}>تفاصيل الفاتورة / Details</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt', marginBottom: '1.5mm' }}><span style={{ color: '#666' }}>تاريخ الإصدار:</span><strong>{invoiceDate}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt', marginBottom: '1.5mm' }}><span style={{ color: '#666' }}>الحالة:</span><strong style={{ color: invoice.status === 'paid' ? '#1b5e20' : '#b45309' }}>{invoice.status === 'paid' ? '✓ مدفوعة' : '⏳ بانتظار السداد'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}><span style={{ color: '#666' }}>نسبة الضريبة:</span><strong>{invoice.is_settlement ? '0%' : vatRate + '%'}</strong></div>
+          </div>
+          {/* Cert badge */}
+          <div style={{ border: '2px solid #001a33', borderRadius: '3mm', padding: '4mm', background: '#001a33', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2mm' }}>
+            <div style={{ fontSize: '7pt', color: '#d4a76a', fontWeight: 900, letterSpacing: '1px' }}>ZATCA CERTIFIED</div>
+            <div style={{ fontSize: '9pt', color: 'white', fontWeight: 700, textAlign: 'center' }}>المرحلة الثانية | Phase 2</div>
+            <div style={{ width: '8mm', height: '8mm', background: '#25D366', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10pt', fontWeight: 900 }}>✓</div>
+          </div>
+        </div>
+
+        {/* ITEMS TABLE */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8mm', fontSize: '9pt' }}>
+          <thead>
+            <tr style={{ background: '#001a33', color: 'white' }}>
+              <th style={{ padding: '3mm 4mm', textAlign: 'right', fontWeight: 900 }}>الوصف / Description</th>
+              <th style={{ padding: '3mm 4mm', textAlign: 'center', fontWeight: 900, width: '20mm' }}>كمية</th>
+              <th style={{ padding: '3mm 4mm', textAlign: 'center', fontWeight: 900, width: '32mm' }}>الصافي / Net</th>
+              <th style={{ padding: '3mm 4mm', textAlign: 'center', fontWeight: 900, width: '28mm', color: '#d4a76a' }}>ضريبة / VAT</th>
+              <th style={{ padding: '3mm 4mm', textAlign: 'center', fontWeight: 900, width: '32mm' }}>الإجمالي / Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ borderBottom: '1px solid #ddd', background: '#fafafa' }}>
+              <td style={{ padding: '4mm', fontWeight: 700 }}>
+                {invoice.is_settlement ? 'قيد تسوية وتعديل مالي' : 'خدمات التخليص الجمركي والخدمات اللوجستية'}
+              </td>
+              <td style={{ padding: '4mm', textAlign: 'center', fontWeight: 700 }}>1</td>
+              <td style={{ padding: '4mm', textAlign: 'center', fontWeight: 700 }}>{gross.toLocaleString('ar-SA')} ر.س</td>
+              <td style={{ padding: '4mm', textAlign: 'center', fontWeight: 700, color: '#b45309' }}>{vat.toLocaleString('ar-SA')} ر.س</td>
+              <td style={{ padding: '4mm', textAlign: 'center', fontWeight: 900, fontSize: '11pt', color: '#001a33' }}>{total.toLocaleString('ar-SA')} ر.س</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* TOTALS + QR */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '6mm' }}>
+          {/* QR */}
+          <div style={{ textAlign: 'center', flexShrink: 0 }}>
+            <div style={{ border: '1.5px solid #ddd', borderRadius: '3mm', padding: '3mm', background: 'white', display: 'inline-block' }}>
+              <QRCodeSVG value={qrData} size={100} level="M" />
+            </div>
+            <div style={{ fontSize: '6.5pt', fontWeight: 900, marginTop: '1.5mm', color: '#1b5e20' }}>ZATCA QR CODE</div>
+          </div>
+          {/* Totals */}
+          <div style={{ flex: 1, border: '2px solid #001a33', borderRadius: '4mm', overflow: 'hidden' }}>
+            <div style={{ background: '#f5f7fa', padding: '3mm 5mm', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ddd', fontSize: '9pt' }}>
+              <span style={{ color: '#555', fontWeight: 700 }}>المبلغ قبل الضريبة:</span>
+              <strong>{gross.toLocaleString('ar-SA')} ر.س</strong>
+            </div>
+            <div style={{ background: '#fffbf0', padding: '3mm 5mm', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ddd', fontSize: '9pt' }}>
+              <span style={{ color: '#b45309', fontWeight: 700 }}>ضريبة القيمة المضافة ({invoice.is_settlement ? '0' : vatRate}%):</span>
+              <strong style={{ color: '#b45309' }}>{vat.toLocaleString('ar-SA')} ر.س</strong>
+            </div>
+            <div style={{ background: '#001a33', padding: '4mm 5mm', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#d4a76a', fontWeight: 900, fontSize: '11pt' }}>الإجمالي المستحق:</span>
+              <strong style={{ color: 'white', fontSize: '17pt', fontFamily: 'Tajawal' }}>{total.toLocaleString('ar-SA')} <span style={{ fontSize: '9pt' }}>ر.س</span></strong>
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{ marginTop: '10mm', borderTop: '2px solid #001a33', paddingTop: '4mm', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '7pt', color: '#666', maxWidth: '120mm', lineHeight: 1.5 }}>
+            <strong style={{ color: '#001a33' }}>ملاحظة:</strong> هذه فاتورة ضريبية مبسطة صادرة وفقاً لمتطلبات هيئة الزكاة والضريبة والجمارك.
+            {settings.reportFooter && <span> | {settings.reportFooter}</span>}
+          </div>
+          <div style={{ textAlign: 'left', direction: 'ltr', fontSize: '7pt', color: '#999' }}>
+            <div style={{ fontWeight: 900, color: '#001a33', fontSize: '8pt' }}>{companyName}</div>
+            <div>VAT: {settings.taxNumber}</div>
+            <div style={{ color: '#25D366', fontWeight: 700 }}>ZATCA Phase 2 ✓</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
+

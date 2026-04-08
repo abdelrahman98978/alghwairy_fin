@@ -19,7 +19,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface Transaction {
@@ -54,18 +54,17 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
     date: new Date().toISOString().split('T')[0]
   });
 
-  const fetchFinancialData = useCallback(async () => {
+  const fetchFinancialData = useCallback(() => {
     setIsDataLoading(true);
-    const { data: trxs, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error fetching report data: ' + error.message, 'error');
-    } else if (trxs) {
+    try {
+      const trxs = localDB.getActive('transactions').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
       setTransactions(trxs as Transaction[]);
       let totalRevenue = 0;
       let totalExpenses = 0;
       
       (trxs as Transaction[]).forEach((trx: Transaction) => {
-        if (trx.type === 'income' || trx.type === 'إيراد / فاتورة صاردة') {
+        if (trx.type === 'income' || trx.type === 'إيراد / فاتورة صاردة' || trx.type === 'كاش') {
           totalRevenue += Number(trx.amount || 0);
         } else if (trx.type === 'expense' || trx.type === 'مصروف') {
           totalExpenses += Number(trx.amount || 0);
@@ -78,60 +77,60 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
       // Aggregating data for the chart from actual transactions
       const last6Months: {name: string, revenue: number, expenses: number}[] = [];
+      const now = new Date();
       for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleString(t.lang === 'en' ? 'en-US' : 'ar-SA', { month: 'short' });
-        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthYearPrefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         
         const monthRev = (trxs as Transaction[])
-          .filter((t_obj: Transaction) => (t_obj.type === 'income' || t_obj.type === 'إيراد / فاتورة صاردة') && (t_obj.created_at || '').startsWith(monthKey))
+          .filter((t_obj: Transaction) => (t_obj.type === 'income' || t_obj.type === 'إيراد / فاتورة صاردة' || t_obj.type === 'كاش') && (t_obj.created_at || '').startsWith(monthYearPrefix))
           .reduce((sum: number, t_obj: Transaction) => sum + Number(t_obj.amount || 0), 0);
           
         const monthExp = (trxs as Transaction[])
-          .filter((t_obj: Transaction) => (t_obj.type === 'expense' || t_obj.type === 'مصروف') && (t_obj.created_at || '').startsWith(monthKey))
+          .filter((t_obj: Transaction) => (t_obj.type === 'expense' || t_obj.type === 'مصروف') && (t_obj.created_at || '').startsWith(monthYearPrefix))
           .reduce((sum: number, t_obj: Transaction) => sum + Number(t_obj.amount || 0), 0);
 
         last6Months.push({
           name: monthName,
-          revenue: monthRev || (totalRevenue / 12), // Fallback to average if no data for month to keep chart descriptive
-          expenses: monthExp || (totalExpenses / 12),
+          revenue: monthRev,
+          expenses: monthExp,
         });
       }
       setChartData(last6Months);
+    } catch (err: any) {
+        showToast('Error fetching report data: ' + err.message, 'error');
     }
     setIsDataLoading(false);
   }, [showToast, t.lang]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchFinancialData();
-    };
-    init();
+    fetchFinancialData();
   }, [fetchFinancialData]);
 
-  const handleManualTransaction = async (e: React.FormEvent) => {
+  const handleManualTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualForm.title || !manualForm.amount) {
       showToast('Validation Error: Title and Amount required', 'error');
       return;
     }
 
-    const { error } = await supabase.from('transactions').insert([{
-      trx_number: 'MANU-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-      description: manualForm.title,
-      type: manualForm.type === 'income' ? 'income' : 'expense',
-      amount: parseFloat(manualForm.amount),
-      status: 'مكتمل'
-    }]);
+    try {
+        localDB.insert('transactions', {
+          trx_number: 'MANU-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+          description: manualForm.title,
+          type: manualForm.type === 'income' ? 'income' : 'expense',
+          amount: parseFloat(manualForm.amount),
+          status: 'مكتمل',
+          created_at: new Date(manualForm.date).toISOString()
+        });
 
-    if (error) {
-      showToast('Error recording TRX: ' + error.message, 'error');
-    } else {
-      showToast('Sovereign Transaction recorded.', 'success');
-      setShowAddModal(false);
-      setManualForm({ title: '', amount: '', type: 'income', date: new Date().toISOString().split('T')[0] });
-      fetchFinancialData();
+        showToast(t.lang === 'ar' ? 'تم تسجيل القيد في الأستاذ المحلي' : 'Transaction recorded in local ledger.', 'success');
+        setShowAddModal(false);
+        setManualForm({ title: '', amount: '', type: 'income', date: new Date().toISOString().split('T')[0] });
+        fetchFinancialData();
+    } catch (err: any) {
+        showToast('Error recording TRX: ' + err.message, 'error');
     }
   };
 
@@ -153,7 +152,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sovereign_financial_report_${Date.now()}.csv`);
+    link.setAttribute("download", `alghwairy_report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     showToast(t.print || 'Analytical report exported', 'success');
@@ -164,7 +163,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       <div style={{ height: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
          <div className="spinner-royal"></div>
          <p style={{ color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 900, fontFamily: 'Tajawal' }}>
-            {t.extracting_intelligence || 'Extracting Intelligence...'}
+            {t.extracting_intelligence || 'جاري تحليل البيانات...'}
          </p>
       </div>
     );
@@ -179,7 +178,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={exportReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-             <Download size={18} /> {t.export}
+             <Download size={18} /> {t.export || 'تصدير'}
           </button>
           <button onClick={() => setShowAddModal(true)} className="btn-executive" style={{ border: 'none' }}>
              <Plus size={18} /> {t.manual_trx || 'قيد تسوية جديد'}
@@ -197,20 +196,20 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
          <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--surface-container-high)', paddingBottom: '1.5rem' }}>
                 <div style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '16px', color: 'var(--secondary)' }}><Wallet size={24} /></div>
-                <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.summary_ledger || 'الميزان السيادي العام'}</h3>
+                <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.summary_ledger || 'الميزان العمومي'}</h3>
              </div>
              
              <table className="sovereign-table">
-               <tbody>
-                  <ReportRow label={t.revenue} current={revenue.toLocaleString()} />
-                  <ReportRow label={t.expenses} current={expenses.toLocaleString()} down />
-                  <ReportRow label={t.tax_est} current={(revenue * 0.15).toLocaleString()} down />
-                  <tr style={{ borderTop: '3px solid var(--primary)' }}>
-                     <td style={{ fontWeight: 900, padding: '2rem 0', color: 'var(--primary)', fontSize: '1.1rem' }}>{t.net_position || 'المركز المالي الصافي'}</td>
-                     <td style={{ textAlign: 'right', fontWeight: 950, fontSize: '1.8rem', color: 'var(--primary)' }}>{netProfit.toLocaleString()}</td>
-                     <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.9rem', opacity: 0.6 }}>SAR</td>
-                  </tr>
-               </tbody>
+                <tbody>
+                   <ReportRow label={t.revenue} current={revenue.toLocaleString()} />
+                   <ReportRow label={t.expenses} current={expenses.toLocaleString()} down />
+                   <ReportRow label={t.tax_est} current={(revenue * 0.15).toLocaleString()} down />
+                   <tr style={{ borderTop: '3px solid var(--primary)' }}>
+                      <td style={{ fontWeight: 900, padding: '2rem 0', color: 'var(--primary)', fontSize: '1.1rem' }}>{t.net_position || 'صافي المركز المالي'}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 950, fontSize: '1.8rem', color: 'var(--primary)' }}>{netProfit.toLocaleString()}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.9rem', opacity: 0.6 }}>SAR</td>
+                   </tr>
+                </tbody>
              </table>
          </div>
 
@@ -218,7 +217,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
             <div className="card" style={{ padding: '2.5rem', flex: 1, border: '1px solid var(--surface-container-high)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                   <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', fontWeight: 900, margin: 0 }}>
-                    {t.growth_chart || 'تحليل توزيع الموارد'}
+                    {t.growth_chart || 'تحليل الأداء المالي'}
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.8rem', fontWeight: 700 }}>
                     <Filter size={14} /> {t.lang === 'en' ? 'Last 6 Months' : 'آخر 6 أشهر'}
@@ -251,10 +250,10 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                </div>
                <div>
                  <h4 style={{ color: 'var(--primary)', marginBottom: '0.4rem', fontFamily: 'Tajawal', fontWeight: 900, fontSize: '1.1rem' }}>
-                    {t.compliance_audit || 'ZATKA Financial Audit Certified'}
+                    {t.compliance_audit || 'نظام الرقابة المالية الذاتية'}
                  </h4>
                  <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
-                    {t.compliance_footer || 'جميع الحركات المالية المجمعة متوافقة تماماً مع معايير هيئة الزكاة والضريبة والجمارك (المرحلة الثانية). تجري عمليات تدقيق آلية كل 24 ساعة.'}
+                    {t.compliance_footer || 'جميع التقارير المالية والضريبية يتم إنتاجها وتدقيقها محلياً وفق معايير هيئة الزكاة والضريبة والجمارك (المرحلة الثانية).'}
                  </p>
                </div>
             </div>
@@ -263,14 +262,14 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
       {/* Manual Entry Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
-            <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'قيد تسوية سيادي'}</h3>
+            <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'تسجيل قيد مالي'}</h3>
             
             <form onSubmit={handleManualTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                 <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Transaction Type' : 'نوع العملية'}</label>
+                 <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>نوع العملية</label>
                  <div style={{ display: 'flex', gap: '1rem' }}>
                     <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'income' ? 'var(--success)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'income' ? 'rgba(27, 94, 32, 0.1)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
                        <input type="radio" value="income" checked={manualForm.type === 'income'} onChange={() => setManualForm({...manualForm, type: 'income'})} style={{ display: 'none' }} /> 
@@ -286,24 +285,24 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                </div>
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                 <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.description_placeholder}</label>
+                 <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>الوصف</label>
                  <input required type="text" value={manualForm.title} onChange={e => setManualForm({...manualForm, title: e.target.value})} className="input-executive" style={{ fontWeight: 700 }} />
                </div>
 
                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.amount_placeholder}</label>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>المبلغ</label>
                     <input required type="number" value={manualForm.amount} onChange={e => setManualForm({...manualForm, amount: e.target.value})} className="input-executive" style={{ fontWeight: 900, fontSize: '1.4rem', textAlign: 'center', color: 'var(--primary)', border: '2px solid var(--secondary)' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.lang === 'en' ? 'Entry Date' : 'تاريخ القيد'}</label>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>التاريخ</label>
                     <input required type="date" value={manualForm.date} onChange={e => setManualForm({...manualForm, date: e.target.value})} className="input-executive" style={{ fontWeight: 800 }} />
                   </div>
                </div>
 
                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                 <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none', fontWeight: 800 }}>{t.modal?.cancel ?? (t.lang === 'en' ? 'Cancel' : 'إلغاء')}</button>
-                 <button type="submit" className="btn-executive" style={{ flex: 2, padding: '1.2rem', fontSize: '1.1rem', border: 'none' }}>{t.lang === 'en' ? 'Commit to Ledger' : 'ترحيل إلى الأستاذ'}</button>
+                 <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none', fontWeight: 800 }}>إلغاء</button>
+                 <button type="submit" className="btn-executive" style={{ flex: 2, padding: '1.2rem', fontSize: '1.1rem', border: 'none' }}>ترحيل القيد</button>
                </div>
             </form>
           </div>
@@ -313,16 +312,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
   );
 }
 
-interface MetricBoxProps {
-  title: string;
-  value: string;
-  sub: string;
-  positive?: boolean;
-  icon: React.ReactNode;
-  highlight?: boolean;
-}
-
-function MetricBox({ title, value, sub, positive, icon, highlight }: MetricBoxProps) {
+function MetricBox({ title, value, sub, positive, icon, highlight }: any) {
   return (
     <div className="card" style={highlight ? { background: 'var(--primary)', color: 'white', padding: '2.5rem', border: 'none' } : { padding: '2.5rem', borderInlineStart: `6px solid ${positive ? 'var(--success)' : 'var(--error)'}` }}>
        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -338,13 +328,7 @@ function MetricBox({ title, value, sub, positive, icon, highlight }: MetricBoxPr
   );
 }
 
-interface ReportRowProps {
-  label: string;
-  current: string;
-  down?: boolean;
-}
-
-function ReportRow({ label, current, down }: ReportRowProps) {
+function ReportRow({ label, current, down }: any) {
   return (
     <tr style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
        <td style={{ fontWeight: 800, padding: '1.5rem 0', fontSize: '1rem' }}>{label}</td>

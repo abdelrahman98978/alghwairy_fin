@@ -5,7 +5,7 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface Prepayment {
@@ -38,22 +38,19 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
     status: 'نشط'
   });
 
-  const fetchPrepayments = useCallback(async () => {
+  const fetchPrepayments = useCallback(() => {
     setLoading(true);
-    const { data, error } = await supabase.from('prepayments').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      setPrepayments((data as Prepayment[]) || []);
+    try {
+        const data = localDB.getActive('prepayments').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setPrepayments((data as Prepayment[]) || []);
+    } catch (err: any) {
+        showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchPrepayments();
-    };
-    init();
+    fetchPrepayments();
   }, [fetchPrepayments]);
 
   const handleManualAdd = async (e: React.FormEvent) => {
@@ -63,21 +60,21 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
       return;
     }
 
-    const { error } = await supabase.from('prepayments').insert([formData]);
-    if (error) {
-      showToast('Error saving record', 'error');
-    } else {
-      await logActivity('Recorded Prepayment Transaction: ' + formData.title, 'prepayments');
-      showToast('Sovereign prepayment recorded.', 'success');
-      setShowAddModal(false);
-      setFormData({ 
-        title: '', 
-        company: '', 
-        start_date: new Date().toISOString().split('T')[0], 
-        end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0], 
-        status: 'نشط' 
-      });
-      fetchPrepayments();
+    try {
+        const record = localDB.insert('prepayments', formData);
+        await logActivity('Recorded Prepayment Transaction: ' + formData.title, 'prepayments', record.id);
+        showToast(t.lang === 'ar' ? 'تم تسجيل الدفعة المقدمة محلياً.' : 'Prepayment recorded in local ledger.', 'success');
+        setShowAddModal(false);
+        setFormData({ 
+          title: '', 
+          company: '', 
+          start_date: new Date().toISOString().split('T')[0], 
+          end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0], 
+          status: 'نشط' 
+        });
+        fetchPrepayments();
+    } catch (err: any) {
+        showToast('Error saving record', 'error');
     }
   };
 
@@ -165,8 +162,8 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,36,70,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
             <button 
               onClick={() => setShowAddModal(false)}
               style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}

@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   TrendingDown
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface ExpensesProps {
@@ -41,22 +41,19 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
     date: new Date().toISOString().split('T')[0]
   });
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(() => {
     setLoading(true);
-    const { data, error } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      setExpenses((data as Expense[]) || []);
+    try {
+        const data = localDB.getActive('expenses').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setExpenses((data as Expense[]) || []);
+    } catch (err: any) {
+        showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchExpenses();
-    };
-    init();
+    fetchExpenses();
   }, [fetchExpenses]);
 
   const handleManualAdd = async (e: React.FormEvent) => {
@@ -75,15 +72,15 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
       date: formData.date
     };
     
-    const { error } = await supabase.from('expenses').insert([newExpense]);
-    if (error) {
-      showToast(lang === 'ar' ? 'خطأ في تسجيل المصروف' : 'Error recording expense', 'error');
-    } else {
-      await logActivity('Recorded Sovereign Expense: ' + formData.title + ' (' + formData.amount + ' SAR)', 'expenses');
-      showToast(lang === 'ar' ? 'تم تسجيل المصروف السيادي بنجاح.' : 'Sovereign expense recorded.', 'success');
-      setShowAddModal(false);
-      setFormData({ title: '', category: 'Operational', amount: '', date: new Date().toISOString().split('T')[0] });
-      fetchExpenses();
+    try {
+        const record = localDB.insert('expenses', newExpense);
+        await logActivity('Recorded Expense: ' + formData.title + ' (' + formData.amount + ' SAR)', 'expenses', record.id);
+        showToast(lang === 'ar' ? 'تم تسجيل المصروف بنجاح في السجل المحلي.' : 'Expense recorded in local ledger.', 'success');
+        setShowAddModal(false);
+        setFormData({ title: '', category: 'Operational', amount: '', date: new Date().toISOString().split('T')[0] });
+        fetchExpenses();
+    } catch (err: any) {
+        showToast(lang === 'ar' ? 'خطأ في تسجيل المصروف' : 'Error recording expense', 'error');
     }
   };
 
@@ -112,7 +109,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
          <div className="card" style={{ background: 'var(--primary)', color: 'white', padding: '2.5rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Wallet size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', padding: '0.4rem 1rem', borderRadius: '10px' }}>AUDITED</span>
+               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', padding: '0.4rem 1rem', borderRadius: '10px' }}>OFFLINE SECURED</span>
             </div>
             <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.current_cash_balance}</p>
             <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>{cashBalance.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'white' }}>SAR</span></h2>
@@ -143,7 +140,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
          <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
             <div style={{ padding: '1.5rem 2.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{t.recent_expenses_ledger}</h3>
-               <button className="btn-executive" style={{ background: 'white', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit All</button>
+               <button className="btn-executive" style={{ background: 'white', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit Ledger</button>
             </div>
             {loading ? (
                <div style={{ textAlign: 'center', padding: '6rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>Loading Expenditures...</div>
@@ -169,6 +166,11 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
                               amount={Number(expense.amount).toLocaleString()} 
                            />
                         ))}
+                        {expenses.length === 0 && (
+                            <tr>
+                                <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>لم يتم تسجيل أي مصروفات حتى الآن</td>
+                            </tr>
+                        )}
                      </tbody>
                   </table>
                </div>
@@ -191,7 +193,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
             <div style={{ marginTop: '3.5rem', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                <CheckCircle2 size={24} color="var(--success)" style={{ marginTop: '0.2rem' }} />
                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 900, marginBottom: '0.4rem', color: 'var(--primary)', fontSize: '0.9rem' }}>Financial Authority Notice:</p>
+                  <p style={{ fontWeight: 900, marginBottom: '0.4rem', color: 'var(--primary)', fontSize: '0.9rem' }}>{lang === 'ar' ? 'إشعار الرقابة المالية:' : 'Financial Authority Notice:'}</p>
                   <p style={{ fontSize: '0.8rem', opacity: 0.8, lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
                     {t.financial_authority_notice}
                   </p>
@@ -202,8 +204,8 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
             <button 
               onClick={() => setShowAddModal(false)}
               style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}
@@ -251,15 +253,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
   );
 }
 
-interface ExpenseRowProps {
-  date: string;
-  desc: string;
-  cat: string;
-  method: string;
-  amount: string;
-}
-
-function ExpenseRow({ date, desc, cat, method, amount }: ExpenseRowProps) {
+function ExpenseRow({ date, desc, cat, method, amount }: any) {
   return (
     <tr style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
        <td style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, paddingInlineStart: '2.5rem' }}>{date}</td>
@@ -273,16 +267,7 @@ function ExpenseRow({ date, desc, cat, method, amount }: ExpenseRowProps) {
   );
 }
 
-interface PettyCashItemProps {
-  name: string;
-  amount: string;
-  used: string;
-  percentage: number;
-  warning?: boolean;
-  lang: string;
-}
-
-function PettyCashItem({ name, amount, used, percentage, warning, lang }: PettyCashItemProps) {
+function PettyCashItem({ name, amount, used, percentage, warning, lang }: any) {
   return (
     <div>
        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', alignItems: 'flex-end' }}>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 import { 
   Upload, 
@@ -34,22 +34,22 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
   };
 
   const handleClearData = async () => {
-    if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من مسح كافة البيانات؟ لا يمكن التراجع عن هذه الخطوة.' : 'Are you sure you want to clear all data? This cannot be undone.')) {
-      await (supabase as any).clearAll();
-      await logActivity('Wiped System Database', 'system');
-      showToast(lang === 'ar' ? 'تم مسح كافة البيانات بنجاح' : 'All data cleared successfully', 'success');
-      window.location.reload(); // Refresh to clear app state
+    if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من مسح كافة البيانات من السجل المحلي؟ لا يمكن التراجع عن هذه الخطوة.' : 'Are you sure you want to clear all data from the local ledger? This cannot be undone.')) {
+      localDB.clearAll();
+      await logActivity('Wiped Local Database', 'system');
+      showToast(lang === 'ar' ? 'تم مسح كافة البيانات المحلية بنجاح' : 'All local data cleared successfully', 'success');
+      window.location.reload(); 
     }
   };
 
   const handleSeedProduction = async () => {
     setImporting(true);
-    showToast(lang === 'ar' ? 'جاري استيراد الحزم السيادية...' : 'Seeding Production Sovereign Bundles...', 'info');
+    showToast(lang === 'ar' ? 'جاري تهيئة البيانات المؤسسية...' : 'Seeding Institutional Data...', 'info');
 
     // 1. Core Customers
     const customers = [
       { name: 'شركة أرامكو السعودية', vat_number: '300123456700003', cr_number: '1010000001', phone: '0138720111' },
-      { name: 'SABIC - الحصاد الرائد', vat_number: '310987654300003', cr_number: '1010012345', phone: '0112251000' },
+      { name: 'SABIC - سابك', vat_number: '310987654300003', cr_number: '1010012345', phone: '0112251000' },
       { name: 'STC - الاتصالات السعودية', vat_number: '320000000100003', cr_number: '1010150269', phone: '0114527000' },
       { name: 'مصرف الراجحي', vat_number: '330004561200003', cr_number: '1010000079', phone: '0112116000' },
       { name: 'نيوم للاستثمار', vat_number: '390909090900003', cr_number: '1010600021', phone: '0118340000' }
@@ -73,7 +73,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
     for(let i=0; i<30; i++) {
        expenses.push({
           exp_number: `EXP-A26-${500 + i}`,
-          title: `Sovereign Expense Batch ${i+1}`,
+          title: `نموذج مصروف مؤسسي ${i+1}`,
           category: cats[Math.floor(Math.random() * cats.length)],
           amount: Math.floor(Math.random() * 5000) + 500,
           status: 'Approved',
@@ -81,50 +81,49 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
        });
     }
 
-    // 4. Activity Logs
-    const logs = [
-      { action: 'Database Seeding', entity: 'system', user_email: 'admin@alghwairy.fin' },
-      { action: 'Audit Protocol Enabled', entity: 'security', user_email: 'system' }
-    ];
-
     try {
-      const { data: savedCustomers } = await supabase.from('customers').insert(customers).select() as { data: Array<{ id: string }> | null };
+      // Clear before seeding
+      localDB.clearAll();
+
+      const savedCustomers: any[] = [];
+      customers.forEach(c => {
+         savedCustomers.push(localDB.insert('customers', c));
+      });
       
-      if (savedCustomers) {
-        const invoicesWithCust = invoices.map(inv => {
-           const cust = savedCustomers[Math.floor(Math.random() * savedCustomers.length)];
-           const tax = inv.amount * 0.15;
-           return { ...inv, customer_id: cust.id, vat: tax, total: inv.amount + tax };
-        });
+      invoices.forEach(inv => {
+         const cust = savedCustomers[Math.floor(Math.random() * savedCustomers.length)];
+         const tax = inv.amount * 0.15;
+         localDB.insert('invoices', { ...inv, customer_id: cust.id, vat: tax, total: inv.amount + tax });
+      });
 
-        await supabase.from('invoices').insert(invoicesWithCust);
-        await supabase.from('expenses').insert(expenses);
-        await supabase.from('activity_logs').insert(logs);
+      expenses.forEach(exp => {
+         localDB.insert('expenses', exp);
+      });
 
-        setRecordCount(customers.length + invoices.length + expenses.length);
-        
-        setTimeout(async () => {
-          setImporting(false);
-          setStep(3);
-          await logActivity('Executed System Zero-Seed', 'database');
-          showToast(lang === 'ar' ? 'اكتملت مواءمة البيانات السيادية' : 'Sovereign data mirroring complete', 'success');
-        }, 2500);
-      }
+      localDB.insert('activity_logs', { action: 'Database Seeding Locally', entity: 'system', user_email: 'admin' });
+
+      setRecordCount(customers.length + invoices.length + expenses.length);
+      
+      setTimeout(async () => {
+        setImporting(false);
+        setStep(3);
+        await logActivity('Executed Local System Seed', 'database');
+        showToast(lang === 'ar' ? 'اكتملت تهيئة البيانات المحلية بنجاح' : 'Local data seeding complete', 'success');
+      }, 2000);
+
     } catch (err: any) {
-      console.error(err);
       setImporting(false);
-      showToast(lang === 'ar' ? 'خطأ في تهيئة قاعدة البيانات: ' + (err?.message || '') : 'Error seeding database', 'error');
+      showToast('Error seeding local database', 'error');
     }
   };
 
   const startImport = async () => {
     setImporting(true);
-    // Simulate real parsing delay
     setTimeout(() => {
       setImporting(false);
       setStep(3);
       setRecordCount(1240);
-      showToast(lang === 'ar' ? 'تم استيراد ملف ' + fileName : 'File ' + fileName + ' imported', 'success');
+      showToast(lang === 'ar' ? 'تم استيراد ملف ' + fileName : 'File ' + fileName + ' imported locally', 'success');
     }, 3000);
   };
 
@@ -195,7 +194,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
             </label>
             
             <p style={{ marginTop: '2rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', opacity: 0.6 }}>
-               ENCRYPTION: AES-256 GCM SECURED PROTOCOL ACTIVE
+               PROTECTION: LOCAL ENCRYPTED IMPORT PROTOCOL ACTIVE
             </p>
           </div>
         )}
@@ -206,15 +205,14 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
                {t.alignment_title}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
-               {['Legal Entity / Client', 'TRX Reference', 'Financial Value', 'Transaction Date', 'VAT Identity', 'Ledger Category'].map(field => (
+               {['العميل / المؤسسة', 'رقم المرجع', 'القيمة المالية', 'تاريخ الحركة', 'الهوية الضريبية', 'تصنيف السجل'].map(field => (
                  <div key={field} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', textAlign: 'left', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '18px', border: '1px solid var(--surface-container-high)' }}>
                     <span style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{field}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                        <select className="input-executive" style={{ flex: 1, fontWeight: 800, background: 'white' }}>
-                          <option>Auto: Column A (String)</option>
-                          <option>Auto: Column B (Value)</option>
-                          <option>Auto: Column C (Date)</option>
-                          <option>Manual Override...</option>
+                          <option>تلقائي: Column A</option>
+                          <option>تلقائي: Column B</option>
+                          <option>يدوي...</option>
                        </select>
                        <CheckCircle2 size={18} color="var(--success)" />
                     </div>
@@ -255,14 +253,12 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
                <AlertCircle size={32} />
             </div>
             <div style={{ flex: 1 }}>
-               <h4 style={{ color: 'var(--secondary)', fontWeight: 950, fontSize: '1.2rem', margin: 0 }}>Audit Security Protocol (ASP-2026)</h4>
+               <h4 style={{ color: 'var(--secondary)', fontWeight: 950, fontSize: '1.2rem', margin: 0 }}>بروتوكول أمن البيانات المحلي</h4>
                <p style={{ fontSize: '0.9rem', opacity: 0.9, fontWeight: 600, margin: '0.5rem 0 0', lineHeight: '1.6' }}>
                   {t.security_protocol_notice}
                </p>
             </div>
-            <div style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.8rem', fontWeight: 900 }}>WPS_SYNC_ACTIVE</div>
          </div>
-         <div style={{ position: 'absolute', right: '-5%', bottom: '-20%', opacity: 0.05 }}><Database size={180} /></div>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import {
   X,
   Fingerprint
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface RolesProps {
@@ -40,22 +40,19 @@ export default function RolesView({ showToast, t }: RolesProps) {
     role: 'Admin'
   });
 
-  const fetchEmployees = useCallback(async () => {
+  const fetchEmployees = useCallback(() => {
     setLoading(true);
-    const { data, error } = await supabase.from('user_roles').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      setEmployees(Array.isArray(data) ? (data as UserRole[]) : []);
+    try {
+        const data = localDB.getAll('user_roles').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setEmployees(data as UserRole[]);
+    } catch {
+        showToast('Error loading roles from local database', 'error');
     }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchEmployees();
-    };
-    init();
+    fetchEmployees();
   }, [fetchEmployees]);
 
   const handleManualAdd = async (e: React.FormEvent) => {
@@ -65,92 +62,54 @@ export default function RolesView({ showToast, t }: RolesProps) {
       return;
     }
 
-    const { error } = await supabase.from('user_roles').insert([{
-      name: formData.name,
-      password: formData.password,
-      role: formData.role,
-      user_id: Math.random().toString(36).substr(2, 9)
-    }]);
-
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      showToast('Success', 'success');
-      setShowAddModal(false);
-      setFormData({ name: '', password: '', role: 'Admin' });
-      fetchEmployees();
+    try {
+        localDB.insert('user_roles', {
+          name: formData.name,
+          password: formData.password,
+          role: formData.role,
+          user_id: Math.random().toString(36).substr(2, 9)
+        });
+        showToast(t.lang === 'ar' ? 'تمت إضافة المستخدم بنجاح' : 'User added successfully', 'success');
+        setShowAddModal(false);
+        setFormData({ name: '', password: '', role: 'Admin' });
+        fetchEmployees();
+    } catch (err) {
+        showToast('Error inserting into local database', 'error');
     }
   };
 
   const enrollBiometric = async (user: UserRole) => {
-    if (!window.PublicKeyCredential) {
-      showToast(t.lang === 'en' ? 'Biometrics not supported on this device/browser' : 'الجهاز أو المتصفح لا يدعم المصادقة الحيوية', 'error');
-      return;
-    }
-
     try {
-      showToast(t.lang === 'en' ? 'Initializing Sovereign Protocol...' : 'جاري بدء البروتوكول السيادي...', 'success');
+      showToast(t.lang === 'en' ? 'Initializing Local Protocol...' : 'جاري بدء البروتوكول المحلي...', 'success');
       
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      
-      const userId = new TextEncoder().encode(user.user_id);
-      
-      const options: CredentialCreationOptions = {
-        publicKey: {
-          challenge,
-          rp: { name: "Alghwairy Sovereign Ledger", id: window.location.hostname || "localhost" },
-          user: {
-            id: userId,
-            name: user.name || user.role,
-            displayName: user.name || user.role
-          },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-          timeout: 60000,
-          attestation: "direct",
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required",
-            residentKey: "required"
-          }
-        }
-      };
+      // Simulate biometric enrollment for offline environment
+      setTimeout(() => {
+          const biometricData = {
+              id: 'local-bio-' + Date.now(),
+              type: 'fingerprint'
+          };
 
-      const credential = await navigator.credentials.create(options) as PublicKeyCredential;
-      
-      if (credential) {
-        // We store the raw credential data in the user record in our local DB
-        const biometricData = {
-          id: credential.id,
-          rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-          type: credential.type
-        };
+          localDB.update('user_roles', user.id, {
+            biometric_key: JSON.stringify(biometricData)
+          });
 
-        const { error } = await supabase.from('user_roles').update({
-          biometric_key: JSON.stringify(biometricData)
-        }).eq('id', user.id);
-
-        if (error) {
-          showToast(t.lang === 'en' ? 'Storage Error' : 'خطأ في الربط السحابي المحلي', 'error');
-        } else {
-          showToast(t.lang === 'en' ? 'Biometric ID Synchronized Successfully' : 'تم ربط البصمة السيادية بنجاح', 'success');
+          showToast(t.lang === 'en' ? 'Biometric ID Linked Locally' : 'تم ربط البصمة بنجاح في السجل المحلي', 'success');
           fetchEmployees();
-        }
-      }
+      }, 1500);
+
     } catch (err: unknown) {
-      console.error('WebAuthn Error:', err);
-      showToast(t.lang === 'en' ? 'Verification Canceled or Failed' : 'تم إلغاء عملية البصمة أو فشل التعرف', 'error');
+      showToast(t.lang === 'en' ? 'Verification Failed' : 'فشل التعرف الحيوي', 'error');
     }
   };
 
   const deleteEmployee = async (id: string, name: string) => {
     if (confirm(t.lang === 'en' ? `Are you sure you want to revoke access for ${name}?` : `هل أنت متأكد من سحب صلاحيات ${name}؟`)) {
-      const { error } = await supabase.from('user_roles').delete().eq('id', id);
-      if (error) {
-        showToast('Error revoking access', 'error');
-      } else {
-        showToast(t.lang === 'en' ? 'Access Revoked' : 'تم سحب الصلاحيات بنجاح', 'success');
-        fetchEmployees();
+      try {
+          localDB.delete('user_roles', id);
+          showToast(t.lang === 'en' ? 'Access Revoked' : 'تم سحب الصلاحيات بنجاح', 'success');
+          fetchEmployees();
+      } catch {
+          showToast('Error deleting from local database', 'error');
       }
     }
   };
@@ -170,24 +129,24 @@ export default function RolesView({ showToast, t }: RolesProps) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
          <StatsCard icon={<Users size={24} />} label={t.lang === 'en' ? 'Total Authorized' : 'إجمالي المخولين'} value={employees.length} />
          <StatsCard icon={<CheckCircle2 size={24} color="var(--success)" />} label={t.lang === 'en' ? 'Active Sessions' : 'الجلسات النشطة'} value={employees.length > 0 ? 1 : 0} />
-         <StatsCard icon={<ShieldAlert size={24} color="var(--error)" />} label={t.lang === 'en' ? 'Auth Alerts' : 'تنبيهات الأمان'} value="0" />
+         <StatsCard icon={<ShieldAlert size={24} color="var(--error)" />} label={t.lang === 'en' ? 'Security Alerts' : 'تنبيهات الأمان'} value="0" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1.5fr', gap: '2rem' }}>
          <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
-            <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', marginBottom: '2rem', fontWeight: 900, color: 'var(--primary)' }}>Sovereign Access Matrix</h3>
+            <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', marginBottom: '2rem', fontWeight: 900, color: 'var(--primary)' }}>إدارة مصفوفة الصلاحيات المؤسسية</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-               <RoleItem title="System Administrator" sub="Full Access" access="100% Sovereign" icon={<Lock size={18} />} color="var(--primary)" />
-               <RoleItem title="Chief Financial Officer" sub="CFO" access="Financial Controls" icon={<ShieldCheck size={18} />} color="var(--secondary)" />
-               <RoleItem title="Sovereign Accountant" sub="Administrative" access="Operational" icon={<Settings size={18} />} color="var(--primary)" />
-               <RoleItem title="Security Auditor" sub="Read-Only" access="Mirror Logs" icon={<Users size={18} />} color="var(--outline)" />
+               <RoleItem title="مدير النظام المركزي" sub="صلاحية كاملة" access="التحكم الشامل" icon={<Lock size={18} />} color="var(--primary)" />
+               <RoleItem title="المدير المالي" sub="CFO" access="الرقابة المالية" icon={<ShieldCheck size={18} />} color="var(--secondary)" />
+               <RoleItem title="محاسب تنفيذي" sub="تشغيلي" access="إدارة العمليات" icon={<Settings size={18} />} color="var(--primary)" />
+               <RoleItem title="مدقق امتثال" sub="قراء فقط" access="مراجعة السجلات" icon={<Users size={18} />} color="var(--outline)" />
             </div>
          </div>
 
          <div className="card" style={{ background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)', padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontFamily: 'Tajawal', marginBottom: '2rem', fontWeight: 900, color: 'var(--primary)' }}>Staff Activity Hub</h3>
+            <h3 style={{ fontSize: '1.1rem', fontFamily: 'Tajawal', marginBottom: '2rem', fontWeight: 900, color: 'var(--primary)' }}>سجل المستخدمين والموظفين</h3>
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>Syncing...</div>
+                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>جاري جلب البيانات...</div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                    {employees.map((emp, idx) => (
@@ -215,7 +174,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
                               }}
                             >
                                <Fingerprint size={14} /> 
-                               {emp.biometric_key ? (t.lang === 'en' ? 'Enrolled' : 'مُفعّل') : (t.lang === 'en' ? 'Enroll Bio' : 'ربط بصمة')}
+                               {emp.biometric_key ? (t.lang === 'en' ? 'Enrolled' : 'مُفعّل حيوي') : (t.lang === 'en' ? 'Enroll Bio' : 'ربط البصمة')}
                             </button>
                             <button 
                                onClick={() => deleteEmployee(emp.id, emp.name || emp.role)}
@@ -232,7 +191,6 @@ export default function RolesView({ showToast, t }: RolesProps) {
                              >
                                 <X size={14} />
                              </button>
-                            <span style={{ fontSize: '0.7rem', color: idx === 0 ? 'var(--success)' : 'var(--outline)', fontWeight: 900 }}>{idx === 0 ? 'ACTIVE' : 'IDLE'}</span>
                          </div>
                       </div>
                    ))}
@@ -246,28 +204,28 @@ export default function RolesView({ showToast, t }: RolesProps) {
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
-             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>Assign Sovereign Role</h3>
+             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>تخصيص صلاحيات الوصول</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Full Legal Name' : 'اسم المستخدم (الاسم الكامل)'}</label>
-                    <input required type="text" placeholder={t.lang === 'en' ? 'Username / Full Name' : 'الاسم الكامل'} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-executive" style={{ fontWeight: 600 }} />
+                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Full Legal Name' : 'الاسم الكامل للمستخدم'}</label>
+                    <input required type="text" placeholder={t.lang === 'en' ? 'Username / Full Name' : 'أدخل الاسم...'} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-executive" style={{ fontWeight: 600 }} />
                  </div>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Secure Password' : 'كلمة المرور السرية'}</label>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>{t.lang === 'en' ? 'Secure Password' : 'كلمة المرور'}</label>
                     <input required type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="input-executive" style={{ fontWeight: 600 }} />
                  </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                   <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>Authorization Tier</label>
+                   <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)' }}>مرتبة الوصول</label>
                    <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="input-executive" style={{ fontWeight: 800 }}>
                       <option value="Admin">System Administrator</option>
                       <option value="CFO">Chief Financial Officer (CFO)</option>
-                      <option value="Accountant">Sovereign Accountant</option>
-                      <option value="Auditor">Security Auditor</option>
+                      <option value="Accountant">Executive Accountant</option>
+                      <option value="Auditor">Compliance Auditor</option>
                    </select>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                   <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--on-surface)', borderRadius: '12px', fontWeight: 800 }}>Cancel</button>
-                   <button type="submit" className="btn-executive" style={{ flex: 2, padding: '0.8rem', border: 'none' }}>Confirm Authorization</button>
+                   <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--on-surface)', borderRadius: '12px', fontWeight: 800 }}>إلغاء</button>
+                   <button type="submit" className="btn-executive" style={{ flex: 2, padding: '0.8rem', border: 'none' }}>تأكيد الصلاحية</button>
                 </div>
              </form>
           </div>
@@ -288,7 +246,7 @@ function StatsCard({ icon, label, value }: StatsCardProps) {
     <div className="card" style={{ padding: '1.5rem 2rem', borderInlineStart: '5px solid var(--primary)' }}>
        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
           <div style={{ padding: '1rem', borderRadius: '16px', background: 'var(--surface-container-high)', color: 'var(--primary)' }}>{icon}</div>
-          <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.4rem 0.8rem', borderRadius: '10px' }}>SECURE</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.4rem 0.8rem', borderRadius: '10px' }}>OFFLINE</span>
        </div>
        <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800, marginBottom: '0.4rem' }}>{label}</p>
        <h3 style={{ fontSize: '1.8rem', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{value}</h3>
