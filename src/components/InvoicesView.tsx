@@ -597,7 +597,7 @@ function InvoicePreviewModal({ invoice, onClose, onWhatsApp, onEmail, onPrint, t
       {/* A4 Invoice */}
       <div className="print-content" dir="rtl" style={{
         width: '210mm', minHeight: '297mm', background: 'white',
-        margin: '1.5rem auto 4rem', padding: '14mm 16mm',
+        margin: '0 auto 4rem', padding: '14mm 16mm',
         boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
         fontFamily: "'Tajawal','Cairo',sans-serif", color: '#111',
         boxSizing: 'border-box' as const
