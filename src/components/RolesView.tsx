@@ -11,6 +11,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
+import { biometricService } from '../lib/biometricService';
 import { ALL_MODULES } from '../lib/permissions';
 import type { Translations } from '../types/translations';
 
@@ -114,42 +115,41 @@ export default function RolesView({ showToast, t }: RolesProps) {
   };
 
   const enrollBiometric = async (user: UserRole) => {
+    if (!biometricService.isSupported()) {
+        showToast(t.lang === 'en' ? 'Biometrics not supported' : 'جهازك لا يدعم البصمة', 'error');
+        return;
+    }
+    
     setTargetUser(user);
     setIsScanning(true);
-    setScanProgress(0);
+    setScanProgress(30);
     
-    // Animate scan progress
-    const interval = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 5;
+    try {
+      // Trigger REAL Windows Hello Enrollment
+      const bioResult = await biometricService.enroll(user.name || 'Staff');
+      setScanProgress(100);
+      
+      const biometricData = {
+        id: bioResult.id,
+        rawId: bioResult.rawId,
+        type: 'windows-hello',
+        date: new Date().toISOString()
+      };
+
+      localDB.update('user_roles', user.id, {
+        biometric_key: JSON.stringify(biometricData)
       });
-    }, 100);
 
-    setTimeout(() => {
-      try {
-        const biometricData = {
-          id: 'local-bio-' + Date.now(),
-          type: 'fingerprint',
-          hash: Math.random().toString(36).substring(7)
-        };
-
-        localDB.update('user_roles', user.id, {
-          biometric_key: JSON.stringify(biometricData)
-        });
-
-        showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة بنجاح', 'success');
-        setIsScanning(false);
-        setTargetUser(null);
-        fetchData();
-      } catch {
-        setIsScanning(false);
-        showToast('Scanning Error', 'error');
-      }
-    }, 2500);
+      showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة الحقيقية بنجاح', 'success');
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      showToast(t.lang === 'en' ? 'Enrollment Cancelled or Failed' : 'تم إلغاء أو فشل تسجيل البصمة', 'error');
+    } finally {
+      setIsScanning(false);
+      setTargetUser(null);
+      setScanProgress(0);
+    }
   };
 
   const deleteEmployee = async (id: string, name: string) => {

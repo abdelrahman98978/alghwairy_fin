@@ -12,6 +12,7 @@ import {
   Database
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
+import { biometricService } from '../lib/biometricService';
 
 export default function LoginView({ onLogin }: { onLogin: (role: string, name: string) => void }) {
   const [username, setUsername] = useState('عبدالله الغويري');
@@ -98,28 +99,35 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
     setError('');
     try {
       const users = localDB.getActive('user_roles');
-      const bioUsers = users.filter((u: any) => u.biometric_key);
+      const userRecord = users.find((u: any) => u.name === username);
 
-      if (bioUsers.length === 0) {
-        setError('لا يوجد مستخدمون مسجلون بالبصمة حالياً. قم بربط البصمة من الإعدادات أولاً.');
+      if (!userRecord || !userRecord.biometric_key) {
+        setError('لم يتم تفعيل البصمة لهذا المستخدم بعد.');
         return;
       }
 
+      const bioData = JSON.parse(userRecord.biometric_key);
       setShowBiometric(true);
       setScanStatus('scanning');
       
-      // Simulate biometric check in offline environment
-      setTimeout(() => {
+      // Use rawId for robust verification
+      const isVerified = await biometricService.verify(bioData.rawId || bioData.id);
+      
+      if (isVerified) {
         setScanStatus('success');
         setTimeout(() => {
-          onLogin(bioUsers[0].role || 'admin', bioUsers[0].name || 'Administrator');
+          onLogin(userRecord.role || 'admin', username);
           setShowBiometric(false);
         }, 800);
-      }, 2000);
+      } else {
+        setScanStatus('failed');
+        setError('فشل التحقق عبر البصمة.');
+        setTimeout(() => setShowBiometric(false), 2000);
+      }
 
     } catch (err: any) {
       setScanStatus('failed');
-      setError('فشل التوثيق الحيوي المحلي.');
+      setError('خطأ في التواصل مع حساس البصمة.');
       setTimeout(() => setShowBiometric(false), 2000);
     }
   };

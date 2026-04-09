@@ -21,6 +21,7 @@ import {
   Monitor
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
+import { biometricService } from '../lib/biometricService';
 
 import type { Translations } from '../types/translations';
 
@@ -104,22 +105,33 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
   };
 
   const enrollBiometric = async () => {
+    if (!biometricService.isSupported()) {
+        showToast(t.lang === 'en' ? 'Biometrics not supported' : 'جهازك لا يدعم البصمة', 'error');
+        return;
+    }
     setIsEnrolling(true);
     try {
-      setTimeout(async () => {
-          const bioData = { id: 'local-bio-' + Date.now(), type: 'fingerprint', date: new Date().toISOString() };
-          const users = localDB.findBy('user_roles', 'name', userName);
-          if (users.length > 0) {
-              localDB.update('user_roles', users[0].id, { biometric_key: JSON.stringify(bioData) });
-          } else {
-              localDB.insert('user_roles', { name: userName, role: 'admin', biometric_key: JSON.stringify(bioData) });
-          }
-          await logActivity('Enrolled Biometric ID Locally', 'security', bioData.id);
-          showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة محلياً بنجاح', 'success');
-          setIsEnrolling(false);
-      }, 2000);
-    } catch (err) {
-      showToast(t.lang === 'en' ? 'Enrollment Failed' : 'فشل تسجيل البصمة', 'error');
+      const bioResult = await biometricService.enroll(userName);
+      const bioData = { 
+        id: bioResult.id, 
+        rawId: bioResult.rawId, 
+        type: 'windows-hello', 
+        date: new Date().toISOString() 
+      };
+      
+      const users = localDB.findBy('user_roles', 'name', userName);
+      if (users.length > 0) {
+          localDB.update('user_roles', users[0].id, { biometric_key: JSON.stringify(bioData) });
+      } else {
+          localDB.insert('user_roles', { name: userName, role: 'admin', biometric_key: JSON.stringify(bioData) });
+      }
+      
+      await logActivity('Enrolled REAL Biometric ID (Windows Hello)', 'security', bioResult.id);
+      showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة الحقيقية بنجاح', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast(t.lang === 'en' ? 'Enrollment Cancelled or Failed' : 'تم إلغاء أو فشل تسجيل البصمة', 'error');
+    } finally {
       setIsEnrolling(false);
     }
   };
@@ -147,6 +159,27 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
   };
 
   const wipeSystem = async () => {
+    // Check if biometric verification is required
+    const users = localDB.findBy('user_roles', 'name', userName);
+    if (users.length > 0 && users[0].biometric_key) {
+        try {
+            const bioData = JSON.parse(users[0].biometric_key);
+            showToast(t.lang === 'en' ? 'Authenticating via Windows Hello...' : 'جاري التحقق عبر البصمة الجمركية...', 'info');
+            
+            // Fix: Use rawId or fallback to id for robust verification
+            const isVerified = await biometricService.verify(bioData.rawId || bioData.id);
+            
+            if (!isVerified) {
+                showToast(t.lang === 'en' ? 'Biometric Authentication Failed' : 'فشل التحقق من الهوية الحيوية', 'error');
+                return;
+            }
+        } catch (err) {
+            console.error('Biometric parse error:', err);
+            showToast('خطأ في بيانات البصمة المسجلة', 'error');
+            return;
+        }
+    }
+
     setLoading(true);
     try {
       await logActivity('SYSTEM_WIPE', 'system', 'all_data_deleted');

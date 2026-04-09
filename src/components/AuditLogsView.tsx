@@ -13,7 +13,8 @@ import {
   Settings,
   CreditCard,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Fingerprint
 } from 'lucide-react';
 
 interface Props {
@@ -54,6 +55,7 @@ export default function AuditLogsView({ showToast, t }: Props) {
     if (act.includes('add') || act.includes('insert') || act.includes('issue')) return <Plus size={14} className="text-success" />;
     if (act.includes('delete') || act.includes('revoke') || act.includes('trash')) return <Trash2 size={14} className="text-error" />;
     if (act.includes('login') || act.includes('auth') || act.includes('shield')) return <ShieldCheck size={14} className="text-primary" />;
+    if (act.includes('biometric') || act.includes('fingerprint')) return <Fingerprint size={14} className="text-secondary" />;
     if (act.includes('payment') || act.includes('trx') || act.includes('financial')) return <CreditCard size={14} className="text-secondary" />;
     if (act.includes('settings') || act.includes('update')) return <Settings size={14} className="text-on-surface-variant" />;
     return <Activity size={14} />;

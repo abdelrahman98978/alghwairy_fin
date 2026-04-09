@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "مؤسسة الغويري للتخليص الجمركي - المنظومة السيادية",
-  "author": "Alghwairy",
+  "author": "Alghwairy Sovereign Finance",
   "main": "main.cjs",
   "type": "module",
   "scripts": {
@@ -39,12 +39,6 @@
       "assets/**/*",
       "ALGHWAIRY_SOVEREIGN_MANUAL.md"
     ],
-    "win": {
-      "target": "nsis",
-      "publish": null,
-      "icon": "assets/icon.png",
-      "requestedExecutionLevel": "requireAdministrator"
-    },
     "nsis": {
       "oneClick": false,
       "allowElevation": true,
@@ -55,8 +49,13 @@
       "shortcutName": "مؤسسة الغويري للتخليص الجمركي",
       "artifactName": "Alghwairy-Customs-Clearance-Setup-${version}.${ext}"
     },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
     "asar": true,
-    "copyright": "Copyright © 2026 Alghwairy Financial Hub"
+    "copyright": "Copyright © 2026 Alghwairy Customs Clearance Institution"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
