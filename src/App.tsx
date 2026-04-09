@@ -1786,6 +1786,25 @@ function NavItem({ icon, label, active, onClick, lang, isCollapsed, badge }: Nav
     >
       {icon}
       {!isCollapsed && <span style={{ transition: 'opacity 0.2s' }}>{label}</span>}
+      {badge && badge !== 0 && (
+         <span style={{
+            position: 'absolute',
+            top: '4px',
+            [lang === 'ar' ? 'left' : 'right']: isCollapsed ? '-4px' : '8px',
+            background: 'var(--secondary)',
+            color: 'var(--primary)',
+            fontSize: '0.65rem',
+            fontWeight: 950,
+            padding: '2px 6px',
+            borderRadius: '10px',
+            minWidth: '18px',
+            textAlign: 'center',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            zIndex: 10
+         }}>
+            {badge}
+         </span>
+      )}
       {(active && !isCollapsed) && <ArrowUpRight size={14} style={{ [lang === 'ar' ? 'marginRight' : 'marginLeft']: 'auto', opacity: 0.5 }} />}
     </button>
   );
