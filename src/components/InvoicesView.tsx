@@ -52,6 +52,14 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
     setCustomers(custs);
   }, []);
 
+  const handleMarkPaid = useCallback((invoiceId: string) => {
+    localDB.update('invoices', invoiceId, { status: 'paid' });
+    logActivity('Marked Invoice as Paid', 'invoices', invoiceId);
+    showToast('تم تحديث حالة الفاتورة إلى مدفوعة ✓', 'success');
+    loadData();
+    setShowPreviewModal(false);
+  }, [loadData, logActivity, showToast]);
+
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleCreate = (e: React.FormEvent) => {
@@ -264,7 +272,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 
       {/* Preview Modal */}
       {showPreviewModal && selectedInvoice && (
-        <InvoicePreview invoice={selectedInvoice} settings={settings} onClose={() => setShowPreviewModal(false)} />
+        <InvoicePreview invoice={selectedInvoice} settings={settings} onClose={() => setShowPreviewModal(false)} onMarkPaid={handleMarkPaid} />
       )}
     </div>
   );
@@ -295,7 +303,7 @@ function KPICard({ title, value, icon, color }: { title: string; value: number; 
   );
 }
 
-function InvoicePreview({ invoice, settings, onClose }: { invoice: Invoice; settings: any; onClose: () => void }) {
+function InvoicePreview({ invoice, settings, onClose, onMarkPaid }: { invoice: Invoice; settings: any; onClose: () => void; onMarkPaid?: (id: string) => void }) {
   const sovereignQRData = JSON.stringify({
     op: invoice.operation_number || invoice.id,
     client: invoice.customers?.name || 'Customer',
@@ -333,20 +341,84 @@ function InvoicePreview({ invoice, settings, onClose }: { invoice: Invoice; sett
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  const handleExportXML = () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_2.2</cbc:CustomizationID>
+  <cbc:ID>${invoice.operation_number || invoice.reference_number}</cbc:ID>
+  <cbc:IssueDate>${new Date(invoice.created_at).toISOString().split('T')[0]}</cbc:IssueDate>
+  <cbc:InvoiceTypeCode>388</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>${settings.companyName}</cbc:Name></cac:PartyName>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${settings.taxNumber}</cbc:CompanyID>
+        <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>${invoice.customers?.name || 'Customer'}</cbc:Name></cac:PartyName>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SAR">${(invoice.vat || 0).toFixed(2)}</cbc:TaxAmount>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="SAR">${invoice.amount.toFixed(2)}</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">${invoice.amount.toFixed(2)}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">${invoice.total.toFixed(2)}</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="SAR">${invoice.total.toFixed(2)}</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SAR">${invoice.amount.toFixed(2)}</cbc:LineExtensionAmount>
+    <cac:Item><cbc:Description>خدمات التخليص الجمركي واللوجستي</cbc:Description></cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="SAR">${invoice.amount.toFixed(2)}</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>`;
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `ZATCA-UBL2-${invoice.operation_number || invoice.id}.xml`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="modal-overlay invoice-print-overlay" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir="rtl">
       {/* Toolbar */}
-      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Printer size={20} /> طباعة الفاتورة كاملة
+      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1rem', display: 'flex', justifyContent: 'center', gap: '0.8rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Printer size={20} /> طباعة الفاتورة
         </button>
-        <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <MessageCircle size={20} /> إرسال واتساب
+        <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <MessageCircle size={20} /> واتساب
         </button>
-        <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Mail size={20} /> إرسال إيميل
+        <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Mail size={20} /> إيميل
         </button>
-        <button onClick={onClose} className="btn-executive" style={{ background: 'var(--error)', color: 'white', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <button onClick={handleExportXML} className="btn-executive" style={{ background: 'rgba(49, 130, 206, 0.15)', color: '#3182ce', border: '1px solid #3182ce', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Download size={20} /> UBL 2.1 XML
+        </button>
+        {invoice.status !== 'paid' && onMarkPaid && (
+          <button onClick={() => onMarkPaid(invoice.id)} className="btn-executive" style={{ background: 'rgba(27, 94, 32, 0.12)', color: 'var(--success)', border: '1px solid var(--success)', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <CheckCircle2 size={20} /> تحديد كمدفوعة
+          </button>
+        )}
+        {invoice.status === 'paid' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.9rem 1.5rem', background: 'rgba(27, 94, 32, 0.1)', borderRadius: '12px', color: 'var(--success)', fontWeight: 900 }}>
+            <CheckCircle2 size={18} /> مدفوعة
+          </div>
+        )}
+        <button onClick={onClose} className="btn-executive" style={{ background: 'var(--error)', color: 'white', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <X size={20} /> إغلاق
         </button>
       </div>

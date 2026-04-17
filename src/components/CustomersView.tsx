@@ -441,13 +441,60 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 }
 
 function CustomerProfile({ customer, invoices, onBack }: any) {
+  const totalRevenue = invoices.reduce((sum: number, i: any) => sum + (i.total || 0), 0);
+  const totalProfit  = invoices.reduce((sum: number, i: any) => sum + (i.profit || 0), 0);
+  const paidCount    = invoices.filter((i: any) => i.status === 'paid').length;
+
+  const handleWhatsApp = () => {
+    const text = `*مؤسسة الغويري للتخليص الجمركي*\n\nعزيزنا العميل: ${customer.name}\nإجمالي عملياتكم: ${totalRevenue.toLocaleString()} ر.س\nالفواتير المدفوعة: ${paidCount} من ${invoices.length}\n\nنسعد بخدمتكم دائماً.`;
+    const phone = (customer.phone || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleEmail = () => {
+    const subject = `كشف حساب - ${customer.name}`;
+    const body = `عزيزنا العميل: ${customer.name}\n\nإجمالي الإيرادات: ${totalRevenue.toLocaleString()} ر.س\nصافي الربح: ${totalProfit.toLocaleString()} ر.س\nعدد الفواتير: ${invoices.length}\n\nمع التحية،\nمؤسسة الغويري`;
+    window.location.href = `mailto:${customer.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   return (
      <div className="slide-in">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-           <button onClick={onBack} className="btn-executive" style={{ padding: '0.6rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
-              <ArrowRight size={20} />
-           </button>
-           <h2 className="view-title" style={{ margin: 0 }}>ملف العميل/الشريك: {customer.name}</h2>
+        {/* Back Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button onClick={onBack} className="btn-executive" style={{ padding: '0.6rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
+                 <ArrowRight size={20} />
+              </button>
+              <h2 className="view-title" style={{ margin: 0 }}>ملف العميل/الشريك: {customer.name}</h2>
+           </div>
+           <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                 <MessageCircle size={16} /> واتساب
+              </button>
+              <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                 <FileText size={16} /> بريد إلكتروني
+              </button>
+           </div>
+        </div>
+
+        {/* Financial Summary KPIs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
+           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--primary)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>إجمالي الإيرادات</p>
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{totalRevenue.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></h3>
+           </div>
+           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--success)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>صافي الأرباح</p>
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--success)', fontFamily: 'Tajawal', fontWeight: 900 }}>{totalProfit.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></h3>
+           </div>
+           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--secondary)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>عدد الفواتير</p>
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{invoices.length} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>فاتورة</span></h3>
+           </div>
+           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--error)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>الفواتير المدفوعة</p>
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{paidCount} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>/ {invoices.length}</span></h3>
+           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}>
@@ -485,7 +532,7 @@ function CustomerProfile({ customer, invoices, onBack }: any) {
 
            {/* Invoices List */}
            <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
-              <div style={{ padding: '1.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyItems: 'space-between', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '1.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                  <h3 style={{ margin: 0, fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>الفواتير والعمليات المرتبطة</h3>
                  <span style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.3rem 0.8rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 900 }}>{invoices.length} فواتير</span>
               </div>
