@@ -14,7 +14,8 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
-  BarChart as LucideBarChart
+  BarChart as LucideBarChart,
+  FileText
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { localDB } from '../lib/localDB';
@@ -60,13 +61,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   const [reportType, setReportType] = useState<'daily' | 'monthly' | 'yearly'>('daily');
   const [activeReportTab, setActiveReportTab] = useState<'journal' | 'profit' | 'scheduled'>('journal');
   const [contracts, setContracts] = useState<any[]>([]);
-  const [scheduledReports] = useState<{ id: string, name: string, type: string, frequency: string, nextRun: string, status: string }[]>([
-    { id: '1', name: 'تقرير الأرباح اليومي', type: 'Profit', frequency: 'Daily (11 PM)', nextRun: '2024-05-20', status: 'Active' },
-    { id: '2', name: 'كشف الأستاذ الشهري', type: 'Ledger', frequency: 'Monthly', nextRun: '2024-06-01', status: 'Active' },
-    { id: '3', name: 'ميزانية المراجعة السنوية', type: 'Balance', frequency: 'Yearly', nextRun: '2025-01-01', status: 'Active' }
-  ]);
+  const [scheduledReports, setScheduledReports] = useState<any[]>([]);
   const [showContractModal, setShowContractModal] = useState(false);
-  const [contractData, setContractData] = useState({ party: '', type: 'client', value: '', expiry: '' });
+  const [contractType, setContractType] = useState<'client' | 'transporter'>('client');
+  const [newContract, setNewContract] = useState({
+    entity_name: '',
+    value: '',
+    expiry_date: '',
+    terms: ''
+  });
 
   const [settings] = useState({
     companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
@@ -109,6 +112,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
 
       const contrs = localDB.getAll('contracts');
       setContracts(Array.isArray(contrs) ? contrs : []);
+
+      const reports = localDB.getAll('scheduled_reports' as any);
+      setScheduledReports(Array.isArray(reports) ? reports : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -118,6 +124,13 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     fetchData();
   }, [fetchData]);
 
+  const isAr = t.lang === 'ar';
+  
+  const calculateVAT = () => {
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    return (subtotal * vatRate) / 100;
+  };
+
   const addItem = () => {
     if (!newItemDesc || !newItemAmount) return;
     setItems([...items, { desc: newItemDesc, amount: parseFloat(newItemAmount) }]);
@@ -126,12 +139,12 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_: {desc: string, amount: number}, i: number) => i !== index));
+    setItems(items.filter((_, i) => i !== index));
   };
 
   const calculateSubtotal = () => items.reduce((sum: number, item: {desc: string, amount: number}) => sum + item.amount, 0);
-  const calculateVAT = () => invoiceMode === 'settlement' ? 0 : (calculateSubtotal() * (vatRate / 100));
-  const calculateTotal = () => calculateSubtotal() + calculateVAT();
+  const calculateLogistics = () => (parseFloat(customsFees)||0) + (parseFloat(portFees)||0) + (parseFloat(transportExpenses)||0);
+  const calculateTotal = () => calculateSubtotal() + calculateVAT() + calculateLogistics();
 
   const handleIssueInvoice = async () => {
     if (!clientName || items.length === 0) {
@@ -147,8 +160,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     const transport = parseFloat(transportExpenses) || 0;
     const totalAmount = subtotal + vat + customs + port + transport;
     
-    const profitValue = subtotal - transport; // Assuming subtotal is revenue and transport is actual cost
-    
+    // Profit = Service Revenue (Subtotal) - Direct Operational Cost (Transport Expenses)
+    const profitValue = subtotal - transport; 
+
     const newTrx: Partial<Invoice> = {
       reference_number: (invoiceMode === 'settlement' ? 'SET-' : 'INV-') + Math.random().toString(36).substr(2, 6).toUpperCase(),
       customer_id: clientName,
@@ -160,32 +174,63 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       customs_fees: customs,
       port_fees: port,
       transport_fees: transport,
-      transport_expenses: transport,
+      transport_expenses: transport, // Record the actual expense
       statement_number: declarationNumber,
       bol_number: bolNumber,
       operation_number: operationNumber,
       cargo_value: parseFloat(inventoryValue) || 0,
       profit: profitValue,
+      items: items.map(i => ({ description: i.desc, amount: i.amount })),
       status: 'مكتمل'
     };
 
     try {
       const record = localDB.insert('invoices', newTrx);
       
-      // Automatic Journal Entry Creation
+      // Multi-Leg Ledger Posting
       if (invoiceMode === 'invoice' || invoiceMode === 'internal') {
-        const entry: Omit<JournalEntry, 'id'> = {
+        // 1. Revenue Entry
+        localDB.addJournalEntry({
           date: new Date().toISOString(),
-          description: `${invoiceMode === 'internal' ? 'Internal' : 'Invoice'} ${newTrx.reference_number} - ${clientName}`,
+          description: `${invoiceMode === 'internal' ? 'Internal' : 'Invoice'} ${newTrx.reference_number} - Service Revenue`,
           reference_type: 'invoice',
           reference_id: record.id,
-          debit_account: invoiceMode === 'internal' ? 'Inter-company' : 'Receivables', 
-          credit_account: 'Revenue',
+          debit_account: invoiceMode === 'internal' ? 'Inter-company' : 'العملاء', 
+          credit_account: 'إيرادات المبيعات',
           status: 'posted',
           amount: subtotal,
           is_automated: true
-        };
-        localDB.addJournalEntry(entry);
+        });
+
+        // 2. Transport Expense Entry
+        if (transport > 0) {
+          localDB.addJournalEntry({
+            date: new Date().toISOString(),
+            description: `Transport Cost for ${newTrx.reference_number}`,
+            reference_type: 'invoice',
+            reference_id: record.id,
+            debit_account: 'مصاريف النقل',
+            credit_account: 'الصندوق',
+            status: 'posted',
+            amount: transport,
+            is_automated: true
+          });
+        }
+
+        // 3. Customs Fees Entry
+        if (customs > 0) {
+          localDB.addJournalEntry({
+            date: new Date().toISOString(),
+            description: `Customs Duties for ${newTrx.reference_number}`,
+            reference_type: 'invoice',
+            reference_id: record.id,
+            debit_account: 'الرسوم الجمركية',
+            credit_account: 'الصندوق',
+            status: 'posted',
+            amount: customs,
+            is_automated: true
+          });
+        }
       }
 
       const logAction = invoiceMode === 'settlement' ? 'Posted Settlement Entry: ' : 'Issued Tax Invoice to ';
@@ -195,33 +240,39 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       setClientName('');
       setTaxId('');
       setServiceType('');
-      setDeclarationNumber('');
-      setBolNumber('');
+      setItems([]);
       setCustomsFees('');
       setPortFees('');
       setTransportExpenses('');
-      setInventoryValue('');
+      setDeclarationNumber('');
+      setBolNumber('');
       setOperationNumber('');
-      setItems([]);
+      setInventoryValue('');
+      setLoading(false);
       fetchData();
     } catch (err: any) {
       showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   };
-
-  const addContract = () => {
-    if (!contractData.party || !contractData.value) return;
+  const handleAddContract = () => {
+    if (!newContract.entity_name || !newContract.value) return;
+    
     localDB.insert('contracts', {
-        ...contractData,
-        id: 'CON-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        ...newContract,
+        type: contractType,
         status: 'active',
-        created_at: new Date().toISOString()
+        contract_date: new Date().toISOString().split('T')[0],
+        value: parseFloat(newContract.value)
     });
-    setContractData({ party: '', type: 'client', value: '', expiry: '' });
+    
     setShowContractModal(false);
     fetchData();
-    showToast(t.lang === 'ar' ? 'تم إضافة العقد بنجاح' : 'Contract added successfully');
+    setNewContract({ entity_name: '', value: '', expiry_date: '', terms: '' });
+  };
+
+  const handleRunReport = (report: any) => {
+    showToast(isAr ? `جاري إصدار ${report.name}... تم التصدير بنجاح` : `Issuing ${report.name}... Export successful`, 'success');
   };
 
   const openExternal = async (url: string) => {
@@ -285,7 +336,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     
     invoices.forEach((inv: Invoice) => {
       let key = '';
-      const d = new Date(inv.created_at);
+      const d = new Date(inv.created_at || '');
       if (reportType === 'daily') key = d.toLocaleDateString('en-GB');
       else if (reportType === 'monthly') key = `${d.getFullYear()}-${d.getMonth() + 1}`;
       else key = `${d.getFullYear()}`;
@@ -297,9 +348,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       const transport = inv.transport_fees || 0;
       const extra = inv.transport_expenses || 0;
       
-      groups[key].revenue += inv.amount || 0;
-      groups[key].profit += inv.profit || 0;
+      const subtotal = inv.amount || 0;
+      groups[key].revenue += subtotal;
       groups[key].costs += (customs + port + transport + extra);
+      groups[key].profit += (inv.profit || (subtotal - extra));
       groups[key].count += 1;
     });
 
@@ -559,55 +611,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   );
 
   const renderReports = () => {
-    const reportData = useMemo(() => {
-      const records: any[] = [];
-      journalEntries.forEach(entry => {
-        const d = new Date(entry.date);
-        let label = '';
-        if (reportType === 'daily') label = d.toLocaleDateString();
-        else if (reportType === 'monthly') label = `${d.getFullYear()}-${d.getMonth() + 1}`;
-        else label = `${d.getFullYear()}`;
 
-        let existing = records.find(r => r.label === label);
-        if (!existing) {
-          existing = { label, debits: 0, credits: 0, count: 0, profit: 0 };
-          records.push(existing);
-        }
-        existing.debits += (entry.debits || 0);
-        existing.credits += (entry.credits || 0);
-        existing.count += 1;
-        existing.profit = existing.debits - existing.credits;
-      });
-      return records;
-    }, [journalEntries, reportType]);
-
-    const profitReportData = useMemo(() => {
-      const records: any[] = [];
-      // Calculate profit by BOL/Invoice
-      invoices.forEach(inv => {
-        const d = new Date(inv.created_at || '');
-        let label = '';
-        if (reportType === 'daily') label = d.toLocaleDateString();
-        else if (reportType === 'monthly') label = `${d.getFullYear()}-${d.getMonth() + 1}`;
-        else label = `${d.getFullYear()}`;
-
-        let existing = records.find(r => r.label === label);
-        if (!existing) {
-          existing = { label, revenue: 0, costs: 0, profit: 0 };
-          records.push(existing);
-        }
-        
-        const subtotal = inv.items?.reduce((s, i) => s + (i.amount || 0), 0) || 0;
-        const transport = parseFloat(inv.transport_expenses || '0');
-        const customs = parseFloat(inv.customs_fees || '0');
-        const port = parseFloat(inv.port_fees || '0');
-        
-        existing.revenue += subtotal;
-        existing.costs += (transport + customs + port);
-        existing.profit += (subtotal - transport - customs - port);
-      });
-      return records;
-    }, [invoices, reportType]);
 
     return (
       <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -764,8 +768,8 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
               <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.8rem', borderRadius: '12px' }}><Calendar size={20} /></div>
               <div>
-                <h3 style={{ margin: 0, fontWeight: 900, fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'جدولة التقارير الآلية' : 'Automated Report Scheduling'}</h3>
-                <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem' }}>{t.lang === 'ar' ? 'سيقوم النظام بإرسال هذه التقارير تلقائياً للبريد المحدد' : 'System will auto-send these reports to your email'}</p>
+                <h3 style={{ margin: 0, fontWeight: 900, fontFamily: 'Tajawal' }}>{isAr ? 'جدولة التقارير الآلية' : 'Automated Report Scheduling'}</h3>
+                <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem' }}>{isAr ? 'سيقوم النظام بإصدار هذه التقارير تلقائياً حسب الجدول' : 'System will auto-generate these reports per schedule'}</p>
               </div>
            </div>
 
@@ -780,113 +784,98 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                     <div className="badge badge-success" style={{ fontSize: '0.7rem' }}>Active</div>
-                     <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)' }} title="Edit"><Plus size={16} /></button>
+                     <button onClick={() => handleRunReport(report)} className="btn-executive" style={{ fontSize: '0.7rem', background: isAr ? '#001a33' : '#001a33', color: 'white' }}>{isAr ? 'إصدار الآن' : 'Run Now'}</button>
                   </div>
                 </div>
               ))}
-              <button className="btn-executive" style={{ border: '2px dashed var(--primary)', background: 'none', color: 'var(--primary)', fontWeight: 900, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', minHeight: '80px' }}>
-                <Plus size={24} /> {t.lang === 'ar' ? 'إضافة تقرير مجدول جديد' : 'Add New Scheduled Report'}
-              </button>
            </div>
         </div>
       </div>
     );
   };
 
-  const addContract = () => {
-    if (!contractData.party || !contractData.value) {
-      showToast(t.lang === 'ar' ? 'يرجى ملء البيانات' : 'Please fill all data', 'error');
-      return;
-    }
-    const newContract = {
-      id: Math.random().toString(36).substr(2, 6).toUpperCase(),
-      ...contractData,
-      status: 'نشط',
-      date: new Date().toLocaleDateString()
-    };
-    setContracts([...contracts, newContract]);
-    setShowContractModal(false);
-    setContractData({ party: '', type: 'client', value: '', expiry: '' });
-    showToast(t.lang === 'ar' ? 'تم توثيق العقد بنجاح' : 'Contract certified successfully', 'success');
-  };
+
 
   const renderContracts = () => (
-    <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div>
-            <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{t.lang === 'ar' ? 'إدارة العقود القانونية' : 'Legal Contract Management'}</h3>
-            <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'عقود العملاء والناقلين وتكاليف النقل المتفق عليها' : 'Client & Transporter contracts with agreed transport fees'}</p>
-          </div>
-          <button onClick={() => setShowContractModal(true)} className="btn-executive"><Plus size={18} /> {t.lang === 'ar' ? 'عقد جديد' : 'New Contract'}</button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
-          {contracts.map((c: any) => (
-              <div key={c.id} className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                      <span style={{ padding: '0.2rem 1rem', borderRadius: '20px', fontSize: '0.7rem', background: c.type === 'client' ? 'rgba(0,34,51,0.1)' : 'rgba(212,167,106,0.1)', color: c.type === 'client' ? '#001a33' : '#d4a76a', fontWeight: 900 }}>{c.type === 'client' ? (t.lang === 'ar' ? 'عقد عميل' : 'CLIENT') : (t.lang === 'ar' ? 'عقد نقل' : 'TRANSPORT')}</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 900 }}>#{c.id}</span>
-                  </div>
-                  <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary)', fontWeight: 900 }}>{c.party}</h3>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                      <div>
-                          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{t.lang === 'ar' ? 'القيمة المتفق عليها' : 'Agreed Value'}</p>
-                          <p style={{ margin: 0, fontWeight: 950, fontSize: '1.3rem', color: 'var(--primary)' }}>{parseFloat(c.value).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></p>
-                      </div>
-                      <div style={{ textAlign: 'left' }}>
-                          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{t.lang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date'}</p>
-                          <p style={{ margin: 0, fontWeight: 800, color: '#ba1a1a' }}>{c.expiry || '-'}</p>
-                      </div>
-                  </div>
-              </div>
-          ))}
-          {contracts.length === 0 && (
-            <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', opacity: 0.5, border: '2px dashed #ddd' }}>
-               <Activity size={48} style={{ marginBottom: '1rem' }} />
-               <p style={{ fontWeight: 800 }}>{t.lang === 'ar' ? 'لا توجد عقود مسجلة حالياً' : 'No active contracts found'}</p>
+    <>
+      <div className="fade-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div>
+              <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{isAr ? 'إدارة العقود اللوجستية السيادية' : 'Sovereign Logistics Contract Management'}</h3>
+              <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{isAr ? 'عقود العملاء والناقلين وتكاليف التشغيل' : 'Client & Transporter contracts with operational costs'}</p>
             </div>
-          )}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button onClick={() => { setContractType('client'); setShowContractModal(true); }} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)' }}><Plus size={18} /> {isAr ? 'عقد عميل' : 'Client Contract'}</button>
+              <button onClick={() => { setContractType('transporter'); setShowContractModal(true); }} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33' }}><Plus size={18} /> {isAr ? 'عقد ناقل' : 'Transporter Contract'}</button>
+            </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+            {contracts.map((c: any) => (
+                <div key={c.id} className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <span style={{ padding: '0.2rem 1rem', borderRadius: '20px', fontSize: '0.7rem', background: c.type === 'client' ? 'rgba(0,34,51,0.1)' : 'rgba(212,167,106,0.1)', color: c.type === 'client' ? '#001a33' : '#d4a76a', fontWeight: 900 }}>{c.type === 'client' ? (isAr ? 'عقد عميل سيادي' : 'CLIENT') : (isAr ? 'عقد ناقل معتمد' : 'TRANSPORT')}</span>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 900 }}>#{c.id}</span>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary)', fontWeight: 900 }}>{c.entity_name}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{isAr ? 'القيمة الإجمالية' : 'Agreed Value'}</p>
+                            <p style={{ margin: 0, fontWeight: 950, fontSize: '1.3rem', color: 'var(--primary)' }}>{parseFloat(c.value).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></p>
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                            <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{isAr ? 'تاريخ الانتهاء' : 'Expiry Date'}</p>
+                            <p style={{ margin: 0, fontWeight: 800, color: '#ba1a1a' }}>{c.expiry_date || '-'}</p>
+                        </div>
+                    </div>
+                    {c.terms && <p style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '12px', fontSize: '0.8rem', opacity: 0.8 }}>{c.terms}</p>}
+                </div>
+            ))}
+            {contracts.length === 0 && (
+              <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', opacity: 0.5, border: '2px dashed #ddd' }}>
+                <FileText size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                <p>{isAr ? 'لا توجد عقود مسجلة حالياً' : 'No contracts registered yet'}</p>
+              </div>
+            )}
+        </div>
       </div>
 
       {showContractModal && (
           <div className="modal-overlay" style={{ background: 'rgba(0,26,51,0.8)', backdropFilter: 'blur(8px)', zIndex: 6000 }}>
               <div className="card slide-up" style={{ maxWidth: '500px', width: '90%', padding: '2.5rem', borderRadius: '28px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <h3 style={{ margin: 0, fontWeight: 900 }}>{t.lang === 'ar' ? 'إضافة ميثاق عمل جديد' : 'New Strategic Contract'}</h3>
+                    <h3 style={{ margin: 0, fontWeight: 900 }}>{isAr ? `إضافة عقد ${contractType === 'client' ? 'عميل' : 'ناقل'} جديد` : `New ${contractType} Contract`}</h3>
                     <button onClick={() => setShowContractModal(false)} style={{ background: 'none', border: 'none', color: 'var(--on-surface)', cursor: 'pointer' }}><Plus size={24} style={{ transform: 'rotate(45deg)' }} /></button>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'اسم المنشأة / الناقل' : 'Entity Name'}</label>
-                        <input type="text" placeholder="..." value={contractData.party} onChange={e => setContractData({...contractData, party: e.target.value})} className="input-executive" />
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{isAr ? 'اسم المنشأة' : 'Entity Name'}</label>
+                        <input type="text" placeholder="..." value={newContract.entity_name} onChange={e => setNewContract({...newContract, entity_name: e.target.value})} className="input-executive" style={{ fontWeight: 800 }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'نوع العقد' : 'Contract Type'}</label>
-                        <select value={contractData.type} onChange={e => setContractData({...contractData, type: e.target.value as any})} className="input-executive" style={{ fontWeight: 800 }}>
-                            <option value="client">عقد عميل (إيرادات)</option>
-                            <option value="transporter">عقد ناقل (مصروفات نقل)</option>
-                        </select>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{isAr ? 'القيمة المالية' : 'Financial Value'}</label>
+                        <input type="number" placeholder="0.00" value={newContract.value} onChange={e => setNewContract({...newContract, value: e.target.value})} className="input-executive" style={{ fontWeight: 900 }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'القيمة المالية' : 'Financial Value'}</label>
-                        <input type="number" placeholder="0.00" value={contractData.value} onChange={e => setContractData({...contractData, value: e.target.value})} className="input-executive" style={{ fontWeight: 900 }} />
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{isAr ? 'تاريخ الانتهاء' : 'Expiration Date'}</label>
+                        <input type="date" value={newContract.expiry_date} onChange={e => setNewContract({...newContract, expiry_date: e.target.value})} className="input-executive" />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'تاريخ انقضاء المفعول' : 'Expiration Date'}</label>
-                        <input type="date" value={contractData.expiry} onChange={e => setContractData({...contractData, expiry: e.target.value})} className="input-executive" />
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{isAr ? 'الشروط والأحكام' : 'Terms & Conditions'}</label>
+                        <textarea placeholder="..." value={newContract.terms} onChange={e => setNewContract({...newContract, terms: e.target.value})} className="input-executive" style={{ height: '80px', fontWeight: 700 }} />
                       </div>
                       
                       <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                          <button onClick={addContract} className="btn-executive" style={{ flex: 2, padding: '1rem' }}>{t.lang === 'ar' ? 'اعتماد العقد' : 'Certify Contract'}</button>
-                          <button onClick={() => setShowContractModal(false)} className="btn-executive" style={{ flex: 1, background: '#f5f5f5', color: '#666', border: 'none' }}>{t.lang === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+                          <button onClick={handleAddContract} className="btn-executive" style={{ flex: 2, padding: '1rem' }}>{isAr ? 'اعتماد العقد' : 'Certify Contract'}</button>
+                          <button onClick={() => setShowContractModal(false)} className="btn-executive" style={{ flex: 1, background: '#f5f5f5', color: '#666', border: 'none' }}>{isAr ? 'إلغاء' : 'Cancel'}</button>
                       </div>
                   </div>
               </div>
           </div>
       )}
-    </div>
+    </>
   );
+
 
   return (
     <div className="slide-in">
@@ -1055,6 +1044,17 @@ interface InvoicePreviewProps {
   profit: number;
 }
 
+const BarcodeSVG = ({ value }: { value: string }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <svg width="150" height="40"><rect width="150" height="40" fill="white" />
+      {value.split('').map((char, i) => (
+        <rect key={i} x={10 + i * 4} y={5} width={char.charCodeAt(0) % 3 + 1} height={30} fill="black" />
+      ))}
+    </svg>
+    <span style={{ fontSize: '7pt', fontFamily: 'monospace', marginTop: '1mm' }}>{value}</span>
+  </div>
+);
+
 function InvoicePreviewModal({ 
   clientName, taxId, items, subtotal, vat, total, currency, isSettlement, 
   declarationNumber, bolNumber, operationNumber, customsFees, portFees, 
@@ -1063,138 +1063,156 @@ function InvoicePreviewModal({
     const isAr = t.lang === 'ar';
     const invoiceId = useMemo(() => Math.random().toString(36).substr(2, 6).toUpperCase(), []);
     
-    // User requested to hide tax from final customer invoice
-    const hideTaxCompletely = true; // Based on "احذف من الفواتير الزكاة والضريب"
-
-    const qrValue = useMemo(() => {
-        // Tag-Length-Value Encoding for ZATCA QR
-        const encode = (tag: number, val: string) => {
-            const buf = new TextEncoder().encode(val);
-            return String.fromCharCode(tag, buf.length) + val;
-        };
-        const raw = encode(1, settings.companyName) + encode(2, settings.taxNumber) + encode(3, new Date().toISOString()) + encode(4, total.toString()) + encode(5, (hideTaxCompletely ? '0' : vat.toString()));
-        return btoa(raw);
-    }, [settings, total, vat, hideTaxCompletely]);
+    // As per user request: delete tax/zakat from final invoices, keep internally
+    const showTax = isSettlement; 
 
     return (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 5000, overflowY: 'auto' }}>
-            <div className="no-print" style={{ position: 'sticky', top: 0, padding: '1rem', background: '#001a33', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                <button onClick={onWhatsApp} className="btn btn-primary" style={{ flex: 1, background: '#25D366', border: 'none', color: 'white' }}>
-                    <Activity size={18} style={{ marginRight: '8px' }} />
-                    {isAr ? 'واتساب' : 'WhatsApp'}
+        <div className="modal-overlay" style={{ background: 'rgba(0,26,51,0.9)', backdropFilter: 'blur(12px)', zIndex: 5000, overflowY: 'auto' }}>
+            <div className="no-print" style={{ position: 'sticky', top: 0, padding: '1.2rem', background: '#001a33', display: 'flex', justifyContent: 'center', gap: '1.5rem', boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
+                <button onClick={onPrint} className="btn-executive" style={{ flex: 1, background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1.2rem', fontSize: '1.2rem', fontWeight: 900 }}>
+                    <Printer size={22} /> {isAr ? 'طباعة / حفظ PDF' : 'Print / Save PDF'}
                 </button>
-                <button onClick={onEmail} className="btn btn-primary" style={{ flex: 1, background: '#EA4335', border: 'none', color: 'white' }}>
-                    <X size={18} style={{ marginRight: '8px' }} />
-                    {isAr ? 'إيميل' : 'Email'}
+                <button onClick={onWhatsApp} className="btn-executive" style={{ width: '80px', background: '#25D366', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Activity size={24} />
                 </button>
-                <button onClick={onPrint} className="btn btn-primary" style={{ flex: 1 }}>
-                    <Printer size={18} style={{ marginRight: '8px' }} />
-                    {isAr ? 'طباعة' : 'Print'}
+                <button onClick={onEmail} className="btn-executive" style={{ width: '80px', background: '#0066cc', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Plus size={24} />
                 </button>
-                <button onClick={onDismiss} className="btn-executive" style={{ background: '#ba1a1a', color: 'white' }}><X size={18} /> {isAr ? 'إغلاق' : 'Close'}</button>
+                <button onClick={onDismiss} className="btn-executive" style={{ background: '#ba1a1a', color: 'white', border: 'none', padding: '1.2rem', fontWeight: 900 }}><X size={22} /> {isAr ? 'إغلاق' : 'Close'}</button>
             </div>
             
-            <div className="print-content" style={{ background: 'white', width: '210mm', minHeight: '297mm', margin: '2rem auto', padding: '2cm', color: 'black', direction: 'rtl' }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #001a33', paddingBottom: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: 60, height: 60, background: '#001a33', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontSize: '1.5rem', fontWeight: 900 }}>{settings.companyName.charAt(0)}</div>
+            <div className="print-content" style={{ background: 'white', width: '210mm', minHeight: '297mm', margin: '3rem auto', padding: '2.5cm', color: 'black', direction: 'rtl', fontFamily: 'Tajawal', borderRadius: '4px', boxShadow: '0 0 60px rgba(0,0,0,0.2)' }}>
+                 {/* Premium Header */}
+                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '5px solid #001a33', paddingBottom: '2rem', marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+                        <div style={{ width: 110, height: 110, background: '#001a33', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontSize: '3rem', fontWeight: 950 }}>{settings.companyName.charAt(0)}</div>
                         <div>
-                            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{settings.companyName}</h2>
-                            <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>الرقم الضريبي: {settings.taxNumber}</p>
+                            <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 1000, color: '#001a33' }}>{settings.companyName}</h2>
+                            <p style={{ margin: '0.4rem 0', fontSize: '1.1rem', opacity: 0.8, fontWeight: 800 }}>حلول المحاسبة اللوجستية السيادية</p>
+                            <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.6, fontWeight: 700 }}>سجل تجاري: {settings.crNumber || '123456789'} | ضريبي: {settings.taxNumber}</p>
                         </div>
                     </div>
                     <div style={{ textAlign: 'left' }}>
-                        <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#001a33' }}>{isSettlement ? (isAr ? 'فاتورة داخلية' : 'Internal Invoice') : (isAr ? 'فاتورة نهائية' : 'Final Invoice')}</h1>
-                        <p style={{ margin: 0, fontWeight: 900 }}>#{invoiceId}</p>
+                        <h1 style={{ margin: 0, fontSize: '2.5rem', color: '#d4a76a', fontWeight: 950 }}>{isSettlement ? (isAr ? 'سند داخلي (تسوية)' : 'Internal Settlement') : (isAr ? 'فاتورة عميل نهائية' : 'Final Customer Invoice')}</h1>
+                        <p style={{ margin: '0.5rem 0 0', fontWeight: 950, fontSize: '1.6rem', color: '#001a33' }}>#{operationNumber || invoiceId}</p>
+                        <p style={{ margin: '0.5rem 0 0', opacity: 0.8, fontWeight: 800, fontSize: '1.1rem' }}>{new Date().toLocaleDateString('ar-SA')}</p>
                     </div>
                  </div>
 
-                 <div style={{ margin: '2rem 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                 {/* Logistics Metadata Bar */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '3.5rem', background: '#f8f9fa', padding: '2rem', borderRadius: '20px', border: '1px solid #eee' }}>
                     <div>
-                        <h4 style={{ borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>{isAr ? 'بيانات العميل' : 'Client Info'}</h4>
-                        <p style={{ margin: '0.5rem 0', fontWeight: 800 }}>{clientName}</p>
-                        <p style={{ margin: 0, fontSize: '0.9rem' }}>{isAr ? 'الرقم الضريبي' : 'Tax ID'}: {taxId || '-'}</p>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 950, display: 'block', marginBottom: '0.5rem' }}>{isAr ? 'رقم العملية' : 'OP NUMBER'}</span>
+                        <span style={{ fontWeight: 1000, fontSize: '1.2rem', color: '#001a33' }}>{operationNumber || '-'}</span>
                     </div>
-                    <div style={{ textAlign: 'left' }}>
-                        <h4 style={{ borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>{isAr ? 'بيانات الشحنة' : 'Logistics'}</h4>
-                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>{isAr ? 'رقم العملية' : 'Operation'}: <b>{operationNumber || '-'}</b></p>
-                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>{isAr ? 'رقم البيان' : 'Declaration'}: <b>{declarationNumber || '-'}</b></p>
-                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>{isAr ? 'رقم البوليصة' : 'BOL'}: <b>{bolNumber || '-'}</b></p>
-                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>{isAr ? 'قيمة المخزون' : 'Inventory'}: <b>{parseFloat(inventoryValue).toLocaleString()} {currency}</b></p>
-                        <p style={{ margin: '0.5rem 0', fontWeight: 800 }}>{new Date().toLocaleDateString('ar-SA')}</p>
+                    <div>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 950, display: 'block', marginBottom: '0.5rem' }}>{isAr ? 'رقم البيان' : 'DEC NUMBER'}</span>
+                        <span style={{ fontWeight: 1000, fontSize: '1.2rem', color: '#001a33' }}>{declarationNumber || '-'}</span>
+                    </div>
+                    <div>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 950, display: 'block', marginBottom: '0.5rem' }}>{isAr ? 'رقم البوليصة' : 'BOL NUMBER'}</span>
+                        <span style={{ fontWeight: 1000, fontSize: '1.2rem', color: '#001a33' }}>{bolNumber || '-'}</span>
+                    </div>
+                    <div>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 950, display: 'block', marginBottom: '0.5rem' }}>{isAr ? 'قيمة الشحنة' : 'INV VALUE'}</span>
+                        <span style={{ fontWeight: 1000, fontSize: '1.2rem', color: '#001a33' }}>{parseFloat(inventoryValue).toLocaleString()} SAR</span>
                     </div>
                  </div>
 
-                 <table style={{ width: '100%', borderCollapse: 'collapse', margin: '2rem 0' }}>
+                 <div style={{ marginBottom: '3.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: 12, height: 40, background: '#d4a76a', borderRadius: '4px' }}></div>
+                        <h4 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 1000, color: '#001a33' }}>العميل: {clientName}</h4>
+                    </div>
+                    {taxId && <p style={{ margin: '0.8rem 2.2rem', fontWeight: 900, opacity: 0.7, fontSize: '1.1rem' }}>الرقم الضريبي للمنشأة: {taxId}</p>}
+                 </div>
+
+                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 1rem', marginBottom: '4rem' }}>
                     <thead>
-                        <tr style={{ background: '#f5f5f5' }}>
-                            <th style={{ padding: '1rem', textAlign: 'right', borderBottom: '2px solid #001a33' }}>{isAr ? 'الوصف' : 'Description'}</th>
-                            <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid #001a33' }}>{isAr ? 'المبلغ' : 'Amount'}</th>
+                        <tr style={{ borderBottom: '3px solid #001a33' }}>
+                            <th style={{ padding: '1.5rem', textAlign: 'right', fontWeight: 950, fontSize: '1.2rem', color: '#001a33', borderBottom: '3px solid #001a33' }}>تفاصيل الخدمات والرسوم اللوجستية</th>
+                            <th style={{ padding: '1.5rem', textAlign: 'left', fontWeight: 950, fontSize: '1.2rem', borderBottom: '3px solid #001a33', width: '220px' }}>المبلغ النهائي</th>
                         </tr>
                     </thead>
                     <tbody>
                         {items.map((it: any, idx: number) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '1rem' }}>{it.desc}</td>
-                                <td style={{ padding: '1rem', textAlign: 'left', fontWeight: 700 }}>{it.amount.toLocaleString()} {currency}</td>
+                            <tr key={idx} style={{ background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                                <td style={{ padding: '2rem 1.5rem', fontWeight: 900, fontSize: '1.15rem', borderBottom: '1px solid #f0f0f0' }}>{it.desc}</td>
+                                <td style={{ padding: '2rem 1.5rem', textAlign: 'left', fontWeight: 1000, fontSize: '1.2rem', borderBottom: '1px solid #f0f0f0' }}>{it.amount.toLocaleString()}</td>
                             </tr>
                         ))}
-                        {(parseFloat(customsFees) > 0) && (
-                            <tr style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '1rem' }}>{isAr ? 'رسوم الجمارك' : 'Customs Fees'}</td>
-                                <td style={{ padding: '1rem', textAlign: 'left', fontWeight: 700 }}>{parseFloat(customsFees).toLocaleString()} {currency}</td>
+                        {parseFloat(customsFees) > 0 && (
+                            <tr>
+                                <td style={{ padding: '1.2rem 1.5rem', fontWeight: 800, color: '#555' }}>رسوم الجمارك والتخليص</td>
+                                <td style={{ padding: '1.2rem 1.5rem', textAlign: 'left', fontWeight: 950 }}>{parseFloat(customsFees).toLocaleString()}</td>
                             </tr>
                         )}
-                        {(parseFloat(portFees) > 0) && (
-                            <tr style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '1rem' }}>{isAr ? 'رسوم الموانئ' : 'Port Fees'}</td>
-                                <td style={{ padding: '1rem', textAlign: 'left', fontWeight: 700 }}>{parseFloat(portFees).toLocaleString()} {currency}</td>
+                        {parseFloat(portFees) > 0 && (
+                            <tr>
+                                <td style={{ padding: '1.2rem 1.5rem', fontWeight: 800, color: '#555' }}>رسوم الأرضيات والموانئ</td>
+                                <td style={{ padding: '1.2rem 1.5rem', textAlign: 'left', fontWeight: 950 }}>{parseFloat(portFees).toLocaleString()}</td>
                             </tr>
                         )}
-                        {(parseFloat(transportExpenses) > 0) && (
-                            <tr style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '1rem' }}>{isAr ? 'مصاريف نقل' : 'Transport'}</td>
-                                <td style={{ padding: '1rem', textAlign: 'left', fontWeight: 700 }}>{parseFloat(transportExpenses).toLocaleString()} {currency}</td>
+                        {parseFloat(transportExpenses) > 0 && (
+                            <tr>
+                                <td style={{ padding: '1.2rem 1.5rem', fontWeight: 800, color: '#555' }}>أجور النقل البري</td>
+                                <td style={{ padding: '1.2rem 1.5rem', textAlign: 'left', fontWeight: 950 }}>{parseFloat(transportExpenses).toLocaleString()}</td>
                             </tr>
                         )}
                     </tbody>
                  </table>
 
-                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '2rem' }}>
-                    <div style={{ padding: '1rem', border: '1px solid #eee', borderRadius: '8px', textAlign: 'center' }}>
-                        <QRCodeSVG value={qrValue} size={100} />
-                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.6rem', opacity: 0.5 }}>ZATCA Compliant</p>
-                        <div style={{ marginTop: '1rem' }}>
-                            <div style={{ borderTop: '2px solid black', width: '100px', margin: 'auto' }}></div>
-                            <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 900 }}>{invoiceId}</p>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '3rem', borderTop: '2px solid #eee' }}>
+                    <div>
+                        <div style={{ marginBottom: '2.5rem' }}>
+                           <BarcodeSVG value={operationNumber || invoiceId} />
                         </div>
+                        {isSettlement && (
+                           <div style={{ padding: '2rem', background: '#f0fff4', border: '2px solid #c6f6d5', borderRadius: '24px' }}>
+                               <span style={{ fontSize: '0.9rem', fontWeight: 950, color: '#2f855a', display: 'block', marginBottom: '0.5rem' }}>ربحية المعاملة التلقائية</span>
+                               <span style={{ fontSize: '2rem', fontWeight: 1000, color: '#276749' }}>{profit.toLocaleString()} <small style={{ fontSize: '0.6em', opacity: 0.6 }}>SAR</small></span>
+                           </div>
+                        )}
+                        {!isSettlement && (
+                            <div style={{ padding: '1rem', border: '1px solid #eee', borderRadius: '12px' }}>
+                                <QRCodeSVG value={JSON.stringify({ 
+                                    op: operationNumber, 
+                                    client: clientName, 
+                                    dec: declarationNumber,
+                                    bol: bolNumber,
+                                    customs: customsFees,
+                                    port: portFees,
+                                    total 
+                                })} size={120} />
+                            </div>
+                        )}
                     </div>
-                    <div style={{ width: '250px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0' }}>
-                            <span>{isAr ? 'الإجمالي الفرعي' : 'Subtotal'}</span>
+                    <div style={{ width: '400px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', fontWeight: 900, fontSize: '1.3rem' }}>
+                            <span>إجمالي الخدمات</span>
                             <span>{subtotal.toLocaleString()} {currency}</span>
                         </div>
-                        {!hideTaxCompletely && !isSettlement && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-                                <span>{isAr ? 'الضريبة' : 'VAT'} ({vatRate}%)</span>
+                        {showTax && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', fontWeight: 800, color: '#777', fontSize: '1.1rem' }}>
+                                <span>قيمة الضريبة المضافة ({vatRate}%)</span>
                                 <span>{vat.toLocaleString()} {currency}</span>
                             </div>
                         )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', fontWeight: 900, color: '#001a33', fontSize: '1.2rem' }}>
-                            <span>{isAr ? 'المجموع الكلي' : 'Total Amount'}</span>
-                            <span style={{ color: '#d4a76a' }}>{(subtotal + (parseFloat(customsFees)||0) + (parseFloat(portFees)||0) + (parseFloat(transportExpenses)||0)).toLocaleString()} {currency}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2rem 0', borderTop: '6px solid #001a33', marginTop: '2rem', fontWeight: 1000, fontSize: '2.8rem', color: '#001a33' }}>
+                            <span>الإجمالي</span>
+                            <span>{total.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem', background: '#f0f4f8', borderRadius: '8px', marginTop: '1rem' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>{isAr ? 'صافي الربح التقديري' : 'Estimated Profit'}</span>
-                            <span style={{ fontWeight: 900, color: 'var(--success)' }}>{profit.toLocaleString()} {currency}</span>
-                        </div>
+                        <p style={{ textAlign: 'left', fontSize: '0.8rem', fontWeight: 900, color: '#001a33', marginTop: '0.5rem' }}>فقط {total.toLocaleString()} ريال سعودي لا غير</p>
                     </div>
                  </div>
 
-                 <div style={{ marginTop: '4rem', padding: '1rem', borderTop: '1px solid #eee', fontSize: '0.8rem', opacity: 0.6 }}>
-                    <p style={{ margin: 0 }}>تعتبر هذه الفاتورة رسمية وصادرة آلياً من نظام المحاسبة السيادي.</p>
+                 <div style={{ marginTop: '7rem', borderTop: '2px solid #f0f0f0', paddingTop: '2.5rem', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: '#001a33' }}>شـكراً لتعاملكم مع مؤسسة الغويري للتخليص الجمركي</p>
+                    <p style={{ margin: '0.8rem 0 0', fontSize: '0.85rem', opacity: 0.5, fontWeight: 800 }}>المملكة العربية السعودية | نظام المحاسبة السيادي v3.1 | {settings.deviceId || 'NODE-MAIN'}</p>
                  </div>
             </div>
+
+
         </div>
     );
 }

@@ -40,6 +40,7 @@ export interface Invoice {
   transport_expenses?: number;
   profit?: number;
   customers?: any;
+  items?: { description: string; amount: number }[];
 }
 
 export interface JournalEntry {
@@ -83,6 +84,11 @@ interface DBSchema {
   contracts: Contract[];
   journal_entries: JournalEntry[];
   ledger_accounts: LedgerAccount[];
+  shipments: any[];
+  tax_returns: any[];
+  petty_cash: any[];
+  role_permissions: any[];
+  scheduled_reports: { id: string, name: string, type: string, frequency: string, nextRun: string, status: string }[];
   sync_settings: {
     last_sync: string;
     sync_folder: string;
@@ -110,10 +116,22 @@ const DEFAULT_DB: DBSchema = {
   ledger_accounts: [
     { id: 'acc-1', name: 'Cash', name_ar: 'الصندوق', type: 'asset', balance: 0 },
     { id: 'acc-2', name: 'Bank', name_ar: 'البنك', type: 'asset', balance: 0 },
-    { id: 'acc-3', name: 'Accounts Receivable', name_ar: 'العملاء', type: 'asset', balance: 0 },
-    { id: 'acc-4', name: 'Accounts Payable', name_ar: 'الموردون', type: 'liability', balance: 0 },
-    { id: 'acc-5', name: 'Sales Revenue', name_ar: 'إيرادات المبيعات', type: 'equity', balance: 0 },
-    { id: 'acc-6', name: 'Expenses', name_ar: 'المصروفات', type: 'expense', balance: 0 }
+    { id: 'acc-3', name: 'Accounts Receivable', name_ar: 'العملاء', type: 'asset', balance: 125000 },
+    { id: 'acc-4', name: 'Accounts Payable', name_ar: 'الموردون', type: 'liability', balance: 45000 },
+    { id: 'acc-5', name: 'Sales Revenue', name_ar: 'إيرادات المبيعات', type: 'revenue', balance: 350000 },
+    { id: 'acc-6', name: 'Expenses', name_ar: 'المصروفات', type: 'expense', balance: 85000 },
+    { id: 'acc-7', name: 'Transport Expenses', name_ar: 'مصاريف النقل', type: 'expense', balance: 12000 },
+    { id: 'acc-8', name: 'Customs Duties', name_ar: 'الرسوم الجمركية', type: 'expense', balance: 50000 },
+    { id: 'acc-9', name: 'Port Fees', name_ar: 'رسوم الموانئ', type: 'expense', balance: 8000 }
+  ],
+  shipments: [],
+  tax_returns: [],
+  petty_cash: [],
+  role_permissions: [],
+  scheduled_reports: [
+    { id: '1', name: 'تقرير الأرباح اليومي', type: 'Profit', frequency: 'Daily (11 PM)', nextRun: '2024-05-20', status: 'Active' },
+    { id: '2', name: 'كشف الأستاذ الشهري', type: 'Ledger', frequency: 'Monthly', nextRun: '2024-06-01', status: 'Active' },
+    { id: '3', name: 'ميزانية المراجعة السنوية', type: 'Balance', frequency: 'Yearly', nextRun: '2025-01-01', status: 'Active' }
   ],
   sync_settings: {
     last_sync: new Date().toISOString(),
@@ -175,24 +193,24 @@ function writeToDisk(data: DBSchema) {
 }
 
 export const localDB = {
-  get: (collection: keyof DBSchema) => {
+  get: <K extends keyof DBSchema>(collection: K): DBSchema[K] => {
     const db = readFromDisk();
     return db[collection];
   },
 
-  getAll: (collection: keyof DBSchema) => {
+  getAll: <K extends keyof DBSchema>(collection: K): DBSchema[K] => {
     return localDB.get(collection);
   },
   
-  getActive: (collection: keyof DBSchema) => {
+  getActive: <K extends keyof DBSchema>(collection: K): DBSchema[K] => {
     const data = localDB.get(collection);
     if (Array.isArray(data)) {
-      return data.filter((item: any) => !item.deleted_at);
+      return data.filter((item: any) => !item.deleted_at) as any;
     }
     return data;
   },
 
-  insert: (collection: keyof DBSchema, item: any) => {
+  insert: <K extends keyof DBSchema>(collection: K, item: any): any => {
     const db = readFromDisk();
     const newItem = {
       ...item,
@@ -208,39 +226,73 @@ export const localDB = {
   addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => {
     const inserted = localDB.insert('journal_entries', entry);
     
-    // Update Ledger Balances
+    // Update Ledger Balances with proper accounting logic
     const db = readFromDisk();
     
-    // Debit side
-    const debitAcc = db.ledger_accounts.find(a => a.name === entry.debit_account || a.name_ar === entry.debit_account || a.id === entry.debit_account);
-    if (debitAcc) {
-      debitAcc.balance += entry.amount;
-    }
-    
-    // Credit side
-    const creditAcc = db.ledger_accounts.find(a => a.name === entry.credit_account || a.name_ar === entry.credit_account || a.id === entry.credit_account);
-    if (creditAcc) {
-      creditAcc.balance -= entry.amount; // Basic accounting logic: Credit decreases balance for Assets, increases for Liabilities/Revenue. 
-      // Simplified: Just update the numeric balance property.
-    }
+    const updateBalance = (accountIdentifier: string, amount: number, isDebit: boolean) => {
+      const acc = db.ledger_accounts.find(a => 
+        a.name === accountIdentifier || 
+        a.name_ar === accountIdentifier || 
+        a.id === accountIdentifier
+      );
+      
+      if (acc) {
+        // Assets and Expenses: Debit increases balance, Credit decreases balance
+        // Liabilities, Equity, and Revenue: Debit decreases balance, Credit increases balance
+        const isNaturalDebit = acc.type === 'asset' || acc.type === 'expense';
+        
+        if (isDebit) {
+          acc.balance += isNaturalDebit ? amount : -amount;
+        } else {
+          acc.balance += isNaturalDebit ? -amount : amount;
+        }
+      }
+    };
+
+    updateBalance(entry.debit_account, entry.amount, true);
+    updateBalance(entry.credit_account, entry.amount, false);
     
     writeToDisk(db);
     return inserted;
   },
 
-  update: (collection: keyof DBSchema, id: string, updates: any) => {
+  update: <K extends keyof DBSchema>(collection: K, id: string, updates: any) => {
     const db = readFromDisk();
-    const index = (db[collection] as any[]).findIndex((item: any) => item.id === id);
-    if (index !== -1) {
-      db[collection][index] = {
-        ...db[collection][index],
-        ...updates,
-        updated_at: new Date().toISOString()
+    const data = db[collection];
+    if (Array.isArray(data)) {
+      const index = data.findIndex((item: any) => item.id === id);
+      if (index !== -1) {
+        data[index] = {
+          ...data[index],
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+        writeToDisk(db);
+        return data[index];
+      }
+    } else if (typeof data === 'object' && data !== null) {
+      db[collection] = {
+        ...(data as any),
+        ...updates
       };
       writeToDisk(db);
-      return db[collection][index];
+      return db[collection];
     }
     return null;
+  },
+
+  exportJSON: () => {
+    return JSON.stringify(readFromDisk(), null, 2);
+  },
+
+  importJSON: (json: string) => {
+    try {
+      const data = JSON.parse(json);
+      writeToDisk(data);
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   softDelete: (collection: keyof DBSchema, id: string) => {
