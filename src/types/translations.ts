@@ -35,6 +35,7 @@ export interface Translations {
     trash: string;
     biometrics: string;
     affiliate: string;
+    contracts: string;
   };
   notifications: {
     success: string;

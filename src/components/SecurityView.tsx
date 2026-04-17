@@ -39,15 +39,19 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
 
   const fetchBackups = () => {
     try {
-        const data = localDB.getAll('backups').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setBackups(data as Backup[]);
+        const data = localDB.getAll('backups');
+        if (Array.isArray(data)) {
+           setBackups(data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+        }
     } catch {}
   };
 
   const fetchRealLogs = () => {
     try {
-        const data = localDB.getActive('activity_logs').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
-        setLogs(data as ActivityLog[]);
+        const data = localDB.getActive('activity_logs');
+        if (Array.isArray(data)) {
+           setLogs(data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
+        }
     } catch {}
   };
 

@@ -95,6 +95,8 @@ interface DBSchema {
     device_id: string;
     auto_sync: boolean;
   };
+  backups?: any[];
+  audit_logs?: any[];
 }
 
 const DEFAULT_DB: DBSchema = {
@@ -256,7 +258,20 @@ export const localDB = {
     return inserted;
   },
 
+  findById: <K extends keyof DBSchema>(collection: K, id: string) => {
+    const data = localDB.get(collection);
+    if (!Array.isArray(data)) return null;
+    return data.find((item: any) => item.id === id) || null;
+  },
+
+  findBy: <K extends keyof DBSchema>(collection: K, key: string, value: any) => {
+    const data = localDB.get(collection);
+    if (!Array.isArray(data)) return [];
+    return data.filter((item: any) => item[key] === value);
+  },
+
   update: <K extends keyof DBSchema>(collection: K, id: string, updates: any) => {
+
     const db = readFromDisk();
     const data = db[collection];
     if (Array.isArray(data)) {
@@ -300,7 +315,7 @@ export const localDB = {
   },
 
   delete: (collection: keyof DBSchema, id: string) => {
-    const db = readFromDisk();
+    const db = readFromDisk() as any;
     db[collection] = (db[collection] as any[]).filter((item: any) => item.id !== id);
     writeToDisk(db);
   },

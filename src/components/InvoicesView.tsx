@@ -10,37 +10,6 @@ interface InvoicesViewProps {
   t: any;
 }
 
-const generateZatcaQR = (seller: string, vatNo: string, date: string, total: string, vat: string) => {
-  const encodeTLV = (tag: number, val: string) => {
-    const tagBuf = new Uint8Array([tag]);
-    const valBuf = new TextEncoder().encode(val);
-    const lenBuf = new Uint8Array([valBuf.length]);
-    const res = new Uint8Array(tagBuf.length + lenBuf.length + valBuf.length);
-    res.set(tagBuf);
-    res.set(lenBuf, tagBuf.length);
-    res.set(valBuf, tagBuf.length + lenBuf.length);
-    return res;
-  };
-
-  const parts = [
-    encodeTLV(1, seller),
-    encodeTLV(2, vatNo),
-    encodeTLV(3, date),
-    encodeTLV(4, total),
-    encodeTLV(5, vat)
-  ];
-
-  const totalLen = parts.reduce((acc, p) => acc + p.length, 0);
-  const combined = new Uint8Array(totalLen);
-  let offset = 0;
-  parts.forEach(p => {
-    combined.set(p, offset);
-    offset += p.length;
-  });
-
-  return btoa(Array.from(combined).map(b => String.fromCharCode(b)).join(''));
-};
-
 const BarcodeSVG = ({ value }: { value: string }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
     <svg width="150" height="40"><rect width="150" height="40" fill="white" />
@@ -246,13 +215,17 @@ interface InvoicePreviewProps {
 }
 
 function InvoicePreview({ invoice, settings, onClose }: InvoicePreviewProps) {
-  const qrData = generateZatcaQR(
-    settings.companyName, 
-    settings.taxNumber, 
-    new Date(invoice.created_at).toISOString(), 
-    invoice.total.toString(), 
-    invoice.vat.toString()
-  );
+  const sovereignQRData = JSON.stringify({ 
+    op: invoice.operation_number || invoice.id, 
+    client: invoice.customers?.name || 'Customer', 
+    dec: invoice.statement_number,
+    bol: invoice.bol_number,
+    customs: invoice.customs_fees,
+    port: invoice.port_fees,
+    inventory: invoice.cargo_value,
+    total: invoice.total.toLocaleString()
+  });
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur flex justify-center p-4 z-[100] overflow-auto">
       <div className="bg-white p-10 w-[210mm] shadow-2xl relative text-right" dir="rtl">
@@ -280,9 +253,14 @@ function InvoicePreview({ invoice, settings, onClose }: InvoicePreviewProps) {
         </table>
         <div className="flex justify-between items-start mt-auto pt-8 border-t">
            <div className="flex flex-col items-center">
-             <QRCodeSVG value={qrData} size={100} />
-             <p className="text-[8px] text-center mt-1">ZATCA QR</p>
-             <div className="mt-4"><BarcodeSVG value={invoice.operation_number || invoice.id} /></div>
+             <div style={{ padding: '10px', border: '2px solid #001a33', borderRadius: '12px' }}>
+                <QRCodeSVG value={sovereignQRData} size={110} level="H" includeMargin />
+             </div>
+             <p className="text-[10px] text-center mt-2 font-black text-slate-800">التحقق السيادي QR</p>
+             <div className="mt-4">
+                <p className="text-[8px] font-bold text-center mb-1 opacity-60">تتبع الباركود النشط</p>
+                <BarcodeSVG value={`${invoice.operation_number || invoice.id}-${invoice.bol_number || 'N/A'}`} />
+             </div>
            </div>
            <div className="w-1/2 space-y-2">
               <div className="flex justify-between font-bold border-b pb-1 text-slate-500"><span>إجمالي المخزون (Cargo Value):</span><span>{invoice.cargo_value?.toLocaleString()} ر.س</span></div>

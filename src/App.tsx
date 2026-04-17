@@ -50,7 +50,7 @@ import TaxAutomationView from './components/TaxAutomationView';
 import ExpensesView from './components/ExpensesView';
 import PrepaymentsView from './components/PrepaymentsView';
 import DataImportView from './components/DataImportView';
-import { InvoicesView } from './components/InvoicesView';
+import InvoicesView from './components/InvoicesView';
 import AuditLogsView from './components/AuditLogsView';
 import StatementsView from './components/StatementsView';
 import PettyCashView from './components/PettyCashView';
@@ -93,7 +93,8 @@ const translations = {
       statements: 'القوائم المالية الجمركية',
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
-      biometrics: 'الأمان والبصمات'
+      biometrics: 'الأمان والبصمات',
+      affiliate: 'التسويق بالعمولة'
     },
     notifications: {
       success: 'تمت تسجيل العملية السيادية بنجاح بميزان الغويري!',
@@ -169,7 +170,29 @@ const translations = {
       settlement_entry: 'قيد تسوية سيادي',
       adjustment_type: 'نوع التسوية',
       credit_adj: 'تسوية دائنة',
-      debit_adj: 'تسوية مدينة'
+      debit_adj: 'تسوية مدينة',
+      journal: 'دفتر اليومية',
+      general_ledger: 'دفتر الأستاذ العام',
+      daily: 'يومي',
+      monthly: 'شهري',
+      yearly: 'سنوي',
+      profit_loss: 'الأرباح والخسائر',
+      ledger_summary: 'ملخص الأستاذ',
+      statement_number: 'رقم الكشف'
+    },
+    contracts: {
+      lang: 'ar',
+      title: 'إدارة العقود السيادية',
+      client_contracts: 'عقود العملاء',
+      transport_contracts: 'عقود النقل',
+      add_contract: 'إضافة عقد',
+      contract_date: 'تاريخ العقد',
+      expiry_date: 'تاريخ الانتهاء',
+      terms: 'الشروط والأحكام',
+      transporter_name: 'اسم الناقل',
+      transport_fees: 'رسوم النقل',
+      client_name: 'اسم العميل',
+      status: 'الحالة'
     },
     payroll: {
       title: 'إدارة مسيرات الرواتب السيادية',
@@ -655,7 +678,8 @@ const translations = {
       petty_cash: 'Petty Cash',
       trash: 'Trash bin',
       biometrics: 'Security & Biometrics',
-      marketing: 'Marketing Systems'
+      contracts: 'Contracts Management',
+      affiliate: 'Affiliate Marketing'
     },
     notifications: {
       success: 'Sovereign transaction recorded successfully!',
@@ -732,7 +756,29 @@ const translations = {
       settlement_entry: 'Sovereign Settlement Entry',
       adjustment_type: 'Adjustment Type',
       credit_adj: 'Credit Adjustment',
-      debit_adj: 'Debit Adjustment'
+      debit_adj: 'Debit Adjustment',
+      journal: 'Journal Entry',
+      general_ledger: 'General Ledger',
+      daily: 'Daily',
+      monthly: 'Monthly',
+      yearly: 'Yearly',
+      profit_loss: 'Profit & Loss',
+      ledger_summary: 'Ledger Summary',
+      statement_number: 'Statement No.'
+    },
+    contracts: {
+      lang: 'en',
+      title: 'Sovereign Contracts Management',
+      client_contracts: 'Client Contracts',
+      transport_contracts: 'Transport Contracts',
+      add_contract: 'Add Contract',
+      contract_date: 'Contract Date',
+      expiry_date: 'Expiry Date',
+      terms: 'Terms',
+      transporter_name: 'Transporter',
+      transport_fees: 'Transport Fees',
+      client_name: 'Client',
+      status: 'Status'
     },
     payroll: {
       lang: 'en',
@@ -1441,7 +1487,7 @@ export default function App() {
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
-      case 'contracts': return <ContractsView />;
+      case 'contracts': return <ContractsView showToast={showToast} logActivity={logActivity} t={{...t.contracts, lang}} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };

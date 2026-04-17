@@ -144,7 +144,13 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
 
   const calculateSubtotal = () => items.reduce((sum: number, item: {desc: string, amount: number}) => sum + item.amount, 0);
   const calculateLogistics = () => (parseFloat(customsFees)||0) + (parseFloat(portFees)||0) + (parseFloat(transportExpenses)||0);
-  const calculateTotal = () => calculateSubtotal() + calculateVAT() + calculateLogistics();
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const logistics = calculateLogistics();
+    // Final Customer Invoice doesn't include tax calculation for the client view
+    if (invoiceMode === 'invoice') return subtotal + logistics;
+    return subtotal + calculateVAT() + logistics;
+  };
 
   const handleIssueInvoice = async () => {
     if (!clientName || items.length === 0) {
@@ -164,24 +170,25 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     const profitValue = subtotal - transport; 
 
     const newTrx: Partial<Invoice> = {
-      reference_number: (invoiceMode === 'settlement' ? 'SET-' : 'INV-') + Math.random().toString(36).substr(2, 6).toUpperCase(),
+      reference_number: (invoiceMode === 'settlement' ? 'SET-' : invoiceMode === 'internal' ? 'INT-' : 'INV-') + Math.random().toString(36).substr(2, 6).toUpperCase(),
       customer_id: clientName,
       invoice_type: invoiceMode === 'internal' ? 'internal' : 'final',
       is_settlement: invoiceMode === 'settlement',
       amount: subtotal,
-      vat: vat,
+      vat: invoiceMode === 'invoice' ? 0 : vat, // Zero tax for final customer invoice per request
       total: totalAmount,
       customs_fees: customs,
       port_fees: port,
       transport_fees: transport,
-      transport_expenses: transport, // Record the actual expense
+      transport_expenses: transport, 
       statement_number: declarationNumber,
       bol_number: bolNumber,
       operation_number: operationNumber,
       cargo_value: parseFloat(inventoryValue) || 0,
       profit: profitValue,
       items: items.map(i => ({ description: i.desc, amount: i.amount })),
-      status: 'مكتمل'
+      status: 'مكتمل',
+      created_at: new Date().toISOString()
     };
 
     try {
@@ -1068,17 +1075,17 @@ function InvoicePreviewModal({
 
     return (
         <div className="modal-overlay" style={{ background: 'rgba(0,26,51,0.9)', backdropFilter: 'blur(12px)', zIndex: 5000, overflowY: 'auto' }}>
-            <div className="no-print" style={{ position: 'sticky', top: 0, padding: '1.2rem', background: '#001a33', display: 'flex', justifyContent: 'center', gap: '1.5rem', boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
-                <button onClick={onPrint} className="btn-executive" style={{ flex: 1, background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1.2rem', fontSize: '1.2rem', fontWeight: 900 }}>
-                    <Printer size={22} /> {isAr ? 'طباعة / حفظ PDF' : 'Print / Save PDF'}
+            <div className="no-print" style={{ position: 'sticky', top: 0, padding: '1.2rem', background: '#001a33', display: 'flex', justifyContent: 'center', gap: '1.5rem', boxShadow: '0 4px 30px rgba(0,0,0,0.3)', width: '100%' }}>
+                <button onClick={onPrint} className="btn-executive" style={{ flex: 1, background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1.2rem', fontSize: '1.1rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}>
+                    <Printer size={22} /> {isAr ? 'طباعة / تحويل PDF' : 'Print / Save PDF'}
                 </button>
                 <button onClick={onWhatsApp} className="btn-executive" style={{ width: '80px', background: '#25D366', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Activity size={24} />
                 </button>
                 <button onClick={onEmail} className="btn-executive" style={{ width: '80px', background: '#0066cc', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Plus size={24} />
+                    <FileText size={24} />
                 </button>
-                <button onClick={onDismiss} className="btn-executive" style={{ background: '#ba1a1a', color: 'white', border: 'none', padding: '1.2rem', fontWeight: 900 }}><X size={22} /> {isAr ? 'إغلاق' : 'Close'}</button>
+                <button onClick={onDismiss} className="btn-executive" style={{ background: '#ba1a1a', color: 'white', border: 'none', padding: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.8rem' }}><X size={22} /> {isAr ? 'إغلاق' : 'Close'}</button>
             </div>
             
             <div className="print-content" style={{ background: 'white', width: '210mm', minHeight: '297mm', margin: '3rem auto', padding: '2.5cm', color: 'black', direction: 'rtl', fontFamily: 'Tajawal', borderRadius: '4px', boxShadow: '0 0 60px rgba(0,0,0,0.2)' }}>
@@ -1165,16 +1172,17 @@ function InvoicePreviewModal({
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '3rem', borderTop: '2px solid #eee' }}>
                     <div>
                         <div style={{ marginBottom: '2.5rem' }}>
-                           <BarcodeSVG value={operationNumber || invoiceId} />
+                           <p style={{ margin: '0 0 5mm', fontSize: '9pt', fontWeight: 800, textAlign: 'center', opacity: 0.6 }}>تتبع العمليات والباركود النشط</p>
+                           <BarcodeSVG value={`${operationNumber || invoiceId}-${bolNumber || 'N/A'}`} />
                         </div>
                         {isSettlement && (
                            <div style={{ padding: '2rem', background: '#f0fff4', border: '2px solid #c6f6d5', borderRadius: '24px' }}>
-                               <span style={{ fontSize: '0.9rem', fontWeight: 950, color: '#2f855a', display: 'block', marginBottom: '0.5rem' }}>ربحية المعاملة التلقائية</span>
-                               <span style={{ fontSize: '2rem', fontWeight: 1000, color: '#276749' }}>{profit.toLocaleString()} <small style={{ fontSize: '0.6em', opacity: 0.6 }}>SAR</small></span>
+                               <span style={{ fontSize: '0.9rem', fontWeight: 950, color: '#2f855a', display: 'block', marginBottom: '0.5rem' }}>ربحية المعاملة التلقائية (الأرباح)</span>
+                               <span style={{ fontSize: '2rem', fontWeight: 1000, color: '#276749' }}>{(profit > 0 ? profit : 0).toLocaleString()} <small style={{ fontSize: '0.6em', opacity: 0.6 }}>SAR</small></span>
                            </div>
                         )}
                         {!isSettlement && (
-                            <div style={{ padding: '1rem', border: '1px solid #eee', borderRadius: '12px' }}>
+                            <div style={{ padding: '1.5rem', border: '2px solid #001a33', borderRadius: '20px', display: 'inline-block' }}>
                                 <QRCodeSVG value={JSON.stringify({ 
                                     op: operationNumber, 
                                     client: clientName, 
@@ -1182,8 +1190,10 @@ function InvoicePreviewModal({
                                     bol: bolNumber,
                                     customs: customsFees,
                                     port: portFees,
-                                    total 
-                                })} size={120} />
+                                    inventory: inventoryValue,
+                                    total: total.toLocaleString()
+                                })} size={140} level="H" includeMargin />
+                                <p style={{ margin: '10px 0 0', fontSize: '8pt', textAlign: 'center', fontWeight: 900 }}>التحقق السيادي QR</p>
                             </div>
                         )}
                     </div>
