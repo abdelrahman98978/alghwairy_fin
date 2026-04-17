@@ -329,8 +329,19 @@ function InvoicePreview({ invoice, settings, onClose }: { invoice: Invoice; sett
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '5px solid #001a33', paddingBottom: '20px', marginBottom: '25px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ width: 80, height: 80, background: '#001a33', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontSize: '2.5rem', fontWeight: 950 }}>
-              {settings.companyName.charAt(0)}
+            <div style={{ width: 80, height: 80, borderRadius: '20px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <img 
+                 src="./logo.png" 
+                 alt="Logo" 
+                 style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 1, backgroundColor: 'white' }} 
+                 onError={(e) => {
+                   const target = e.target as HTMLImageElement;
+                   target.style.display = 'none';
+                   if (target.parentElement) {
+                     target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; background: #001a33; display: flex; align-items: center; justify-content: center; color: #d4a76a; font-size: 2.5rem; font-weight: 950;">${settings.companyName.charAt(0)}</div>`;
+                   }
+                 }}
+              />
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 950, color: '#001a33' }}>{settings.companyName}</h2>

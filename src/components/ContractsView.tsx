@@ -178,13 +178,14 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
       </head>
       <body>
         <div class="header">
+          <img src="${window.location.origin}/logo.png" alt="Logo" style="height: 80px; object-fit: contain; margin-bottom: 15px;" onerror="this.style.display='none'" />
           <h1>مؤسسة الغويري للتخليص الجمركي</h1>
           <p>Alghwairy Customs Clearance Institution</p>
           <h2 style="margin-top: 30px; color: #111;">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
         </div>
 
         <div class="section">
-          <div class="section-title">البيانات الأساسية للمتطأقد</div>
+          <div class="section-title">البيانات الأساسية للمتعاقد</div>
           <div class="grid">
             <div class="field">
               <span class="label">رقم العقد المرجعي</span>
@@ -206,7 +207,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
         </div>
 
         <div class="section">
-          <div class="section-title">يانات الطرف الثاني (العميل/الناقل)</div>
+          <div class="section-title">بيانات الطرف الثاني (العميل/الناقل)</div>
           <div class="field" style="margin-top: 15px;">
             <span class="label">اسم الجهة المتعاقدة</span>
             <span class="value" style="font-size: 1.3rem;">${contract.entity_name}</span>

@@ -648,6 +648,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
       </head>
       <body>
         <div class="header">
+          <img src="${window.location.origin}/logo.png" alt="Logo" style="height: 80px; object-fit: contain; margin-bottom: 15px;" onerror="this.style.display='none'" />
           <h1>مؤسسة الغويري للتخليص الجمركي</h1>
           <p>Alghwairy Customs Clearance Institution</p>
           <h2 style="margin-top: 30px; color: #111;">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
