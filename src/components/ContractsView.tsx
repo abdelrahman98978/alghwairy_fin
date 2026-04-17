@@ -89,115 +89,129 @@ export const ContractsView: React.FC<ContractsViewProps> = ({ showToast, logActi
   );
 
   return (
-    <div className="p-6 overflow-hidden" dir="rtl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="slide-in" dir="rtl" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <header className="view-header" style={{ marginBottom: '1.5rem' }}>
         <div>
-          <h1 className="text-3xl font-black text-slate-800">نظام التعاقدات السيادي</h1>
-          <p className="text-slate-500 font-bold mt-1">إدارة عقود العملاء وشركات النقل اللوجستي</p>
+          <h2 className="view-title" style={{ margin: 0 }}>نظام التعاقدات السيادي</h2>
+          <p className="view-subtitle" style={{ margin: 0 }}>إدارة عقود العملاء وشركات النقل اللوجستي</p>
         </div>
         <button 
           onClick={() => { resetForm(); setShowModal(true); }}
-          className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition"
+          className="btn-executive"
         >
+          <Plus size={18} />
           إضافة عقد جديد
         </button>
-      </div>
+      </header>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-8">
-        <TabButton active={activeTab === 'client'} onClick={() => setActiveTab('client')} icon={<User size={18} />} label="عقود العملاء" />
-        <TabButton active={activeTab === 'transporter'} onClick={() => setActiveTab('transporter')} icon={<Truck size={18} />} label="عقود الناقلين" />
-      </div>
+      <div className="view-container">
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
+          <TabButton active={activeTab === 'client'} onClick={() => setActiveTab('client')} icon={<User size={18} />} label="عقود العملاء" />
+          <TabButton active={activeTab === 'transporter'} onClick={() => setActiveTab('transporter')} icon={<Truck size={18} />} label="عقود الناقلين" />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <ContractStat title="العقود النشطة" value={filtered.filter(c => c.status === 'active').length} color="blue" />
-        <ContractStat title="قيمة الالتزامات" value={filtered.reduce((sum, c) => sum + (Number(c.value) || 0), 0)} color="green" />
-        {activeTab === 'transporter' && <ContractStat title="مصاريف النقل" value={filtered.reduce((sum, c) => sum + (Number(c.transport_expenses) || 0), 0)} color="red" />}
-      </div>
+        <div className="metric-grid">
+          <ContractStat title="العقود النشطة" value={filtered.filter(c => c.status === 'active').length} color="blue" />
+          <ContractStat title="قيمة الالتزامات" value={filtered.reduce((sum, c) => sum + (Number(c.value) || 0), 0)} color="green" />
+          {activeTab === 'transporter' && <ContractStat title="مصاريف النقل" value={filtered.reduce((sum, c) => sum + (Number(c.transport_expenses) || 0), 0)} color="red" />}
+        </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right">
-            <thead>
-              <tr className="bg-slate-50 border-b">
-                <th className="px-6 py-4 font-black text-slate-600">الطرف المتعاقد</th>
-                <th className="px-6 py-4 font-black text-slate-600">تاريخ البدء</th>
-                <th className="px-6 py-4 font-black text-slate-600">القيمة الإجمالية</th>
-                {activeTab === 'transporter' && <th className="px-6 py-4 font-black text-slate-600">مصاريف النقل</th>}
-                <th className="px-6 py-4 font-black text-slate-600">الحالة</th>
-                <th className="px-6 py-4 font-black text-slate-600">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(contract => (
-                <tr key={contract.id} className="border-b hover:bg-slate-50 transition cursor-pointer" onClick={() => { setSelectedContract(contract); setFormData(contract); setShowModal(true); }}>
-                  <td className="px-6 py-4">
-                    <div className="font-black text-slate-800">{contract.entity_name}</div>
-                    <div className="text-xs text-slate-400 font-bold">{contract.id}</div>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-slate-600">{contract.contract_date}</td>
-                  <td className="px-6 py-4 font-black text-blue-600">{(Number(contract.value) || 0).toLocaleString()} ر.س</td>
-                  {activeTab === 'transporter' && <td className="px-6 py-4 font-black text-red-600">{(Number(contract.transport_expenses) || 0).toLocaleString()} ر.س</td>}
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-black shadow-sm ${contract.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {contract.status === 'active' ? 'نشط' : 'ملغى'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition"><FileText size={18} /></button>
-                  </td>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="sovereign-table">
+              <thead>
+                <tr>
+                  <th>الطرف المتعاقد</th>
+                  <th>تاريخ البدء</th>
+                  <th>القيمة الإجمالية</th>
+                  {activeTab === 'transporter' && <th>مصاريف النقل</th>}
+                  <th>الحالة</th>
+                  <th>الإجراءات</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map(contract => (
+                  <tr key={contract.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedContract(contract); setFormData(contract); setShowModal(true); }}>
+                    <td>
+                      <div style={{ fontWeight: 900, color: 'var(--on-surface)' }}>{contract.entity_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>{contract.id}</div>
+                    </td>
+                    <td style={{ fontWeight: 700, color: 'var(--on-surface-variant)' }}>{contract.contract_date}</td>
+                    <td style={{ fontWeight: 900, color: 'var(--secondary)' }}>{(Number(contract.value) || 0).toLocaleString()} ر.س</td>
+                    {activeTab === 'transporter' && <td style={{ fontWeight: 900, color: 'var(--error)' }}>{(Number(contract.transport_expenses) || 0).toLocaleString()} ر.س</td>}
+                    <td>
+                      <span className="badge-sovereign" style={{ 
+                        backgroundColor: contract.status === 'active' ? 'var(--success-container)' : 'var(--error-container)', 
+                        color: contract.status === 'active' ? 'var(--success)' : 'var(--error)' 
+                      }}>
+                        {contract.status === 'active' ? 'نشط' : 'ملغى'}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn-executive" style={{ padding: '0.5rem', background: 'var(--surface-container)', color: 'var(--primary)' }}>
+                        <FileText size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-             <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
-                <h2 className="text-2xl font-black text-slate-800">{selectedContract ? 'تعديل بيانات العقد' : 'إنشاء عقد جديد'}</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-200 rounded-full"><X size={24} /></button>
+        <div className="modal-overlay">
+          <div className="card" style={{ width: '100%', maxWidth: '800px', padding: 0, margin: '2rem auto' }}>
+             <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{selectedContract ? 'تعديل بيانات العقد' : 'إنشاء عقد جديد'}</h2>
+                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}>
+                  <X size={24} />
+                </button>
              </div>
-             <form onSubmit={handleSubmit} className="p-8 grid grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto">
-                <div className="col-span-1">
-                  <label className="block text-sm font-black text-slate-700 mb-2">نوع التعاقد</label>
-                  <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}>
+             <form onSubmit={handleSubmit} style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+                <div style={{ gridColumn: 'span 1' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>نوع التعاقد</label>
+                  <select className="input-executive" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}>
                     <option value="client">عقد عميل (تخليص)</option>
                     <option value="transporter">عقد ناقل (لوجستي)</option>
                   </select>
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-sm font-black text-slate-700 mb-2">اسم الطرف</label>
-                  <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={formData.entity_id} onChange={e => setFormData({...formData, entity_id: e.target.value})} required>
+                <div style={{ gridColumn: 'span 1' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>اسم الطرف</label>
+                  <select className="input-executive" value={formData.entity_id} onChange={e => setFormData({...formData, entity_id: e.target.value})} required>
                     <option value="">اختر الطرف...</option>
                     {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-sm font-black text-slate-700 mb-2">تاريخ العقد</label>
-                  <input type="date" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={formData.contract_date} onChange={e => setFormData({...formData, contract_date: e.target.value})} />
+                <div style={{ gridColumn: 'span 1' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>تاريخ العقد</label>
+                  <input type="date" className="input-executive" value={formData.contract_date} onChange={e => setFormData({...formData, contract_date: e.target.value})} />
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-sm font-black text-slate-700 mb-2">تاريخ الانتهاء</label>
-                  <input type="date" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={formData.expiry_date} onChange={e => setFormData({...formData, expiry_date: e.target.value})} />
+                <div style={{ gridColumn: 'span 1' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>تاريخ الانتهاء</label>
+                  <input type="date" className="input-executive" value={formData.expiry_date} onChange={e => setFormData({...formData, expiry_date: e.target.value})} />
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-sm font-black text-slate-700 mb-2">القيمة الكلية</label>
-                  <input type="number" className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-black text-blue-700" value={formData.value} onChange={e => setFormData({...formData, value: Number(e.target.value)})} />
+                <div style={{ gridColumn: 'span 1' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>القيمة الكلية</label>
+                  <input type="number" className="input-executive" style={{ color: 'var(--primary)', fontWeight: 900 }} value={formData.value} onChange={e => setFormData({...formData, value: Number(e.target.value)})} />
                 </div>
                 {formData.type === 'transporter' && (
-                  <div className="col-span-1">
-                    <label className="block text-sm font-black text-slate-700 mb-2">مصاريف التشغيل/النقل</label>
-                    <input type="number" className="w-full p-4 bg-red-50 border-2 border-red-100 rounded-2xl font-black text-red-700" value={formData.transport_expenses} onChange={e => setFormData({...formData, transport_expenses: Number(e.target.value)})} />
+                  <div style={{ gridColumn: 'span 1' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>مصاريف التشغيل/النقل</label>
+                    <input type="number" className="input-executive" style={{ color: 'var(--error)', fontWeight: 900 }} value={formData.transport_expenses} onChange={e => setFormData({...formData, transport_expenses: Number(e.target.value)})} />
                   </div>
                 )}
-                <div className="col-span-2">
-                  <label className="block text-sm font-black text-slate-700 mb-2">الشروط والأحكام</label>
-                  <textarea rows={3} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={formData.terms} onChange={e => setFormData({...formData, terms: e.target.value})} placeholder="اكتب شروط العقد هنا..." />
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 900, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>الشروط والأحكام</label>
+                  <textarea rows={3} className="input-executive" value={formData.terms} onChange={e => setFormData({...formData, terms: e.target.value})} placeholder="اكتب شروط العقد هنا..." />
                 </div>
-                <button type="submit" className="col-span-2 bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-black transition shadow-xl mt-4">حفظ بيانات العقد السيادي</button>
+                <div style={{ gridColumn: 'span 2', marginTop: '1rem' }}>
+                  <button type="submit" className="btn-executive" style={{ width: '100%', justifyContent: 'center', padding: '1rem', fontSize: '1rem', background: 'var(--primary)', color: 'var(--on-primary)' }}>
+                    حفظ بيانات العقد السيادي
+                  </button>
+                </div>
              </form>
           </div>
         </div>
@@ -215,7 +229,17 @@ interface TabButtonProps {
 
 function TabButton({ active, onClick, icon, label }: TabButtonProps) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-3 px-6 py-3 rounded-xl font-black shadow-sm transition ${active ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border'}`}>
+    <button 
+      onClick={onClick} 
+      style={{ 
+        display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.5rem', 
+        borderRadius: 'var(--radius-md)', fontWeight: 900, cursor: 'pointer', border: 'none',
+        background: active ? 'var(--secondary)' : 'var(--surface)', 
+        color: active ? 'var(--on-secondary-container)' : 'var(--on-surface-variant)',
+        boxShadow: active ? '0 8px 20px rgba(212, 167, 106, 0.3)' : 'var(--shadow-sm)',
+        transition: 'all 0.3s'
+      }}
+    >
        {icon}
        <span>{label}</span>
     </button>
@@ -229,15 +253,13 @@ interface ContractStatProps {
 }
 
 function ContractStat({ title, value, color }: ContractStatProps) {
-  const c = { 
-    blue: 'text-blue-600 bg-blue-50 border-blue-100', 
-    green: 'text-green-600 bg-green-50 border-green-100', 
-    red: 'text-red-600 bg-red-50 border-red-100' 
-  };
+  const bgColors = { blue: 'var(--surface-container-low)', green: 'var(--success-container)', red: 'var(--error-container)' };
+  const textColors = { blue: 'var(--primary)', green: 'var(--success)', red: 'var(--error)' };
+  
   return (
-    <div className={`p-6 rounded-3xl border-2 ${c[color]}`}>
-       <p className="text-xs font-black opacity-70 mb-1">{title}</p>
-       <h3 className="text-2xl font-black">{value.toLocaleString()}</h3>
+    <div className="card" style={{ background: bgColors[color], borderColor: 'transparent' }}>
+       <p style={{ fontSize: '0.875rem', fontWeight: 900, opacity: 0.7, marginBottom: '0.5rem', color: textColors[color] }}>{title}</p>
+       <h3 style={{ fontSize: '2rem', margin: 0, fontWeight: 900, color: textColors[color] }}>{value.toLocaleString()}</h3>
     </div>
   );
 }
