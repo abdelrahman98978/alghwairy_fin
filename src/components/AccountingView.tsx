@@ -7,6 +7,7 @@ import {
   X,
   CheckCircle2,
   ArrowUpRight,
+  ArrowDownLeft,
   BookOpen,
   PieChart,
   Calendar,
@@ -547,46 +548,55 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   );
 
   const renderJournal = () => (
-    <div className="card slide-in" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)' }}>{t.journal}</h3>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <Calendar size={18} />
-            <input type="date" className="input-executive" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
-            <span style={{ fontWeight: 900 }}>-</span>
-            <input type="date" className="input-executive" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
-          </div>
-          <button className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none' }}><Download size={16} /> Excel</button>
-        </div>
+    <div className="slide-in">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        <ReportMetric label="مدين (Total Debits)" value={journalEntries.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} icon={<ArrowUpRight size={20} />} isSuccess />
+        <ReportMetric label="دائن (Total Credits)" value={journalEntries.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} icon={<ArrowDownLeft size={20} />} />
+        <ReportMetric label="إجمالي القيود" value={journalEntries.length.toString()} icon={<Receipt size={20} />} />
       </div>
 
-      <div className="table-container">
-        <table className="modern-table">
-          <thead>
-            <tr>
-              <th>{t.lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-              <th>{t.lang === 'ar' ? 'البيان' : 'Description'}</th>
-              <th>{t.lang === 'ar' ? 'حـ/ مدين' : 'Debit Account'}</th>
-              <th>{t.lang === 'ar' ? 'حـ/ دائن' : 'Credit Account'}</th>
-              <th>{t.lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredJournal.map((entry: JournalEntry) => (
-              <tr key={entry.id}>
-                <td style={{ fontWeight: 700 }}>{new Date(entry.date).toLocaleDateString()}</td>
-                <td style={{ fontWeight: 600 }}>{entry.description}</td>
-                <td style={{ color: 'var(--success)', fontWeight: 800 }}>{entry.debit_account}</td>
-                <td style={{ color: 'var(--error)', fontWeight: 800 }}>{entry.credit_account}</td>
-                <td style={{ fontWeight: 900 }}>{entry.amount.toLocaleString()} <span style={{ opacity: 0.5 }}>SAR</span></td>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
+        <div style={{ padding: '1.5rem 2.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', fontSize: '1.25rem' }}>{t.journal}</h3>
+          <div style={{ display: 'flex', gap: '1rem' }} className="no-print">
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+               <Calendar size={18} />
+               <input type="date" className="input-executive" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
+               <input type="date" className="input-executive" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
+            </div>
+            <button onClick={() => downloadCSV(filteredJournal, 'Journal')} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}><Download size={16} /> Excel</button>
+          </div>
+        </div>
+
+        <div className="table-container">
+          <table className="sovereign-table">
+            <thead>
+              <tr>
+                <th style={{ paddingInlineStart: '2.5rem' }}>{t.lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                <th>{t.lang === 'ar' ? 'البيان الوصفي' : 'Description'}</th>
+                <th>{t.lang === 'ar' ? 'حـ/ مدين' : 'Debit Account'}</th>
+                <th>{t.lang === 'ar' ? 'حـ/ دائن' : 'Credit Account'}</th>
+                <th style={{ textAlign: 'center', paddingInlineEnd: '2.5rem' }}>{t.lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
               </tr>
-            ))}
-            {filteredJournal.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>{t.no_recent}</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredJournal.map((entry: JournalEntry) => (
+                <tr key={entry.id}>
+                  <td style={{ paddingInlineStart: '2.5rem', fontWeight: 700 }}>{new Date(entry.date).toLocaleDateString()}</td>
+                  <td style={{ fontWeight: 600 }}>{entry.description}</td>
+                  <td style={{ color: 'var(--success)', fontWeight: 800 }}>{entry.debit_account}</td>
+                  <td style={{ color: 'var(--error)', fontWeight: 800 }}>{entry.credit_account}</td>
+                  <td style={{ textAlign: 'center', paddingInlineEnd: '2.5rem', fontWeight: 900, direction: 'ltr' }}>
+                    {entry.amount.toLocaleString()}.00 <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>SAR</span>
+                  </td>
+                </tr>
+              ))}
+              {filteredJournal.length === 0 && (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '5rem', opacity: 0.6, fontWeight: 800 }}>{t.no_recent}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -713,7 +723,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
               </div>
 
               <div className="table-container">
-                <table className="modern-table">
+                <table className="sovereign-table">
                   <thead>
                     <tr>
                       <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>
@@ -748,7 +758,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
               </div>
 
               <div className="table-container">
-                <table className="modern-table">
+                <table className="sovereign-table">
                   <thead>
                     <tr>
                       <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>

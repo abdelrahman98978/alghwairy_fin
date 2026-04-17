@@ -58,7 +58,7 @@ import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
 import CommunicationsView from './components/CommunicationsView';
-import { ContractsView } from './components/ContractsView';
+import ContractsView from './components/ContractsView';
 
 
 const translations = {
@@ -1162,6 +1162,7 @@ export interface Transaction {
   status: string;
   created_at: string;
   currency?: string;
+  payment_method?: string;
 }
 
 export interface NotificationItem {
