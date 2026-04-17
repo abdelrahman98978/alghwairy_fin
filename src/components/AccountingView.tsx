@@ -58,15 +58,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [reportType, setReportType] = useState<'daily' | 'monthly' | 'yearly'>('daily');
-  const [activeReportTab, setActiveReportTab] = useState<'journal' | 'profit'>('journal');
-  const [contracts] = useState<{ id: string, party: string, type: 'Client' | 'Transport', date: string, status: string }[]>([
-    { id: 'C-001', party: 'شركة الحلول اللوجستية', type: 'Client', date: '2024-05-15', status: 'Active' },
-    { id: 'T-001', party: 'مؤسسة النقل السريع', type: 'Transport', date: '2024-05-10', status: 'Signed' }
+  const [activeReportTab, setActiveReportTab] = useState<'journal' | 'profit' | 'scheduled'>('journal');
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [scheduledReports] = useState<{ id: string, name: string, type: string, frequency: string, nextRun: string, status: string }[]>([
+    { id: '1', name: 'تقرير الأرباح اليومي', type: 'Profit', frequency: 'Daily (11 PM)', nextRun: '2024-05-20', status: 'Active' },
+    { id: '2', name: 'كشف الأستاذ الشهري', type: 'Ledger', frequency: 'Monthly', nextRun: '2024-06-01', status: 'Active' },
+    { id: '3', name: 'ميزانية المراجعة السنوية', type: 'Balance', frequency: 'Yearly', nextRun: '2025-01-01', status: 'Active' }
   ]);
-  const [scheduledReports] = useState<{ id: string, name: string, type: string, frequency: string, nextRun: string }[]>([
-    { id: '1', name: 'تقرير الأرباح الشهري', type: 'Profit', frequency: 'Monthly', nextRun: '2024-06-01' },
-    { id: '2', name: 'ميزان المراجعة الأسبوعي', type: 'Ledger', frequency: 'Weekly', nextRun: '2024-05-24' }
-  ]);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractData, setContractData] = useState({ party: '', type: 'client', value: '', expiry: '' });
 
   const [settings] = useState({
     companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
@@ -106,6 +106,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       if (Array.isArray(invs)) {
         setInvoices(invs as Invoice[]);
       }
+
+      const contrs = localDB.getAll('contracts');
+      setContracts(Array.isArray(contrs) ? contrs : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -205,6 +208,20 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
+  };
+
+  const addContract = () => {
+    if (!contractData.party || !contractData.value) return;
+    localDB.insert('contracts', {
+        ...contractData,
+        id: 'CON-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        status: 'active',
+        created_at: new Date().toISOString()
+    });
+    setContractData({ party: '', type: 'client', value: '', expiry: '' });
+    setShowContractModal(false);
+    fetchData();
+    showToast(t.lang === 'ar' ? 'تم إضافة العقد بنجاح' : 'Contract added successfully');
   };
 
   const openExternal = async (url: string) => {
@@ -541,213 +558,333 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     </div>
   );
 
-  const renderReports = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div className="card slide-in" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-          <div>
-            <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{t.lang === 'ar' ? 'التقارير التحليلية والمجدولة' : 'Analytical & Scheduled Reports'}</h3>
-            <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'حسابات تفصيلية وجدول آلي للمخرجات' : 'Detailed accounts & automated output scheduling'}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--surface-container-low)', padding: '0.4rem', borderRadius: '12px' }}>
-               {(['daily', 'monthly', 'yearly'] as const).map(mode => (
-                 <button 
-                   key={mode}
-                   onClick={() => setReportType(mode)} 
-                   style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: reportType === mode ? 'var(--primary)' : 'transparent', color: reportType === mode ? 'var(--secondary)' : 'var(--on-surface-variant)', fontWeight: 900, cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
-                 >
-                   {t[mode]}
-                 </button>
-               ))}
+  const renderReports = () => {
+    const reportData = useMemo(() => {
+      const records: any[] = [];
+      journalEntries.forEach(entry => {
+        const d = new Date(entry.date);
+        let label = '';
+        if (reportType === 'daily') label = d.toLocaleDateString();
+        else if (reportType === 'monthly') label = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        else label = `${d.getFullYear()}`;
+
+        let existing = records.find(r => r.label === label);
+        if (!existing) {
+          existing = { label, debits: 0, credits: 0, count: 0, profit: 0 };
+          records.push(existing);
+        }
+        existing.debits += (entry.debits || 0);
+        existing.credits += (entry.credits || 0);
+        existing.count += 1;
+        existing.profit = existing.debits - existing.credits;
+      });
+      return records;
+    }, [journalEntries, reportType]);
+
+    const profitReportData = useMemo(() => {
+      const records: any[] = [];
+      // Calculate profit by BOL/Invoice
+      invoices.forEach(inv => {
+        const d = new Date(inv.created_at || '');
+        let label = '';
+        if (reportType === 'daily') label = d.toLocaleDateString();
+        else if (reportType === 'monthly') label = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        else label = `${d.getFullYear()}`;
+
+        let existing = records.find(r => r.label === label);
+        if (!existing) {
+          existing = { label, revenue: 0, costs: 0, profit: 0 };
+          records.push(existing);
+        }
+        
+        const subtotal = inv.items?.reduce((s, i) => s + (i.amount || 0), 0) || 0;
+        const transport = parseFloat(inv.transport_expenses || '0');
+        const customs = parseFloat(inv.customs_fees || '0');
+        const port = parseFloat(inv.port_fees || '0');
+        
+        existing.revenue += subtotal;
+        existing.costs += (transport + customs + port);
+        existing.profit += (subtotal - transport - customs - port);
+      });
+      return records;
+    }, [invoices, reportType]);
+
+    return (
+      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="card slide-in" style={{ padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+            <div>
+              <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{t.lang === 'ar' ? 'التقارير التحليلية والمجدولة' : 'Analytical & Scheduled Reports'}</h3>
+              <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'حسابات تفصيلية وجدول آلي للمخرجات' : 'Detailed accounts & automated output scheduling'}</p>
             </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--surface-container-low)', padding: '0.4rem', borderRadius: '12px' }}>
+                 {(['daily', 'monthly', 'yearly'] as const).map(mode => (
+                   <button 
+                     key={mode}
+                     onClick={() => setReportType(mode)} 
+                     style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: reportType === mode ? 'var(--primary)' : 'transparent', color: reportType === mode ? 'var(--secondary)' : 'var(--on-surface-variant)', fontWeight: 900, cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                   >
+                     {t[mode]}
+                   </button>
+                 ))}
+              </div>
+              <button 
+                onClick={() => downloadCSV(activeReportTab === 'journal' ? reportData : profitReportData, `report_${reportType}_${activeReportTab}`)}
+                className="btn-executive" 
+                style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '0.8rem 1.5rem' }}
+              >
+                <Download size={18} /> {t.lang === 'ar' ? 'تصدير CSV' : 'Export CSV'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '2px solid var(--surface-container-high)', marginBottom: '2rem' }}>
             <button 
-              onClick={() => downloadCSV(activeReportTab === 'journal' ? reportData : profitReportData, `report_${reportType}_${activeReportTab}`)}
-              className="btn-executive" 
-              style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '0.8rem 1.5rem' }}
+              onClick={() => setActiveReportTab('journal')}
+              style={{ padding: '1rem 1.5rem', background: 'none', border: 'none', borderBottom: activeReportTab === 'journal' ? '4px solid var(--primary)' : 'none', fontWeight: 900, color: activeReportTab === 'journal' ? 'var(--primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: '0.3s' }}
             >
-              <Download size={18} /> {t.lang === 'ar' ? 'تصدير CSV' : 'Export CSV'}
+              {t.lang === 'ar' ? 'حركة اليومية' : 'Journal Flow'}
+            </button>
+            <button 
+              onClick={() => setActiveReportTab('profit')}
+              style={{ padding: '1rem 1.5rem', background: 'none', border: 'none', borderBottom: activeReportTab === 'profit' ? '4px solid var(--primary)' : 'none', fontWeight: 900, color: activeReportTab === 'profit' ? 'var(--primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: '0.3s' }}
+            >
+              {t.lang === 'ar' ? 'تحليل الربحية' : 'Profit Analysis'}
+            </button>
+            <button 
+              onClick={() => setActiveReportTab('scheduled')}
+              style={{ padding: '1rem 1.5rem', background: 'none', border: 'none', borderBottom: activeReportTab === 'scheduled' ? '4px solid var(--primary)' : 'none', fontWeight: 900, color: activeReportTab === 'scheduled' ? 'var(--primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: '0.3s' }}
+            >
+              {t.lang === 'ar' ? 'التقارير المجدولة' : 'Scheduled'}
             </button>
           </div>
+
+          {activeReportTab === 'scheduled' && (
+            <div className="fade-in" style={{ padding: '2rem', textAlign: 'center', background: 'rgba(0,26,51,0.02)', borderRadius: '24px', border: '1px dashed #ddd' }}>
+               <Calendar size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+               <h3 style={{ fontWeight: 900 }}>{t.lang === 'ar' ? 'الجدولة الذكية للتقارير' : 'Smart Report Scheduling'}</h3>
+               <p style={{ opacity: 0.6, maxWidth: '500px', margin: '0 auto 2rem', fontWeight: 700 }}>سيقوم النظام تلقائياً بتصدير تقارير (اليومية، الأرباح، ميزان المراجعة) وإرسالها للجهات المعنية في المواعيد المحددة.</p>
+               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', textAlign: 'right' }}>
+                  {[
+                    { title: 'تقرير الأرباح اليومي', freq: 'يومي - 11:00 مساءً', icon: <TrendingUp size={20} /> },
+                    { title: 'كشف الأستاذ الشهري', freq: 'شهري - أول يوم', icon: <BookOpen size={20} /> },
+                    { title: 'جرد الميزانية السنوي', freq: 'سنوي - 31 ديسمبر', icon: <PieChart size={20} /> }
+                  ].map((rep, idx) => (
+                    <div key={idx} className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem', color: 'var(--primary)' }}>
+                          {rep.icon}
+                          <h4 style={{ margin: 0, fontWeight: 900 }}>{rep.title}</h4>
+                       </div>
+                       <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, opacity: 0.7 }}>{rep.freq}</p>
+                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                          <button className="btn-executive" style={{ fontSize: '0.7rem', flex: 1 }}>{t.lang === 'ar' ? 'تعديل' : 'Edit'}</button>
+                          <button className="btn-executive" style={{ fontSize: '0.7rem', flex: 1, background: 'var(--success)', color: 'white' }}>{t.lang === 'ar' ? 'مفعل' : 'Active'}</button>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
+
+          {activeReportTab === 'journal' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                <ReportMetric label={t.lang === 'ar' ? 'إجمالي الحركة' : 'Total Volume'} value={reportData.reduce((s, c) => s + (c.debits || 0), 0).toLocaleString()} icon={<LucideBarChart size={18} />} />
+                <ReportMetric label={t.lang === 'ar' ? 'عدد القيود' : 'Entries Count'} value={reportData.reduce((s, c) => s + (c.count || 0), 0).toString()} icon={<BookOpen size={18} />} />
+                <ReportMetric label={t.lang === 'ar' ? 'متوسط العملية' : 'Avg Transaction'} value={(reportData.length && reportData.reduce((s, c) => s + (c.count), 0) > 0 ? (reportData.reduce((s, c) => s + (c.debits), 0) / reportData.reduce((s, c) => s + (c.count), 0)) : 0).toLocaleString()} icon={<Activity size={18} />} />
+              </div>
+
+              <div className="table-container">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>
+                      <th>{t.lang === 'ar' ? 'إجمالي المدين' : 'Total Debit'}</th>
+                      <th>{t.lang === 'ar' ? 'إجمالي الدائن' : 'Total Credit'}</th>
+                      <th>{t.lang === 'ar' ? 'عدد العمليات' : 'Trx Count'}</th>
+                      <th>{t.lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.map((item: any) => (
+                      <tr key={item.label}>
+                        <td style={{ fontWeight: 800 }}>{item.label}</td>
+                        <td style={{ fontWeight: 900, color: 'var(--success)' }}>{item.debits.toLocaleString()}</td>
+                        <td style={{ fontWeight: 900, color: 'var(--error)' }}>{item.credits.toLocaleString()}</td>
+                        <td style={{ fontWeight: 800 }}>{item.count}</td>
+                        <td><span className="badge badge-success" style={{ fontWeight: 900 }}>{t.lang === 'ar' ? 'مؤكد' : 'Confirmed'}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {activeReportTab === 'profit' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                <ReportMetric label={t.lang === 'ar' ? 'إجمالي الإيرادات' : 'Total Revenue'} value={profitReportData.reduce((s, c) => s + c.revenue, 0).toLocaleString()} icon={<TrendingUp size={18} />} isSuccess />
+                <ReportMetric label={t.lang === 'ar' ? 'إجمالي التكاليف' : 'Total Costs'} value={profitReportData.reduce((s, c) => s + c.costs, 0).toLocaleString()} icon={<TrendingDown size={18} />} />
+                <ReportMetric label={t.lang === 'ar' ? 'صافي الأرباح' : 'Net Profit'} value={profitReportData.reduce((s, c) => s + c.profit, 0).toLocaleString()} icon={<LucideBarChart size={18} />} isSuccess />
+              </div>
+
+              <div className="table-container">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>
+                      <th>{t.lang === 'ar' ? 'الإيراد' : 'Revenue'}</th>
+                      <th>{t.lang === 'ar' ? 'التكاليف' : 'Costs'}</th>
+                      <th>{t.lang === 'ar' ? 'الربح' : 'Profit'}</th>
+                      <th>{t.lang === 'ar' ? 'الهامش' : 'Margin'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitReportData.map((item: any) => (
+                      <tr key={item.label}>
+                        <td style={{ fontWeight: 800 }}>{item.label}</td>
+                        <td style={{ fontWeight: 900 }}>{item.revenue.toLocaleString()}</td>
+                        <td style={{ fontWeight: 800, color: 'var(--error)' }}>{item.costs.toLocaleString()}</td>
+                        <td style={{ fontWeight: 950, color: 'var(--success)' }}>{item.profit.toLocaleString()}</td>
+                        <td style={{ fontWeight: 800 }}>
+                          {item.revenue > 0 ? ((item.profit / item.revenue) * 100).toFixed(1) : 0}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: '2rem', borderBottom: '2px solid var(--surface-container-high)', marginBottom: '2rem' }}>
-          <button 
-            onClick={() => setActiveReportTab('journal')}
-            style={{ padding: '1rem', background: 'none', border: 'none', borderBottom: activeReportTab === 'journal' ? '4px solid var(--primary)' : 'none', fontWeight: 900, color: activeReportTab === 'journal' ? 'var(--primary)' : 'var(--on-surface-variant)', cursor: 'pointer' }}
-          >
-            {t.lang === 'ar' ? 'حركة اليومية العامة' : 'General Journal Flow'}
-          </button>
-          <button 
-            onClick={() => setActiveReportTab('profit')}
-            style={{ padding: '1rem', background: 'none', border: 'none', borderBottom: activeReportTab === 'profit' ? '4px solid var(--primary)' : 'none', fontWeight: 900, color: activeReportTab === 'profit' ? 'var(--primary)' : 'var(--on-surface-variant)', cursor: 'pointer' }}
-          >
-            {t.lang === 'ar' ? 'تقرير الربحية التلقائي' : 'Automated Profitability'}
-          </button>
-        </div>
+        <div className="card slide-in" style={{ padding: '2rem', border: '1px dashed var(--primary)' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.8rem', borderRadius: '12px' }}><Calendar size={20} /></div>
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 900, fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'جدولة التقارير الآلية' : 'Automated Report Scheduling'}</h3>
+                <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem' }}>{t.lang === 'ar' ? 'سيقوم النظام بإرسال هذه التقارير تلقائياً للبريد المحدد' : 'System will auto-send these reports to your email'}</p>
+              </div>
+           </div>
 
-        {activeReportTab === 'journal' ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-              <ReportMetric label={t.lang === 'ar' ? 'إجمالي الحركة' : 'Total Volume'} value={reportData.reduce((s: number, c: any) => s + (c.debits || 0), 0).toLocaleString()} icon={<LucideBarChart size={18} />} />
-              <ReportMetric label={t.lang === 'ar' ? 'عدد القيود' : 'Entries Count'} value={reportData.reduce((s: number, c: any) => s + (c.count || 0), 0).toString()} icon={<BookOpen size={18} />} />
-              <ReportMetric label={t.lang === 'ar' ? 'متوسط العملية' : 'Avg Transaction'} value={(reportData.length && reportData.reduce((s: number, c: any) => s + (c.count), 0) > 0 ? (reportData.reduce((s: number, c: any) => s + (c.debits), 0) / reportData.reduce((s: number, c: any) => s + (c.count), 0)) : 0).toLocaleString()} icon={<Activity size={18} />} />
-            </div>
-
-            <div className="table-container">
-              <table className="modern-table">
-                <thead>
-                  <tr>
-                    <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>
-                    <th>{t.lang === 'ar' ? 'إجمالي المدين' : 'Total Debit'}</th>
-                    <th>{t.lang === 'ar' ? 'إجمالي الدائن' : 'Total Credit'}</th>
-                    <th>{t.lang === 'ar' ? 'عدد العمليات' : 'Trx Count'}</th>
-                    <th>{t.lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.map((item: any) => (
-                    <tr key={item.label}>
-                      <td style={{ fontWeight: 800 }}>{item.label}</td>
-                      <td style={{ fontWeight: 900, color: 'var(--success)' }}>{item.debits.toLocaleString()}</td>
-                      <td style={{ fontWeight: 900, color: 'var(--error)' }}>{item.credits.toLocaleString()}</td>
-                      <td style={{ fontWeight: 800 }}>{item.count}</td>
-                      <td><span className="badge badge-success" style={{ fontWeight: 900 }}>{t.lang === 'ar' ? 'مؤكد' : 'Confirmed'}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-              <ReportMetric label={t.lang === 'ar' ? 'إجمالي الإيرادات' : 'Total Revenue'} value={profitReportData.reduce((s: number, c: any) => s + c.revenue, 0).toLocaleString()} icon={<TrendingUp size={18} />} isSuccess />
-              <ReportMetric label={t.lang === 'ar' ? 'إجمالي التكاليف' : 'Total Costs'} value={profitReportData.reduce((s: number, c: any) => s + c.costs, 0).toLocaleString()} icon={<TrendingDown size={18} />} />
-              <ReportMetric label={t.lang === 'ar' ? 'صافي الأرباح' : 'Net Profit'} value={profitReportData.reduce((s: number, c: any) => s + c.profit, 0).toLocaleString()} icon={<LucideBarChart size={18} />} isSuccess />
-            </div>
-
-            <div className="table-container">
-              <table className="modern-table">
-                <thead>
-                  <tr>
-                    <th>{t.lang === 'ar' ? 'الفترة' : 'Period'}</th>
-                    <th>{t.lang === 'ar' ? 'الإيراد' : 'Revenue'}</th>
-                    <th>{t.lang === 'ar' ? 'التكاليف' : 'Costs'}</th>
-                    <th>{t.lang === 'ar' ? 'الربح' : 'Profit'}</th>
-                    <th>{t.lang === 'ar' ? 'الهامش' : 'Margin'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profitReportData.map((item: any) => (
-                    <tr key={item.label}>
-                      <td style={{ fontWeight: 800 }}>{item.label}</td>
-                      <td style={{ fontWeight: 900 }}>{item.revenue.toLocaleString()}</td>
-                      <td style={{ fontWeight: 800, color: 'var(--error)' }}>{item.costs.toLocaleString()}</td>
-                      <td style={{ fontWeight: 950, color: 'var(--success)' }}>{item.profit.toLocaleString()}</td>
-                      <td style={{ fontWeight: 800 }}>
-                        {item.revenue > 0 ? ((item.profit / item.revenue) * 100).toFixed(1) : 0}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="card slide-in" style={{ padding: '2rem', border: '1px dashed var(--primary)' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.8rem', borderRadius: '12px' }}><Calendar size={20} /></div>
-            <div>
-              <h3 style={{ margin: 0, fontWeight: 900, fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'جدولة التقارير الآلية' : 'Automated Report Scheduling'}</h3>
-              <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem' }}>{t.lang === 'ar' ? 'سيقوم النظام بإرسال هذه التقارير تلقائياً للبريد المحدد' : 'System will auto-send these reports to your email'}</p>
-            </div>
-         </div>
-
-         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {scheduledReports.map((report: any) => (
-              <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', border: '1px solid var(--surface-container-high)' }}>
-                <div>
-                  <h4 style={{ margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{report.name}</h4>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>
-                     <span>{report.frequency}</span>
-                     <span>Next Run: {report.nextRun}</span>
+           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {scheduledReports.map((report: any) => (
+                <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', border: '1px solid var(--surface-container-high)' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{report.name}</h4>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>
+                       <span>{report.frequency}</span>
+                       <span>Next Run: {report.nextRun}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                     <div className="badge badge-success" style={{ fontSize: '0.7rem' }}>Active</div>
+                     <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)' }} title="Edit"><Plus size={16} /></button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                   <div className="badge badge-success" style={{ fontSize: '0.7rem' }}>Active</div>
-                   <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)' }} title="Edit"><Plus size={16} /></button>
-                </div>
-              </div>
-            ))}
-            <button className="btn-executive" style={{ border: '2px dashed var(--primary)', background: 'none', color: 'var(--primary)', fontWeight: 900, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', minHeight: '80px' }}>
-              <Plus size={24} /> {t.lang === 'ar' ? 'إضافة تقرير مجدول جديد' : 'Add New Scheduled Report'}
-            </button>
-         </div>
+              ))}
+              <button className="btn-executive" style={{ border: '2px dashed var(--primary)', background: 'none', color: 'var(--primary)', fontWeight: 900, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', minHeight: '80px' }}>
+                <Plus size={24} /> {t.lang === 'ar' ? 'إضافة تقرير مجدول جديد' : 'Add New Scheduled Report'}
+              </button>
+           </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const addContract = () => {
+    if (!contractData.party || !contractData.value) {
+      showToast(t.lang === 'ar' ? 'يرجى ملء البيانات' : 'Please fill all data', 'error');
+      return;
+    }
+    const newContract = {
+      id: Math.random().toString(36).substr(2, 6).toUpperCase(),
+      ...contractData,
+      status: 'نشط',
+      date: new Date().toLocaleDateString()
+    };
+    setContracts([...contracts, newContract]);
+    setShowContractModal(false);
+    setContractData({ party: '', type: 'client', value: '', expiry: '' });
+    showToast(t.lang === 'ar' ? 'تم توثيق العقد بنجاح' : 'Contract certified successfully', 'success');
+  };
 
   const renderContracts = () => (
-    <div className="slide-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div className="card" style={{ padding: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+    <div className="fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{t.lang === 'ar' ? 'إدارة العقود والاتفاقيات' : 'Contracts & Agreements'}</h3>
-            <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'عقود المخلص، العملاء، وشركات النقل' : 'Customs broker, clients, and transport contracts'}</p>
+            <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0 }}>{t.lang === 'ar' ? 'إدارة العقود القانونية' : 'Legal Contract Management'}</h3>
+            <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'عقود العملاء والناقلين وتكاليف النقل المتفق عليها' : 'Client & Transporter contracts with agreed transport fees'}</p>
           </div>
-          <button className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none' }}>
-            <Plus size={18} /> {t.lang === 'ar' ? 'إنشاء عقد جديد' : 'New Contract'}
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-           {contracts.map((contract: any) => (
-             <div key={contract.id} className="card" style={{ border: '1px solid var(--surface-container-high)', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                   <div style={{ background: contract.type === 'Client' ? 'var(--primary)' : 'var(--tertiary)', color: 'white', padding: '0.4rem 1rem', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 900 }}>
-                      {contract.type === 'Client' ? (t.lang === 'ar' ? 'عقد عميل' : 'Client Contract') : (t.lang === 'ar' ? 'عقد نقل' : 'Transport Contract')}
-                   </div>
-                   <div className={`badge badge-${contract.status === 'Active' ? 'success' : 'info'}`} style={{ fontWeight: 900 }}>{contract.status}</div>
-                </div>
-                
-                <h4 style={{ margin: '0 0 0.5rem', fontWeight: 900, fontSize: '1.2rem' }}>{contract.party}</h4>
-                <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'رقم العقد' : 'Contract ID'}: {contract.id}</p>
-                
-                <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--surface-container-high)', paddingTop: '1rem' }}>
-                   <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7 }}>{contract.date}</span>
-                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className="btn-executive" style={{ padding: '0.5rem', background: 'var(--surface-container-high)', border: 'none', color: 'var(--primary)' }}><Printer size={16} /></button>
-                      <button className="btn-executive" style={{ padding: '0.5rem', background: 'var(--primary)', border: 'none', color: 'var(--secondary)' }}><ArrowUpRight size={16} /></button>
-                   </div>
-                </div>
-             </div>
-           ))}
-        </div>
+          <button onClick={() => setShowContractModal(true)} className="btn-executive"><Plus size={18} /> {t.lang === 'ar' ? 'عقد جديد' : 'New Contract'}</button>
       </div>
 
-      <div className="card" style={{ padding: '2.5rem', background: 'var(--surface-container-lowest)' }}>
-         <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', marginBottom: '1.5rem' }}>{t.lang === 'ar' ? 'مسودة سريعة لعقد نقل' : 'Quick Transport Draft'}</h3>
-         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-               <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'اسم الناقل' : 'Transporter Name'}</label>
-               <input type="text" className="input-executive" placeholder="..." />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+          {contracts.map((c: any) => (
+              <div key={c.id} className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                      <span style={{ padding: '0.2rem 1rem', borderRadius: '20px', fontSize: '0.7rem', background: c.type === 'client' ? 'rgba(0,34,51,0.1)' : 'rgba(212,167,106,0.1)', color: c.type === 'client' ? '#001a33' : '#d4a76a', fontWeight: 900 }}>{c.type === 'client' ? (t.lang === 'ar' ? 'عقد عميل' : 'CLIENT') : (t.lang === 'ar' ? 'عقد نقل' : 'TRANSPORT')}</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 900 }}>#{c.id}</span>
+                  </div>
+                  <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary)', fontWeight: 900 }}>{c.party}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                      <div>
+                          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{t.lang === 'ar' ? 'القيمة المتفق عليها' : 'Agreed Value'}</p>
+                          <p style={{ margin: 0, fontWeight: 950, fontSize: '1.3rem', color: 'var(--primary)' }}>{parseFloat(c.value).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></p>
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6, fontWeight: 800 }}>{t.lang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date'}</p>
+                          <p style={{ margin: 0, fontWeight: 800, color: '#ba1a1a' }}>{c.expiry || '-'}</p>
+                      </div>
+                  </div>
+              </div>
+          ))}
+          {contracts.length === 0 && (
+            <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', opacity: 0.5, border: '2px dashed #ddd' }}>
+               <Activity size={48} style={{ marginBottom: '1rem' }} />
+               <p style={{ fontWeight: 800 }}>{t.lang === 'ar' ? 'لا توجد عقود مسجلة حالياً' : 'No active contracts found'}</p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-               <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'قيمة النقل' : 'Transport Rate'}</label>
-               <input type="number" className="input-executive" placeholder="0.00" />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-               <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'تاريخ الاستلام' : 'Load Date'}</label>
-               <input type="date" className="input-executive" />
-            </div>
-         </div>
-         <button className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1.2rem 2rem', fontWeight: 900 }}>
-            {t.lang === 'ar' ? 'توليد مسودة العقد' : 'Generate Contract Draft'}
-         </button>
+          )}
       </div>
+
+      {showContractModal && (
+          <div className="modal-overlay" style={{ background: 'rgba(0,26,51,0.8)', backdropFilter: 'blur(8px)', zIndex: 6000 }}>
+              <div className="card slide-up" style={{ maxWidth: '500px', width: '90%', padding: '2.5rem', borderRadius: '28px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <h3 style={{ margin: 0, fontWeight: 900 }}>{t.lang === 'ar' ? 'إضافة ميثاق عمل جديد' : 'New Strategic Contract'}</h3>
+                    <button onClick={() => setShowContractModal(false)} style={{ background: 'none', border: 'none', color: 'var(--on-surface)', cursor: 'pointer' }}><Plus size={24} style={{ transform: 'rotate(45deg)' }} /></button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'اسم المنشأة / الناقل' : 'Entity Name'}</label>
+                        <input type="text" placeholder="..." value={contractData.party} onChange={e => setContractData({...contractData, party: e.target.value})} className="input-executive" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'نوع العقد' : 'Contract Type'}</label>
+                        <select value={contractData.type} onChange={e => setContractData({...contractData, type: e.target.value as any})} className="input-executive" style={{ fontWeight: 800 }}>
+                            <option value="client">عقد عميل (إيرادات)</option>
+                            <option value="transporter">عقد ناقل (مصروفات نقل)</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'القيمة المالية' : 'Financial Value'}</label>
+                        <input type="number" placeholder="0.00" value={contractData.value} onChange={e => setContractData({...contractData, value: e.target.value})} className="input-executive" style={{ fontWeight: 900 }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 800 }}>{t.lang === 'ar' ? 'تاريخ انقضاء المفعول' : 'Expiration Date'}</label>
+                        <input type="date" value={contractData.expiry} onChange={e => setContractData({...contractData, expiry: e.target.value})} className="input-executive" />
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                          <button onClick={addContract} className="btn-executive" style={{ flex: 2, padding: '1rem' }}>{t.lang === 'ar' ? 'اعتماد العقد' : 'Certify Contract'}</button>
+                          <button onClick={() => setShowContractModal(false)} className="btn-executive" style={{ flex: 1, background: '#f5f5f5', color: '#666', border: 'none' }}>{t.lang === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 
