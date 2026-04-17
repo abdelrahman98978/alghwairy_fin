@@ -764,7 +764,8 @@ const translations = {
       yearly: 'Yearly',
       profit_loss: 'Profit & Loss',
       ledger_summary: 'Ledger Summary',
-      statement_number: 'Statement No.'
+      statement_number: 'Statement No.',
+      lang: 'en'
     },
     contracts: {
       lang: 'en',
@@ -912,7 +913,19 @@ const translations = {
       whatsapp_preview: 'Preview',
       wa_phone_label: 'Phone Number',
       wa_review_desc: 'Review message before sending',
-      cancel: 'Cancel'
+      cancel: 'Cancel',
+      internal_invoice: 'Internal Invoice',
+      final_invoice: 'Final Invoice',
+      statement_number: 'Statement No.',
+      bol_number: 'B/L Number',
+      operation_number: 'Operation No.',
+      customs_fees: 'Customs Fees',
+      port_fees: 'Port Fees',
+      inventory_total: 'Inventory Total',
+      final_profit: 'Net Profit',
+      client_name_label: 'Client Name',
+      barcode: 'QR / Barcode',
+      remove_tax: 'Remove VAT'
     },
     expenses: {
       lang: 'en',

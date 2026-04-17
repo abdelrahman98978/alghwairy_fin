@@ -14,6 +14,7 @@ import {
   Coins
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
+import { fmtDate } from '../lib/dateUtils';
 import type { Transaction } from '../App';
 import type { Translations } from '../types/translations';
 
@@ -263,7 +264,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                             title={tax.title} 
                             amount={Number(tax.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})} 
                             status={tax.status} 
-                            date={new Date(tax.created_at).toLocaleDateString()} 
+                            date={fmtDate(tax.created_at, t.lang)}
                             showToast={showToast} 
                             t={t}
                          />

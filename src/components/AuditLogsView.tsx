@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { localDB } from '../lib/localDB';
+import { fmtDate, fmtTime } from '../lib/dateUtils';
 import type { Translations } from '../types/translations';
 import { 
   User as UserIcon, 
@@ -123,10 +124,10 @@ export default function AuditLogsView({ showToast, t }: Props) {
                 logs.map((log) => (
                   <tr key={log.id}>
                     <td style={{ paddingInlineStart: '2rem', color: 'var(--on-surface-variant)', fontWeight: 800, fontSize: '0.85rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span>{new Date(log.created_at).toLocaleDateString()}</span>
-                        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{new Date(log.created_at).toLocaleTimeString()}</span>
-                      </div>
+                       <div style={{ display: 'flex', flexDirection: 'column' }}>
+                         <span>{fmtDate(log.created_at, t.lang)}</span>
+                         <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{fmtTime(log.created_at, t.lang)}</span>
+                       </div>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
@@ -162,7 +163,7 @@ export default function AuditLogsView({ showToast, t }: Props) {
 
         <div style={{ padding: '1.2rem 2rem', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>
           <ShieldCheck size={16} color="var(--success)" />
-          <span>كل العمليات المسجلة في هذا السجل المؤسسي يتم حفظها محلياً في مسار مشفر ولا يمكن تعديلها يدوياً.</span>
+          <span>{t.lang === 'en' ? 'All activity records in this institutional ledger are stored locally in an encrypted path and cannot be manually modified.' : 'كل العمليات المسجلة في هذا السجل المؤسسي يتم حفظها محلياً في مسار مشفر ولا يمكن تعديلها يدوياً.'}</span>
         </div>
       </div>
     </div>

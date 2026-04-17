@@ -41,6 +41,7 @@ import {
 import { localDB } from '../lib/localDB';
 import type { FixedAsset, Invoice, JournalEntry, LedgerAccount, Product, Contract } from '../lib/localDB';
 import { generateZatcaQR, generateZatcaXML } from '../lib/zatca';
+import { fmtDate } from '../lib/dateUtils';
 import type { Translations } from '../types/translations';
 import type { JSX } from 'react';
 
@@ -1017,7 +1018,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                 )
                 .map((entry) => (
                 <tr key={entry.id}>
-                  <td style={{ paddingInlineStart: '2.5rem', fontWeight: 700 }}>{new Date(entry.date).toLocaleDateString()}</td>
+                  <td style={{ paddingInlineStart: '2.5rem', fontWeight: 700 }}>{fmtDate(entry.date, t.lang)}</td>
                   <td style={{ fontWeight: 600 }}>{entry.description}</td>
                   <td style={{ color: 'var(--success)', fontWeight: 800 }}>{entry.debit_account}</td>
                   <td style={{ color: 'var(--error)', fontWeight: 800 }}>{entry.credit_account}</td>
@@ -1643,7 +1644,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
                     const isDebit = e.debit_account === account.name_ar || e.debit_account === account.name;
                     return (
                       <tr key={e.id}>
-                         <td style={{ paddingInlineStart: '1.5rem', fontWeight: 700 }}>{new Date(e.date).toLocaleDateString()}</td>
+                         <td style={{ paddingInlineStart: '1.5rem', fontWeight: 700 }}>{fmtDate(e.date, isAr ? 'ar' : 'en')}</td>
                          <td style={{ fontWeight: 600 }}>{e.description}</td>
                          <td style={{ textAlign: 'center', fontWeight: 1000, color: isDebit ? 'var(--success)' : 'transparent' }}>{isDebit ? e.amount.toLocaleString() : '-'}</td>
                          <td style={{ textAlign: 'center', fontWeight: 1000, color: !isDebit ? 'var(--error)' : 'transparent' }}>{!isDebit ? e.amount.toLocaleString() : '-'}</td>

@@ -22,6 +22,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { localDB } from '../lib/localDB';
+import { fmtDate } from '../lib/dateUtils';
 import type { Translations } from '../types/translations';
 
 interface Transaction {
@@ -218,7 +219,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       trx.type,
       trx.amount,
       trx.status,
-      new Date(trx.created_at).toLocaleDateString()
+      new Date(trx.created_at).toLocaleDateString(t.lang === 'ar' ? 'ar-SA' : 'en-GB')
     ]);
     
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
@@ -443,7 +444,8 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                  <div style={{ textAlign: 'left', direction: 'ltr' }}>
                     <div style={{ fontSize: '14pt', fontWeight: 900, color: '#001a33' }}>FINANCIAL STATEMENT</div>
                     <div style={{ fontSize: '10pt', color: '#d4a76a', fontWeight: 700 }}>FISCAL YEAR 2026</div>
-                    <p style={{ fontSize: '8pt', marginTop: '2mm', color: '#888' }}>تاريخ الإصدار: {new Date().toLocaleDateString('ar-SA')}</p>
+                    <p style={{ fontSize: '8pt', marginTop: '2mm', color: '#888' }}>{
+                      t.lang === 'en' ? 'Issue Date: ' : 'تاريخ الإصدار: '}{fmtDate(new Date(), t.lang)}</p>
                  </div>
               </div>
 
@@ -451,8 +453,8 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                  <h2 style={{ fontSize: '22pt', fontWeight: 900, color: '#001a33', textDecoration: 'underline', textUnderlineOffset: '4mm' }}>القوائم المالية الختامية</h2>
                  <p style={{ fontSize: '10pt', color: '#666', marginTop: '2mm' }}>
                     {period === 'all' 
-                        ? `حتى تاريخ ${new Date().toLocaleDateString('ar-SA')}`
-                        : `عن الفترة من ${dateRange.start ? new Date(dateRange.start).toLocaleDateString('ar-SA') : 'بداية النشاط'} إلى ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('ar-SA') : new Date().toLocaleDateString('ar-SA')}`
+                        ? `${t.lang === 'en' ? 'As of ' : 'حتى تاريخ '}${fmtDate(new Date(), t.lang)}`
+                        : `${t.lang === 'en' ? 'Period: ' : 'عن الفترة من '}${dateRange.start ? fmtDate(dateRange.start, t.lang) : (t.lang === 'en' ? 'Inception' : 'بداية النشاط')} ${t.lang === 'en' ? 'to' : 'إلى'} ${dateRange.end ? fmtDate(dateRange.end, t.lang) : fmtDate(new Date(), t.lang)}`
                     }
                  </p>
               </div>
