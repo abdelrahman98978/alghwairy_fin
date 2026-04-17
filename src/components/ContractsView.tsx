@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Plus, Search, Truck, User, 
-  DollarSign, Clock, X, FileCheck, Download, Briefcase, ShieldCheck
+  DollarSign, Clock, X, FileCheck, Download, Briefcase, ShieldCheck,
+  Trash2, PenTool, Printer
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Contract } from '../lib/localDB';
@@ -52,7 +53,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
         logActivity('تعديل عقد لوجستي', 'contracts', selectedContract.id);
         showToast(t.lang === 'ar' ? 'تم تحديث العقد السيادي بنجاح' : 'Sovereign contract updated successfully', 'success');
       } else {
-        const inserted = localDB.insert('contracts', finalData);
+        const inserted = localDB.insert('contracts', { ...finalData, signed: false, status: 'active' });
         logActivity('إنشاء عقد سيادي جديد', 'contracts', inserted.id);
         showToast(t.lang === 'ar' ? 'تم إنشاء العقد اللوجستي بنجاح' : 'Logistic contract created successfully', 'success');
       }
@@ -63,6 +64,75 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
     } catch (error) {
       showToast('Error saving contract', 'error');
     }
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm(t.lang === 'ar' ? 'هل أنت متأكد من حذف هذا العقد؟' : 'Are you sure you want to delete this contract?')) {
+      try {
+        localDB.delete('contracts', id);
+        logActivity('حذف عقد سيادي', 'contracts', id);
+        showToast(t.lang === 'ar' ? 'تم حذف العقد بنجاح' : 'Contract deleted successfully', 'success');
+        loadData();
+      } catch (err) {
+        showToast('Error deleting contract', 'error');
+      }
+    }
+  };
+
+  const handleSign = (id: string) => {
+    try {
+      localDB.update('contracts', id, { 
+        signed: true, 
+        signature_date: new Date().toISOString().split('T')[0] 
+      });
+      logActivity('توقيع عقد سيادي', 'contracts', id);
+      showToast(t.lang === 'ar' ? 'تم توقيع العقد بنجاح' : 'Contract signed successfully', 'success');
+      loadData();
+    } catch (err) {
+      showToast('Error signing contract', 'error');
+    }
+  };
+
+  const handleDownload = (contract: Contract) => {
+    const content = `
+ALGHWAIRY SOVEREIGN LOGISTICS CONTRACT
+---------------------------------------
+Contract ID: ${contract.id}
+Entity Name: ${contract.entity_name}
+Type: ${contract.type === 'client' ? 'Client Service Agreement' : 'Transporter Logistics Agreement'}
+Date: ${contract.contract_date}
+Expiry: ${contract.expiry_date}
+Value: ${contract.value} SAR
+${contract.type === 'transporter' ? `Operational Expenses: ${contract.transport_expenses} SAR` : ''}
+Status: ${contract.status}
+Signed: ${contract.signed ? `YES (on ${contract.signature_date})` : 'NO'}
+
+Terms and Conditions:
+---------------------
+${contract.terms || 'Standard sovereign logistics terms apply.'}
+
+---------------------------------------
+Certified by Alghwairy Sovereign Ledger
+    `;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `contract_${contract.entity_name.replace(/\s+/g, '_')}_${contract.id.slice(0, 8)}.txt`;
+    link.click();
+  };
+
+  const handleExportFullReport = () => {
+    const header = ['ID', 'Type', 'Entity', 'Date', 'Expiry', 'Value', 'Expenses', 'Status', 'Signed'];
+    const rows = contracts.map(c => [
+      c.id, c.type, c.entity_name, c.contract_date, c.expiry_date, c.value, c.transport_expenses || 0, c.status, c.signed ? 'Yes' : 'No'
+    ]);
+    
+    const csvContent = [header, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `full_contracts_report_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
   const resetForm = () => {
@@ -160,8 +230,8 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
             />
           </div>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <button className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem 1rem' }}>
-              <Download size={16} /> كشف كامل
+            <button onClick={handleExportFullReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem 1rem' }}>
+              <Download size={16} /> كشف كامل (CSV)
             </button>
           </div>
         </div>
@@ -175,12 +245,14 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                 <th style={{ textAlign: 'center' }}>القيمة</th>
                 {activeTab === 'transporter' && <th style={{ textAlign: 'center' }}>مصاريف التشغيل</th>}
                 <th style={{ textAlign: 'center' }}>تاريخ الانتهاء</th>
-                <th style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>الحالة</th>
+                <th style={{ textAlign: 'center' }}>التوقيع</th>
+                <th style={{ textAlign: 'center' }}>الحالة</th>
+                <th style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>العمليات</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '5rem', fontWeight: 800, opacity: 0.5 }}>لا توجد عقود مسجلة لهذا النوع</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '5rem', fontWeight: 800, opacity: 0.5 }}>لا توجد عقود مسجلة لهذا النوع</td></tr>
               ) : (
                 filtered.map(contract => (
                   <tr key={contract.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedContract(contract); setFormData(contract); setShowModal(true); }}>
@@ -199,13 +271,37 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                     <td style={{ textAlign: 'center', fontWeight: 900 }}>{(Number(contract.value) || 0).toLocaleString()} <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>ر.س</span></td>
                     {activeTab === 'transporter' && <td style={{ textAlign: 'center', fontWeight: 900, color: 'var(--error)' }}>{(Number(contract.transport_expenses) || 0).toLocaleString()} <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>ر.س</span></td>}
                     <td style={{ textAlign: 'center', fontWeight: 800, color: isNearExpiry(contract.expiry_date) ? 'var(--error)' : 'inherit' }}>{contract.expiry_date || '-'}</td>
-                    <td style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>
+                    <td style={{ textAlign: 'center' }}>
+                      {contract.signed ? (
+                        <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontWeight: 800, fontSize: '0.8rem' }}>
+                          <CheckCircle2 size={14} /> {contract.signature_date}
+                        </span>
+                      ) : (
+                        <span style={{ opacity: 0.4, fontWeight: 700, fontSize: '0.8rem' }}>غير موقع</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
                       <span className="badge-sovereign" style={{ 
                         background: contract.status === 'active' ? 'rgba(27, 94, 32, 0.1)' : 'rgba(186, 26, 26, 0.1)',
                         color: contract.status === 'active' ? 'var(--success)' : 'var(--error)'
                       }}>
                         {contract.status === 'active' ? 'نشط' : 'ملغى'}
                       </span>
+                    </td>
+                    <td style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>
+                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <button onClick={(e) => { e.stopPropagation(); handleDownload(contract); }} className="btn-action-small" title="تحميل">
+                             <Download size={14} />
+                          </button>
+                          {!contract.signed && (
+                            <button onClick={(e) => { e.stopPropagation(); handleSign(contract.id); }} className="btn-action-small" title="توقيع" style={{ color: 'var(--secondary)' }}>
+                               <PenTool size={14} />
+                            </button>
+                          )}
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(contract.id); }} className="btn-action-small" title="حذف" style={{ color: 'var(--error)' }}>
+                             <Trash2 size={14} />
+                          </button>
+                       </div>
                     </td>
                   </tr>
                 ))
@@ -266,6 +362,11 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                  <button type="button" onClick={() => setShowModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none' }}>إلغاء</button>
+                 {selectedContract && (
+                    <button type="button" onClick={() => handleDownload(selectedContract)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
+                       <Printer size={18} /> طباعة
+                    </button>
+                  )}
                  <button type="submit" className="btn-executive" style={{ flex: 2, border: 'none' }}>
                     <ShieldCheck size={20} /> اعتماد وحفظ العقد
                  </button>
@@ -284,6 +385,12 @@ function isNearExpiry(dateStr?: string) {
   if (!dateStr) return false;
   const diff = new Date(dateStr).getTime() - new Date().getTime();
   return diff > 0 && diff < (30 * 24 * 60 * 60 * 1000);
+}
+
+function CheckCircle2({ size }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+  );
 }
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {

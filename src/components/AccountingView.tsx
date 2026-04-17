@@ -106,6 +106,7 @@ interface ContractsSubViewProps {
   setShowContractModal: (show: boolean) => void;
   onSign: (contractId: string) => void;
   onDownload: (contract: Contract) => void;
+  onDelete: (id: string) => void;
 }
 
 interface InventoryManagementProps {
@@ -552,6 +553,14 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
     ));
     showToast(isAr ? 'تم توقيع العقد بنجاح' : 'Contract signed successfully', 'success');
     logActivity(isAr ? `توقيع عقد: ${contractId}` : `Sign contract: ${contractId}`, 'contracts', contractId);
+  };
+
+  const handleDeleteContract = (id: string) => {
+    if (!window.confirm(isAr ? 'هل أنت متأكد من حذف العقد؟' : 'Are you sure you want to delete this contract?')) return;
+    localDB.delete('contracts', id);
+    showToast(isAr ? 'تم حذف العقد' : 'Contract deleted', 'success');
+    logActivity('Contract deleted', 'contracts', id);
+    fetchData();
   };
 
   const handleDownloadContract = (contract: Contract) => {
@@ -1044,6 +1053,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           setShowContractModal={setShowContractModal} 
           onSign={handleSignContract}
           onDownload={handleDownloadContract}
+          onDelete={handleDeleteContract}
         />
       )}
       {activeTab === 'assets' && <AssetsView assets={fixedAssets} isAr={isAr} setShowAssetModal={setShowAssetModal} onRunDepreciation={handleRunDepreciation} />}
@@ -1508,15 +1518,53 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
             </table>
          </div>
 
-         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={onClose} className="btn-sovereign-outline" style={{ padding: '0.8rem 2.5rem' }}>{isAr ? 'إغلاق' : 'Close'}</button>
+         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <button 
+              onClick={() => {
+                const csvData = journalEntries.map(e => {
+                  const isDebit = e.debit_account === account.name_ar || e.debit_account === account.name;
+                  return {
+                    'Date/التاريخ': e.date,
+                    'Description/البيان': e.description,
+                    'Debit/مدين': isDebit ? e.amount : 0,
+                    'Credit/دائن': !isDebit ? e.amount : 0,
+                    'Reference/المرجع': e.reference
+                  };
+                });
+                const headers = Object.keys(csvData[0] || {}).join(',');
+                const rows = csvData.map(row => Object.values(row).join(',')).join('\n');
+                const csvContent = `\ufeff${headers}\n${rows}`;
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Statement_${account.name_ar || account.name}_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }} 
+              className="btn-sovereign-secondary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 900 }}
+            >
+              <Download size={18} />
+              {isAr ? 'تنزيل CSV' : 'Download CSV'}
+            </button>
+            <button 
+              onClick={() => window.print()} 
+              className="btn-sovereign-secondary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 900 }}
+            >
+              <Printer size={18} />
+              {isAr ? 'طباعة' : 'Print'}
+            </button>
+            <button onClick={onClose} className="btn-sovereign-outline" style={{ padding: '0.8rem 2.5rem', fontWeight: 900 }}>{isAr ? 'إغلاق' : 'Close'}</button>
          </div>
       </div>
     </div>
   );
 }
 
-function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload }: ContractsSubViewProps) {
+function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload, onDelete }: ContractsSubViewProps) {
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -1564,6 +1612,16 @@ function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDow
                         <PenTool size={14} /> {isAr ? 'توقيع العقد' : 'Sign Now'}
                       </button>
                     )}
+                    <button 
+                       onClick={() => {
+                         if(confirm(isAr ? 'هل أنت متأكد من حذف هذا العقد؟' : 'Are you sure you want to delete this contract?')) {
+                           onDelete(c.id);
+                         }
+                       }}
+                       className="btn-action-small" 
+                       style={{ color: 'var(--error)', width: 'auto', padding: '0.5rem', flex: 0 }}>
+                       <Trash2 size={16} />
+                    </button>
                   </div>
                   <style>{`
                     .card-contract-elite { background: var(--surface); padding: 1.8rem; border-radius: 28px; border: 1px solid var(--surface-container-high); box-shadow: 0 5px 25px rgba(0,0,0,0.02); }

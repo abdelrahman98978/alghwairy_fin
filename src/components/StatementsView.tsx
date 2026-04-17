@@ -57,6 +57,46 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
   
   const netIncome = (totalRevenue - stats.cogs) - totalExpenses - stats.salaries;
 
+  const handleExportCSV = () => {
+    let data: any[] = [];
+    let filename = '';
+    
+    if (activeTab === 'pnl') {
+      const gp = totalRevenue - stats.cogs;
+      data = [
+        ['Statement', 'Income Statement'],
+        ['Revenue', totalRevenue],
+        ['COGS', stats.cogs],
+        ['Gross Profit', gp],
+        ['Expenses', totalExpenses],
+        ['Salaries', stats.salaries],
+        ['Net Income', gp - totalExpenses - stats.salaries]
+      ];
+      filename = 'income_statement.csv';
+    } else if (activeTab === 'balance') {
+      data = [
+        ['Statement', 'Balance Sheet'],
+        ['Bank', stats.assets.bank],
+        ['Cash', stats.assets.cash],
+        ['Receivables', stats.assets.receivables],
+        ['Payables', stats.liabilities.payables],
+        ['Tax', stats.liabilities.tax]
+      ];
+      filename = 'balance_sheet.csv';
+    } else {
+      data = [['Trial Balance'], ['Account', 'Debit', 'Credit']];
+      // simplified trial balance export
+      filename = 'trial_balance.csv';
+    }
+
+    const csvContent = data.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
   if (loading) {
     return (
       <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
@@ -76,8 +116,10 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
           <p className="view-subtitle" style={{ margin: 0 }}>التحليل المالي السيادي المتوافق مع المعايير الدولية</p>
         </div>
         <div style={{ display: 'flex', gap: '0.8rem' }} className="no-print">
-           <button className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none' }}>
-              <Download size={18} /> تصدير PDF
+           <button 
+             onClick={handleExportCSV}
+             className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none' }}>
+              <Download size={18} /> تصدير CSV
            </button>
            <button className="btn-executive" onClick={() => window.print()} style={{ border: 'none' }}>
               <Printer size={18} /> {t.print_report}
