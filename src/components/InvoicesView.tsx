@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Plus, X, FileText, DollarSign, TrendingUp,
-  Package, Printer, Download, ShieldCheck, CheckCircle2
+  Package, Printer, Download, ShieldCheck, CheckCircle2, MessageCircle, Mail, Plus, DollarSign, TrendingUp, FileText, X
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Invoice } from '../lib/localDB';
@@ -308,12 +307,44 @@ function InvoicePreview({ invoice, settings, onClose }: { invoice: Invoice; sett
     total: invoice.total.toLocaleString()
   });
 
+  const handleWhatsApp = () => {
+    const text = `*${settings.companyName}*\n\n` +
+                 `عزيزنا العميل: ${invoice.customers?.name || 'العميل'}\n` +
+                 `فاتورة رقم: ${invoice.operation_number || invoice.id}\n` +
+                 `الإجمالي المستحق: ${invoice.total.toLocaleString()} ر.س\n\n` +
+                 `للاطلاع على تفاصيل الفاتورة أو الدفع، يرجى التواصل معنا.\n` +
+                 `نسعد بخدمتكم دائماً.`;
+    const phone = invoice.customers?.phone?.replace(/\D/g, '') || '';
+    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleEmail = () => {
+    const subject = `فاتورة رقم ${invoice.operation_number || invoice.id} - ${settings.companyName}`;
+    const body = `عزيزنا العميل: ${invoice.customers?.name || 'العميل'}\n\n` +
+                 `تجدون أدناه تفاصيل الفاتورة الخاصة بكم:\n` +
+                 `رقم الفاتورة: ${invoice.operation_number || invoice.id}\n` +
+                 `رقم البيان: ${invoice.statement_number || '-'}\n` +
+                 `رقم البوليصة: ${invoice.bol_number || '-'}\n` +
+                 `المبلغ المستحق: ${invoice.total.toLocaleString()} ر.س\n\n` +
+                 `نرجو التواصل معنا في حال وجود أي استفسارات.\n\n` +
+                 `مع التحية،\n${settings.companyName}`;
+    const email = invoice.customers?.email || '';
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   return (
-    <div className="modal-overlay" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir="rtl">
+    <div className="modal-overlay invoice-print-overlay" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir="rtl">
       {/* Toolbar */}
       <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
         <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Printer size={20} /> طباعة / PDF
+          <Printer size={20} /> طباعة الفاتورة كاملة
+        </button>
+        <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <MessageCircle size={20} /> إرسال واتساب
+        </button>
+        <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Mail size={20} /> إرسال إيميل
         </button>
         <button onClick={onClose} className="btn-executive" style={{ background: 'var(--error)', color: 'white', border: 'none', padding: '1rem 2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <X size={20} /> إغلاق

@@ -9,7 +9,8 @@ import {
   Calculator,
   CheckCircle2,
   Filter,
-  Printer
+  Printer,
+  Calendar
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -46,6 +47,8 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [showOfficialModal, setShowOfficialModal] = useState(false);
+  const [period, setPeriod] = useState('all');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   const [settings] = useState({
     companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
@@ -62,16 +65,82 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
     date: new Date().toISOString().split('T')[0]
   });
 
+  const handlePeriodChange = (selectedPeriod: string) => {
+    setPeriod(selectedPeriod);
+    const now = new Date();
+    const year = now.getFullYear();
+    let start = '';
+    let end = '';
+
+    switch (selectedPeriod) {
+      case 'this_month':
+        start = new Date(year, now.getMonth(), 1).toISOString().split('T')[0];
+        end = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+        break;
+      case 'last_month':
+        start = new Date(year, now.getMonth() - 1, 1).toISOString().split('T')[0];
+        end = new Date(year, now.getMonth(), 0).toISOString().split('T')[0];
+        break;
+      case 'q1':
+        start = new Date(year, 0, 1).toISOString().split('T')[0];
+        end = new Date(year, 3, 0).toISOString().split('T')[0];
+        break;
+      case 'q2':
+        start = new Date(year, 3, 1).toISOString().split('T')[0];
+        end = new Date(year, 6, 0).toISOString().split('T')[0];
+        break;
+      case 'q3':
+        start = new Date(year, 6, 1).toISOString().split('T')[0];
+        end = new Date(year, 9, 0).toISOString().split('T')[0];
+        break;
+      case 'q4':
+        start = new Date(year, 9, 1).toISOString().split('T')[0];
+        end = new Date(year, 12, 0).toISOString().split('T')[0];
+        break;
+      case 'this_year':
+        start = new Date(year, 0, 1).toISOString().split('T')[0];
+        end = new Date(year, 12, 0).toISOString().split('T')[0];
+        break;
+      case 'all':
+      case 'custom':
+      default:
+        break;
+    }
+
+    if (selectedPeriod !== 'custom') {
+      setDateRange({ start, end });
+    }
+  };
+
   const fetchFinancialData = useCallback(() => {
     setIsDataLoading(true);
     try {
-      const trxs = localDB.getActive('transactions').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      let trxs = localDB.getActive('transactions').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) as Transaction[];
       
-      setTransactions(trxs as Transaction[]);
+      if (dateRange.start || dateRange.end) {
+         trxs = trxs.filter(trx => {
+            const tDate = new Date(trx.created_at);
+            tDate.setHours(0,0,0,0);
+            
+            if (dateRange.start) {
+              const sDate = new Date(dateRange.start);
+              sDate.setHours(0,0,0,0);
+              if (tDate < sDate) return false;
+            }
+            if (dateRange.end) {
+              const eDate = new Date(dateRange.end);
+              eDate.setHours(23,59,59,999);
+              if (tDate > eDate) return false;
+            }
+            return true;
+         });
+      }
+
+      setTransactions(trxs);
       let totalRevenue = 0;
       let totalExpenses = 0;
       
-      (trxs as Transaction[]).forEach((trx: Transaction) => {
+      trxs.forEach((trx: Transaction) => {
         if (trx.type === 'income' || trx.type === 'إيراد / فاتورة صاردة' || trx.type === 'كاش') {
           totalRevenue += Number(trx.amount || 0);
         } else if (trx.type === 'expense' || trx.type === 'مصروف') {
@@ -109,7 +178,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
         showToast('Error fetching report data: ' + err.message, 'error');
     }
     setIsDataLoading(false);
-  }, [showToast, t.lang]);
+  }, [showToast, t.lang, dateRange]);
 
   useEffect(() => {
     fetchFinancialData();
@@ -178,14 +247,41 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
   return (
     <div className="slide-in">
-      <header className="view-header no-print" style={{ marginBottom: '2.5rem' }}>
+      <header className="view-header no-print" style={{ marginBottom: '2.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-container-low)', padding: '0.2rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', gap: '0.8rem' }}>
+            <Calendar size={18} color="var(--primary)" />
+            <select 
+               value={period}
+               onChange={(e) => handlePeriodChange(e.target.value)}
+               style={{ background: 'transparent', border: 'none', color: 'var(--primary)', fontWeight: 800, padding: '0.5rem', outline: 'none' }}
+            >
+               <option value="all">{t.lang === 'ar' ? 'كل الفترات' : 'All Time'}</option>
+               <option value="this_month">{t.lang === 'ar' ? 'هذا الشهر' : 'This Month'}</option>
+               <option value="last_month">{t.lang === 'ar' ? 'الشهر الماضي' : 'Last Month'}</option>
+               <option value="q1">{t.lang === 'ar' ? 'الربع الأول' : 'Q1'}</option>
+               <option value="q2">{t.lang === 'ar' ? 'الربع الثاني' : 'Q2'}</option>
+               <option value="q3">{t.lang === 'ar' ? 'الربع الثالث' : 'Q3'}</option>
+               <option value="q4">{t.lang === 'ar' ? 'الربع الرابع' : 'Q4'}</option>
+               <option value="this_year">{t.lang === 'ar' ? 'هذا العام (ميزانية)' : 'This Year'}</option>
+               <option value="custom">{t.lang === 'ar' ? 'تخصيص...' : 'Custom...'}</option>
+            </select>
+            
+            {period === 'custom' && (
+               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', borderInlineStart: '1px solid var(--surface-container-high)', paddingInlineStart: '1rem' }}>
+                  <input type="date" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', fontWeight: 700, outline: 'none' }} />
+                  <span style={{ color: 'var(--outline)' }}>-</span>
+                  <input type="date" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', fontWeight: 700, outline: 'none' }} />
+               </div>
+            )}
+          </div>
+          
           <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33', border: 'none' }}>
-             <Printer size={18} /> {t.lang === 'ar' ? 'طباعة القائمة الرسمية' : 'Official Print'}
+             <Printer size={18} /> {t.lang === 'ar' ? 'القائمة الرسمية' : 'Official Print'}
           </button>
           <button onClick={exportReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
              <Download size={18} /> {t.export || 'تصدير'}
@@ -353,7 +449,12 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
               <div style={{ textAlign: 'center', marginBottom: '12mm' }}>
                  <h2 style={{ fontSize: '22pt', fontWeight: 900, color: '#001a33', textDecoration: 'underline', textUnderlineOffset: '4mm' }}>القوائم المالية الختامية</h2>
-                 <p style={{ fontSize: '10pt', color: '#666', marginTop: '2mm' }}>للفترة المنتهية في {new Date().toLocaleDateString('ar-SA')}</p>
+                 <p style={{ fontSize: '10pt', color: '#666', marginTop: '2mm' }}>
+                    {period === 'all' 
+                        ? `حتى تاريخ ${new Date().toLocaleDateString('ar-SA')}`
+                        : `عن الفترة من ${dateRange.start ? new Date(dateRange.start).toLocaleDateString('ar-SA') : 'بداية النشاط'} إلى ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('ar-SA') : new Date().toLocaleDateString('ar-SA')}`
+                    }
+                 </p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15mm' }}>

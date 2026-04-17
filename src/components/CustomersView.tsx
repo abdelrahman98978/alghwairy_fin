@@ -13,7 +13,10 @@ import {
   MessageCircle,
   CheckCircle2,
   Trash2,
-  Edit3
+  Edit3,
+  Eye,
+  ArrowRight,
+  FileText
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 
@@ -65,6 +68,15 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
     email: '',
     creditLimit: 0
   });
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerInvoices, setCustomerInvoices] = useState<any[]>([]);
+
+  const handleViewProfile = (cust: Customer) => {
+     setSelectedCustomer(cust);
+     const invs = localDB.getActive('invoices').filter((i: any) => i.customer_id === cust.id);
+     setCustomerInvoices(invs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+  };
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -195,6 +207,16 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
     window.open(url, '_blank');
   };
 
+  if (selectedCustomer) {
+    return (
+      <CustomerProfile 
+        customer={selectedCustomer} 
+        invoices={customerInvoices} 
+        onBack={() => setSelectedCustomer(null)}
+      />
+    );
+  }
+
   return (
     <div className="slide-in">
       {/* Header */}
@@ -280,6 +302,9 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                         <td style={{ fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }} dir="ltr">{cust.lastOperation}</td>
                         <td style={{ textAlign: 'center' }}>
                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                              <button onClick={() => handleViewProfile(cust)} title="عرض الملف والشراكة" style={{ background: '#d4a76a', color: '#001a33', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
+                                 <Eye size={18} />
+                              </button>
                               <button onClick={() => openEditModal(cust)} style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
                                  <Edit3 size={18} />
                               </button>
@@ -413,6 +438,114 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       )}
     </div>
   );
+}
+
+function CustomerProfile({ customer, invoices, onBack }: any) {
+  return (
+     <div className="slide-in">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+           <button onClick={onBack} className="btn-executive" style={{ padding: '0.6rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
+              <ArrowRight size={20} />
+           </button>
+           <h2 className="view-title" style={{ margin: 0 }}>ملف العميل/الشريك: {customer.name}</h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}>
+           {/* Profile Summary Card */}
+           <div className="card" style={{ padding: '2rem', alignSelf: 'start', border: '1px solid var(--surface-container-high)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--surface-container-high)', paddingBottom: '1.5rem' }}>
+                 <div style={{ width: 60, height: 60, borderRadius: '15px', background: 'var(--primary)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 900 }}>
+                    {customer.name.substring(0, 1)}
+                 </div>
+                 <div>
+                    <h3 style={{ margin: 0, fontWeight: 900, color: 'var(--primary)', fontSize: '1.2rem' }}>{customer.name}</h3>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>{customer.type}</span>
+                    <span style={{ fontSize: '0.75rem', display: 'block', color: 'var(--outline)', marginTop: '0.2rem', fontWeight: 600 }}>ID: {customer.id.split('-')[0].toUpperCase()}</span>
+                 </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                 <ProfileField label="رقم الهاتف" value={customer.phone || 'غير مسجل'} />
+                 <ProfileField label="البريد الإلكتروني" value={customer.email || 'غير مسجل'} />
+                 <ProfileField label="القطاع" value={customer.sector || 'غير محدد'} />
+                 <ProfileField label="الحد الائتماني" value={`${(customer.credit_limit || 0).toLocaleString()} ر.س`} highlight />
+                 <ProfileField label="تاريخ الانضمام" value={new Date(customer.created_at).toLocaleDateString('ar-SA')} />
+              </div>
+
+              <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--surface-container-high)' }}>
+                <p style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 800 }}>مؤشر الأداء والتعاملات</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                   <div style={{ flex: 1, height: 8, background: 'var(--surface-container-high)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${customer.usage || 10}%`, height: '100%', background: 'var(--primary)' }}></div>
+                   </div>
+                   <span style={{ fontSize: '0.8rem', fontWeight: 900 }}>{customer.usage || 10}%</span>
+                </div>
+              </div>
+           </div>
+
+           {/* Invoices List */}
+           <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
+              <div style={{ padding: '1.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyItems: 'space-between', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <h3 style={{ margin: 0, fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>الفواتير والعمليات المرتبطة</h3>
+                 <span style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.3rem 0.8rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 900 }}>{invoices.length} فواتير</span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                 <table className="sovereign-table">
+                    <thead>
+                       <tr>
+                          <th style={{ paddingInlineStart: '1.5rem' }}>البيان / العملية</th>
+                          <th>تاريخ الإصدار</th>
+                          <th style={{ textAlign: 'center' }}>الأرباح</th>
+                          <th style={{ textAlign: 'center' }}>إجمالي الفاتورة</th>
+                          <th style={{ textAlign: 'center', paddingInlineEnd: '1.5rem' }}>الحالة</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       {invoices.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: 'center', padding: '4rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>لا توجد فواتير أو عمليات مالية مرتبطة</td></tr>
+                       ) : (
+                          invoices.map((inv: any) => (
+                             <tr key={inv.id}>
+                                <td style={{ paddingInlineStart: '1.5rem' }}>
+                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                      <div style={{ padding: '0.5rem', background: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--primary)' }}><FileText size={14} /></div>
+                                      <div>
+                                         <span style={{ fontWeight: 900, fontSize: '0.9rem', display: 'block', color: 'var(--primary)' }}>{inv.operation_number || inv.reference_number}</span>
+                                         <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>BOL: {inv.bol_number || 'N/A'}</span>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td style={{ fontWeight: 600, fontSize: '0.85rem' }}>{new Date(inv.created_at).toLocaleDateString('ar-SA')}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 900, color: 'var(--success)', fontSize: '0.9rem' }}>{(inv.profit || 0).toLocaleString()}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 900, color: 'var(--primary)' }}>{inv.total.toLocaleString()} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>SAR</span></td>
+                                <td style={{ textAlign: 'center', paddingInlineEnd: '1.5rem' }}>
+                                   <span style={{
+                                      fontSize: '0.7rem', padding: '0.4rem 1rem', borderRadius: '20px', fontWeight: 900,
+                                      background: inv.status === 'paid' ? 'rgba(27, 94, 32, 0.1)' : 'rgba(212, 167, 106, 0.15)',
+                                      color: inv.status === 'paid' ? 'var(--success)' : 'var(--secondary)'
+                                   }}>
+                                      {inv.status === 'paid' ? 'مدفوعة' : 'قيد المعالجة'}
+                                   </span>
+                                </td>
+                             </tr>
+                          ))
+                       )}
+                    </tbody>
+                 </table>
+              </div>
+           </div>
+        </div>
+     </div>
+  );
+}
+
+function ProfileField({ label, value, highlight }: { label: string, value: string, highlight?: boolean }) {
+   return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+         <span style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>{label}</span>
+         <span style={{ fontSize: '0.9rem', fontWeight: highlight ? 900 : 700, color: highlight ? 'var(--success)' : 'var(--on-surface)', background: highlight ? 'rgba(27, 94, 32, 0.1)' : 'transparent', padding: highlight ? '0.2rem 0.6rem' : 0, borderRadius: highlight ? '6px' : 0 }}>{value}</span>
+      </div>
+   );
 }
 
 function KPIBox({ title, value, unit, icon, color }: any) {
