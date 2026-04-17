@@ -17,6 +17,8 @@ export interface Contract {
   terms: string;
   status: 'active' | 'expired';
   transport_expenses?: number;
+  signed?: boolean;
+  signature_date?: string;
 }
 
 export interface Invoice {

@@ -20,7 +20,8 @@ import {
   Search,
   Package,
   AlertTriangle,
-  Share2
+  Share2,
+  PenTool
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -38,7 +39,7 @@ import {
   Pie
 } from 'recharts';
 import { localDB } from '../lib/localDB';
-import type { FixedAsset, Invoice, JournalEntry, LedgerAccount, Product } from '../lib/localDB';
+import type { FixedAsset, Invoice, JournalEntry, LedgerAccount, Product, Contract } from '../lib/localDB';
 import { generateZatcaQR, generateZatcaXML } from '../lib/zatca';
 import type { Translations } from '../types/translations';
 import type { JSX } from 'react';
@@ -101,8 +102,10 @@ interface ReportsViewProps {
 
 interface ContractsSubViewProps {
   isAr: boolean;
-  contracts: any[];
+  contracts: Contract[];
   setShowContractModal: (show: boolean) => void;
+  onSign: (contractId: string) => void;
+  onDownload: (contract: Contract) => void;
 }
 
 interface InventoryManagementProps {
@@ -160,86 +163,7 @@ interface ProductModalProps {
   isAr: boolean;
 }
 
-interface Invoice {
-  id: string;
-  customer_id: string;
-  amount: number;
-  vat: number;
-  total: number;
-  status: string;
-  reference_number: string;
-  is_settlement: boolean;
-  created_at: string;
-  invoice_type?: 'internal' | 'final';
-  statement_number?: string;
-  bol_number?: string;
-  operation_number?: string;
-  customs_fees?: number;
-  port_fees?: number;
-  transport_fees?: number;
-  cargo_value?: number;
-  transport_expenses?: number;
-  profit?: number;
-  customers?: any;
-  items?: { description: string; amount: number }[];
-  zatca_certified?: boolean;
-  zatca_xml?: string;
-  zatca_cert_date?: string;
-}
 
-interface JournalEntry {
-  id: string;
-  date: string;
-  description: string;
-  reference_type: string;
-  reference_id: string;
-  debit_account: string;
-  credit_account: string;
-  amount: number;
-  status: 'posted' | 'draft';
-  reference?: string;
-  debit_acc?: string;
-  credit_acc?: string;
-  is_automated?: boolean;
-}
-
-interface LedgerAccount {
-  id: string;
-  code?: string;
-  name: string;
-  name_ar: string;
-  name_en?: string;
-  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  balance: number;
-}
-
-interface Product {
-  id: string;
-  sku: string;
-  name_ar: string;
-  name_en: string;
-  category: string;
-  unit: string;
-  purchase_price: number;
-  selling_price: number;
-  quantity_on_hand: number;
-  min_stock_level: number;
-  tax_rate: number;
-}
-
-interface FixedAsset {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  purchase_date: string;
-  purchase_value: number;
-  depreciation_rate: number;
-  salvage_value: number;
-  category: string;
-  useful_life: number;
-  created_at: string;
-  status: 'active' | 'disposed';
-}
 
 interface InvoicePreviewModalProps {
   clientName: string;
@@ -620,6 +544,48 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
       amount: '',
       reference: ''
     });
+  };
+
+  const handleSignContract = (contractId: string) => {
+    setContracts(prev => prev.map(c => 
+      c.id === contractId ? { ...c, signed: true, signature_date: new Date().toISOString() } : c
+    ));
+    showToast(isAr ? 'تم توقيع العقد بنجاح' : 'Contract signed successfully', 'success');
+    logActivity(isAr ? `توقيع عقد: ${contractId}` : `Sign contract: ${contractId}`, 'contracts', contractId);
+  };
+
+  const handleDownloadContract = (contract: Contract) => {
+    const content = `
+      LOGISTICS CONTRACT - SOVEREIGN LEDGER
+      ------------------------------------
+      Contract ID: ${contract.id}
+      Entity: ${contract.entity_name}
+      Type: ${contract.type.toUpperCase()}
+      Date: ${contract.contract_date}
+      Expiry: ${contract.expiry_date}
+      Value: ${contract.value} SAR
+      Status: ${contract.status}
+      Signed: ${contract.signed ? 'YES (' + contract.signature_date + ')' : 'NO'}
+      
+      Terms and Conditions:
+      ${contract.terms}
+      
+      Authorized Signature
+      --------------------
+      Electronic Signature - ALGHWAIRY SOVEREIGN LEDGER
+    `;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Contract_${contract.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(isAr ? 'بدء تحميل العقد' : 'Contract download started', 'success');
   };
 
   const handleRunDepreciation = () => {
@@ -1071,7 +1037,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
       {activeTab === 'journal' && renderJournal()}
       {activeTab === 'ledger' && renderLedger()}
       {activeTab === 'reports' && <ReportsView isAr={isAr} invoices={invoices} journalEntries={journalEntries} ledgerAccounts={ledgerAccounts} downloadCSV={downloadCSV} activeReportTab={activeReportTab} setActiveReportTab={setActiveReportTab} setActiveTab={setActiveTab} />}
-      {activeTab === 'contracts' && <ContractsSubView contracts={contracts} isAr={isAr} setShowContractModal={setShowContractModal} />}
+      {activeTab === 'contracts' && (
+        <ContractsSubView 
+          contracts={contracts} 
+          isAr={isAr} 
+          setShowContractModal={setShowContractModal} 
+          onSign={handleSignContract}
+          onDownload={handleDownloadContract}
+        />
+      )}
       {activeTab === 'assets' && <AssetsView assets={fixedAssets} isAr={isAr} setShowAssetModal={setShowAssetModal} onRunDepreciation={handleRunDepreciation} />}
       {activeTab === 'inventory' && (
         <InventoryManagement 
@@ -1542,7 +1516,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
   );
 }
 
-function ContractsSubView({ contracts, isAr, setShowContractModal }: ContractsSubViewProps) {
+function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload }: ContractsSubViewProps) {
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -1553,11 +1527,14 @@ function ContractsSubView({ contracts, isAr, setShowContractModal }: ContractsSu
           <button onClick={() => setShowContractModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'عقد جديد' : 'New Contract'}</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
-          {contracts.map((c: any) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+          {contracts.map((c: Contract) => (
               <div key={c.id} className="card-contract-elite">
                   <div className="contract-status-bar">
-                      <span className={`contract-badge ${c.type}`}>{c.type === 'client' ? (isAr ? 'عميل سيادي' : 'CLIENT') : (isAr ? 'ناقل معتمد' : 'TRANSPORT')}</span>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <span className={`contract-badge ${c.type}`}>{c.type === 'client' ? (isAr ? 'عميل سيادي' : 'CLIENT') : (isAr ? 'ناقل معتمد' : 'TRANSPORT')}</span>
+                        {c.signed && <span className="contract-badge signed" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#059669' }}>{isAr ? 'تم التوقيع' : 'SIGNED'}</span>}
+                      </div>
                       <span className="contract-ref">#{c.id}</span>
                   </div>
                   <h4 className="contract-name">{c.entity_name}</h4>
@@ -1571,6 +1548,23 @@ function ContractsSubView({ contracts, isAr, setShowContractModal }: ContractsSu
                           <span className="expiry">{c.expiry_date || '-'}</span>
                       </div>
                   </div>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-container-low)' }}>
+                    <button 
+                      onClick={() => onDownload(c)}
+                      className="btn-action-small" 
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <Download size={14} /> {isAr ? 'تحميل كملف' : 'Download'}
+                    </button>
+                    {!c.signed && (
+                      <button 
+                        onClick={() => onSign(c.id)}
+                        className="btn-sovereign-outline" 
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem 0' }}>
+                        <PenTool size={14} /> {isAr ? 'توقيع العقد' : 'Sign Now'}
+                      </button>
+                    )}
+                  </div>
                   <style>{`
                     .card-contract-elite { background: var(--surface); padding: 1.8rem; border-radius: 28px; border: 1px solid var(--surface-container-high); box-shadow: 0 5px 25px rgba(0,0,0,0.02); }
                     .contract-status-bar { display: flex; justify-content: space-between; margin-bottom: 1.2rem; }
@@ -1583,6 +1577,7 @@ function ContractsSubView({ contracts, isAr, setShowContractModal }: ContractsSu
                     .contract-metrics label { font-size: 0.75rem; font-weight: 900; opacity: 0.5; display: block; margin-bottom: 0.4rem; }
                     .contract-metrics .value { font-size: 1.5rem; font-weight: 1000; color: var(--primary); }
                     .contract-metrics .expiry { font-size: 1.1rem; font-weight: 900; color: var(--error); }
+                    .btn-action-small { background: var(--surface-container-low); border: 1px solid var(--surface-container-high); color: var(--primary); border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; }
                   `}</style>
               </div>
           ))}

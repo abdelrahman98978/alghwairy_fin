@@ -111,12 +111,28 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
           }}>
           الميزانية العمومية
         </button>
+        <button 
+          onClick={() => setActiveTab('trial')}
+          style={{ 
+            padding: '1rem 0.5rem', 
+            background: 'none', 
+            border: 'none', 
+            borderBottom: activeTab === 'trial' ? '3px solid var(--primary)' : '3px solid transparent',
+            color: activeTab === 'trial' ? 'var(--primary)' : 'var(--on-surface-variant)',
+            fontWeight: 900, fontSize: '1.1rem', cursor: 'pointer', fontFamily: 'Tajawal'
+          }}>
+          ميزان المراجعة
+        </button>
       </div>
 
-      {activeTab === 'pnl' ? (
+      {activeTab === 'pnl' && (
         <IncomeStatement revenue={totalRevenue} cogs={stats.cogs} expenses={totalExpenses} salaries={stats.salaries} />
-      ) : (
+      )}
+      {activeTab === 'balance' && (
         <BalanceSheet assets={stats.assets} liabilities={stats.liabilities} equity={netIncome + 1000000} />
+      )}
+      {activeTab === 'trial' && (
+        <TrialBalance transactions={transactions} stats={stats} />
       )}
       
       <footer style={{ marginTop: '4rem', padding: '2rem', borderTop: '1px solid var(--surface-container-high)', textAlign: 'center', opacity: 0.6 }}>
@@ -189,28 +205,60 @@ function BalanceSheet({ assets, liabilities, equity }: any) {
   );
 }
 
+function TrialBalance({ transactions, stats }: any) {
+  return (
+    <div className="card shadow-royal" style={{ padding: 0 }}>
+       <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
+          <h3 style={{ margin: 0, fontWeight: 900, color: 'var(--primary)' }}>ميزان المراجعة (Trial Balance)</h3>
+       </div>
+       <table className="sovereign-table">
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--surface-container-high)' }}>
+               <th style={{ textAlign: 'right', padding: '1rem 2rem' }}>الحساب</th>
+               <th style={{ textAlign: 'center' }}>مدين (Dr)</th>
+               <th style={{ textAlign: 'center' }}>دائن (Cr)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <StatementRow label="البنوك" value={stats.assets.bank} />
+            <StatementRow label="مصروفات الموظفين" value={stats.salaries} />
+            <StatementRow label="تكاليف الخدمات" value={stats.cogs} />
+            <StatementRow label="الإيرادات" value={transactions.reduce((acc: number, t: any) => acc + (t.type.includes('إيراد') ? Number(t.amount) : 0), 0)} type="minus" />
+            <StatementRow label="حقوق الملكية" value={1000000} type="minus" />
+            {/* ... other accounts */}
+          </tbody>
+       </table>
+    </div>
+  );
+}
+
 function StatementRow({ label, value, type = 'normal' }: { label: string; value: number; type?: 'normal' | 'header' | 'minus' | 'subtotal' | 'final' }) {
   const isNegative = type === 'minus';
-  const color = type === 'final' ? 'var(--secondary)' : (isNegative ? 'var(--error)' : 'inherit');
-  const background = type === 'final' ? 'var(--primary)' : 'transparent';
   
   return (
-    <tr style={{ background }}>
+    <tr>
       <td style={{ 
         padding: '1.2rem 2.5rem', 
         fontWeight: type !== 'normal' ? 950 : 700,
-        fontSize: type === 'final' ? '1.1rem' : '0.95rem',
-        color: type === 'final' ? 'white' : 'inherit'
+        fontSize: type === 'final' ? '1.1rem' : '0.95rem'
       }}>{label}</td>
       <td style={{ 
-        textAlign: 'right', 
+        textAlign: 'center', 
         padding: '1.2rem 2.5rem', 
         fontWeight: 950, 
-        color,
-        fontSize: type === 'final' ? '1.3rem' : '1.1rem',
+        color: isNegative ? 'inherit' : 'var(--primary)',
         direction: 'ltr'
       }}>
-        {isNegative ? '(' : ''}{Math.abs(value).toLocaleString()}{isNegative ? ')' : ''} <small style={{ opacity: 0.5, fontSize: '0.7rem' }}>SAR</small>
+        {!isNegative ? Math.abs(value).toLocaleString() : '-'}
+      </td>
+      <td style={{ 
+        textAlign: 'center', 
+        padding: '1.2rem 2.5rem', 
+        fontWeight: 950, 
+        color: isNegative ? '#ba1a1a' : 'inherit',
+        direction: 'ltr'
+      }}>
+        {isNegative ? Math.abs(value).toLocaleString() : '-'}
       </td>
     </tr>
   );
