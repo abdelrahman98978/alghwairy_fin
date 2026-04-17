@@ -94,31 +94,183 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
   };
 
   const handleDownload = (contract: Contract) => {
-    const content = `
-ALGHWAIRY SOVEREIGN LOGISTICS CONTRACT
----------------------------------------
-Contract ID: ${contract.id}
-Entity Name: ${contract.entity_name}
-Type: ${contract.type === 'client' ? 'Client Service Agreement' : 'Transporter Logistics Agreement'}
-Date: ${contract.contract_date}
-Expiry: ${contract.expiry_date}
-Value: ${contract.value} SAR
-${contract.type === 'transporter' ? `Operational Expenses: ${contract.transport_expenses} SAR` : ''}
-Status: ${contract.status}
-Signed: ${contract.signed ? `YES (on ${contract.signature_date})` : 'NO'}
+    const isAr = true; // Forcing Arabic primarily for official contracts
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast(isAr ? 'الرجاء السماح بالنوافذ المنبثقة للطباعة' : 'Please allow popups to print', 'error');
+      return;
+    }
 
-Terms and Conditions:
----------------------
-${contract.terms || 'Standard sovereign logistics terms apply.'}
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="${isAr ? 'rtl' : 'ltr'}" lang="${isAr ? 'ar' : 'en'}">
+      <head>
+        <title>عقد لوجستي سيادي #${contract.id}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+          body { 
+            font-family: 'Tajawal', sans-serif; 
+            padding: 40px; 
+            color: #111; 
+            line-height: 1.8;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #001a33;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+          }
+          .header h1 { margin: 0; color: #001a33; font-weight: 900; }
+          .header p { margin: 5px 0 0; color: #555; font-weight: 600; }
+          .section { margin-bottom: 30px; }
+          .section-title {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            font-weight: 800;
+            color: #001a33;
+            border-right: 4px solid #001a33;
+            border-radius: 4px;
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+          }
+          .field { margin-bottom: 15px; }
+          .label { font-size: 0.9em; color: #666; font-weight: 700; display: block; }
+          .value { font-size: 1.1em; font-weight: 800; color: #111; }
+          .terms {
+            background: #fafafa;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            font-weight: 600;
+          }
+          .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 80px;
+            text-align: center;
+          }
+          .sig-box {
+            border-top: 2px dashed #999;
+            padding-top: 15px;
+          }
+          .e-sign {
+            color: #10b981;
+            font-weight: 900;
+            border: 2px solid #10b981;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: -40px;
+            background: white;
+            font-size: 0.9rem;
+          }
+          @media print {
+            body { -webkit-print-color-adjust: exact; padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>مؤسسة الغويري للتخليص الجمركي</h1>
+          <p>Alghwairy Customs Clearance Institution</p>
+          <h2 style="margin-top: 30px; color: #111;">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
+        </div>
 
----------------------------------------
-Certified by Alghwairy Sovereign Ledger
+        <div class="section">
+          <div class="section-title">البيانات الأساسية للمتطأقد</div>
+          <div class="grid">
+            <div class="field">
+              <span class="label">رقم العقد المرجعي</span>
+              <span class="value">#${contract.id}</span>
+            </div>
+            <div class="field">
+              <span class="label">تاريخ تحرير العقد</span>
+              <span class="value">${contract.contract_date}</span>
+            </div>
+            <div class="field">
+              <span class="label">تاريخ انتهاء الصلاحية</span>
+              <span class="value">${contract.expiry_date || 'غير محدد'}</span>
+            </div>
+            <div class="field">
+              <span class="label">حالة العقد</span>
+              <span class="value">${contract.status === 'active' ? 'نشط وساري المفعول' : 'منتهي / ملغى'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">يانات الطرف الثاني (العميل/الناقل)</div>
+          <div class="field" style="margin-top: 15px;">
+            <span class="label">اسم الجهة المتعاقدة</span>
+            <span class="value" style="font-size: 1.3rem;">${contract.entity_name}</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">التفاصيل المالية المتفق عليها</div>
+          <div class="grid">
+            <div class="field">
+              <span class="label">القيمة الإجمالية للعقد</span>
+              <span class="value">${Number(contract.value).toLocaleString()} SAR</span>
+            </div>
+            ${contract.type === 'transporter' ? `
+            <div class="field">
+              <span class="label">عائد التشغيل المتفق عليه</span>
+              <span class="value">${Number(contract.transport_expenses || 0).toLocaleString()} SAR</span>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">البنود والشروط السيادية</div>
+          <div class="terms">${contract.terms || 'تخضع هذه الاتفاقية للشروط والأحكام القياسية المعتمدة لدى مؤسسة الغويري للتخليص الجمركي، وحسب المواصفات المحددة من السلطات المختصة والأنظمة الأمنية واللوجستية.'}</div>
+        </div>
+
+        <div class="signatures">
+          <div class="sig-box">
+            <strong style="font-size: 1.1em;">الطرف الأول (مؤسسة الغويري)</strong>
+            <br/><br/>
+            ${contract.signed ? `
+              <div class="e-sign">
+                ✓ معتمد وموقع إلكترونياً
+                <br/><small>${contract.signature_date}</small>
+              </div>
+            ` : `
+              <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+            `}
+          </div>
+          <div class="sig-box">
+            <strong style="font-size: 1.1em;">الطرف الثاني (${contract.entity_name})</strong>
+            <br/><br/>
+            <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 70px; font-size: 0.8em; color: #888; border-top: 1px solid #eee; padding-top: 15px;">
+          هذه الوثيقة مستخرجة من المنظومة السيادية للغويري للعمليات المالية واللوجستية - ${new Date().toLocaleString('ar-SA')}
+        </div>
+        
+        <script>
+          window.onload = function() { 
+            setTimeout(() => {
+              window.print(); 
+            }, 500); 
+          }
+        </script>
+      </body>
+      </html>
     `;
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `contract_${contract.entity_name.replace(/\s+/g, '_')}_${contract.id.slice(0, 8)}.txt`;
-    link.click();
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    showToast(t.lang === 'ar' ? 'جاري تجهيز العقد للطباعة/PDF الحفظ' : 'Preparing contract for Print/PDF', 'success');
   };
 
   const handleExportFullReport = () => {
@@ -247,7 +399,7 @@ Certified by Alghwairy Sovereign Ledger
                 <th style={{ textAlign: 'center' }}>تاريخ الانتهاء</th>
                 <th style={{ textAlign: 'center' }}>التوقيع</th>
                 <th style={{ textAlign: 'center' }}>الحالة</th>
-                <th style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>العمليات</th>
+                <th style={{ textAlign: 'center' }}>الإجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -290,12 +442,12 @@ Certified by Alghwairy Sovereign Ledger
                     </td>
                     <td style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>
                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                          <button onClick={(e) => { e.stopPropagation(); handleDownload(contract); }} className="btn-action-small" title="تحميل">
-                             <Download size={14} />
+                          <button onClick={(e) => { e.stopPropagation(); handleDownload(contract); }} className="btn-action-small" title="تحميل PDF / طباعة">
+                             <Printer size={16} />
                           </button>
                           {!contract.signed && (
                             <button onClick={(e) => { e.stopPropagation(); handleSign(contract.id); }} className="btn-action-small" title="توقيع" style={{ color: 'var(--secondary)' }}>
-                               <PenTool size={14} />
+                               <PenTool size={16} />
                             </button>
                           )}
                           <button onClick={(e) => { e.stopPropagation(); handleDelete(contract.id); }} className="btn-action-small" title="حذف" style={{ color: 'var(--error)' }}>

@@ -107,6 +107,7 @@ interface ContractsSubViewProps {
   onSign: (contractId: string) => void;
   onDownload: (contract: Contract) => void;
   onDelete: (id: string) => void;
+  downloadCSV: (data: any[], filename: string) => void;
 }
 
 interface InventoryManagementProps {
@@ -564,37 +565,171 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
   };
 
   const handleDownloadContract = (contract: Contract) => {
-    const content = `
-      LOGISTICS CONTRACT - SOVEREIGN LEDGER
-      ------------------------------------
-      Contract ID: ${contract.id}
-      Entity: ${contract.entity_name}
-      Type: ${contract.type.toUpperCase()}
-      Date: ${contract.contract_date}
-      Expiry: ${contract.expiry_date}
-      Value: ${contract.value} SAR
-      Status: ${contract.status}
-      Signed: ${contract.signed ? 'YES (' + contract.signature_date + ')' : 'NO'}
-      
-      Terms and Conditions:
-      ${contract.terms}
-      
-      Authorized Signature
-      --------------------
-      Electronic Signature - ALGHWAIRY SOVEREIGN LEDGER
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast(isAr ? 'الرجاء السماح بالنوافذ المنبثقة للطباعة' : 'Please allow popups to print', 'error');
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="\${isAr ? 'rtl' : 'ltr'}" lang="\${isAr ? 'ar' : 'en'}">
+      <head>
+        <title>عقد لوجستي سيادي #\${contract.id}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+          body { 
+            font-family: 'Tajawal', sans-serif; 
+            padding: 40px; 
+            color: #111; 
+            line-height: 1.8;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #001a33;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+          }
+          .header h1 { margin: 0; color: #001a33; font-weight: 900; }
+          .header p { margin: 5px 0 0; color: #555; font-weight: 600; }
+          .section { margin-bottom: 30px; }
+          .section-title {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            font-weight: 800;
+            color: #001a33;
+            border-right: 4px solid #001a33;
+            border-radius: 4px;
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+          }
+          .field { margin-bottom: 15px; }
+          .label { font-size: 0.9em; color: #666; font-weight: 700; display: block; }
+          .value { font-size: 1.1em; font-weight: 800; color: #111; }
+          .terms {
+            background: #fafafa;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            font-weight: 600;
+          }
+          .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 80px;
+            text-align: center;
+          }
+          .sig-box {
+            border-top: 2px dashed #999;
+            padding-top: 15px;
+          }
+          .e-sign {
+            color: #10b981;
+            font-weight: 900;
+            border: 2px solid #10b981;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: -40px;
+            background: white;
+            font-size: 0.9rem;
+          }
+          @media print {
+            body { -webkit-print-color-adjust: exact; padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>مؤسسة الغويري للتخليص الجمركي</h1>
+          <p>Alghwairy Customs Clearance Institution</p>
+          <h2 style="margin-top: 30px; color: #111;">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
+        </div>
+
+        <div class="section">
+          <div class="section-title">البيانات الأساسية للمتعاقد</div>
+          <div class="grid">
+            <div class="field">
+              <span class="label">رقم العقد المرجعي</span>
+              <span class="value">#${contract.id}</span>
+            </div>
+            <div class="field">
+              <span class="label">تاريخ تحرير العقد</span>
+              <span class="value">${contract.contract_date}</span>
+            </div>
+            <div class="field">
+              <span class="label">تاريخ انتهاء الصلاحية</span>
+              <span class="value">${contract.expiry_date || 'غير محدد'}</span>
+            </div>
+            <div class="field">
+              <span class="label">حالة العقد</span>
+              <span class="value">${contract.status === 'active' ? 'نشط وساري المفعول' : 'منتهي / ملغى'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">بيانات الطرف الثاني (العميل/الناقل)</div>
+          <div class="field" style="margin-top: 15px;">
+            <span class="label">اسم الجهة المتعاقدة</span>
+            <span class="value" style="font-size: 1.3rem;">${contract.entity_name}</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">التفاصيل المالية المتفق عليها</div>
+          <div class="grid">
+            <div class="field">
+              <span class="label">القيمة الإجمالية للعقد</span>
+              <span class="value">${Number(contract.value).toLocaleString()} SAR</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">البنود والشروط السيادية</div>
+          <div class="terms">${contract.terms || 'تخضع هذه الاتفاقية للشروط والأحكام القياسية المعتمدة لدى مؤسسة الغويري للتخليص الجمركي، وحسب المواصفات المحددة من السلطات المختصة والأنظمة الأمنية واللوجستية.'}</div>
+        </div>
+
+        <div class="signatures">
+          <div class="sig-box">
+            <strong style="font-size: 1.1em;">الطرف الأول (مؤسسة الغويري)</strong>
+            <br/><br/>
+            ${contract.signed ? `
+              <div class="e-sign">
+                ✓ معتمد وموقع إلكترونياً
+                <br/><small>${contract.signature_date}</small>
+              </div>
+            ` : `
+              <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+            `}
+          </div>
+          <div class="sig-box">
+            <strong style="font-size: 1.1em;">الطرف الثاني (${contract.entity_name})</strong>
+            <br/><br/>
+            <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+          </div>
+        </div>
+      </body>
+      </html>
     `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.focus();
     
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Contract_${contract.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
     
-    showToast(isAr ? 'بدء تحميل العقد' : 'Contract download started', 'success');
+    showToast(isAr ? 'جاري تجهيز العقد للطباعة/PDF بصيغة احترافية' : 'Preparing professional PDF contract format', 'success');
   };
 
   const handleRunDepreciation = () => {
@@ -1054,6 +1189,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           onSign={handleSignContract}
           onDownload={handleDownloadContract}
           onDelete={handleDeleteContract}
+          downloadCSV={downloadCSV}
         />
       )}
       {activeTab === 'assets' && <AssetsView assets={fixedAssets} isAr={isAr} setShowAssetModal={setShowAssetModal} onRunDepreciation={handleRunDepreciation} />}
@@ -1564,7 +1700,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
   );
 }
 
-function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload, onDelete }: ContractsSubViewProps) {
+function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload, onDelete, downloadCSV }: ContractsSubViewProps) {
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -1572,7 +1708,10 @@ function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDow
             <h3 style={{ fontWeight: 1000, color: 'var(--primary)', margin: 0 }}>{isAr ? 'إدارة العقود اللوجستية' : 'Logistics Contract Management'}</h3>
             <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>{isAr ? 'تتبع الاتفاقيات المالية مع العملاء والناقلين' : 'Track financial agreements with clients and carriers'}</p>
           </div>
-          <button onClick={() => setShowContractModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'عقد جديد' : 'New Contract'}</button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button onClick={() => downloadCSV(contracts, 'Contracts_Full_Ledger')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1rem', fontSize: '0.95rem' }}><Download size={18} /> {isAr ? 'كشف كامل' : 'Full Report'}</button>
+            <button onClick={() => setShowContractModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'عقد جديد' : 'New Contract'}</button>
+          </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
