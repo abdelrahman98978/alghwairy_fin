@@ -22,7 +22,8 @@ export type AppModule =
   | 'audit_logs' 
   | 'data_import' 
   | 'settings' 
-  | 'trash';
+  | 'trash'
+  | 'contracts';
 
 /**
  * Checks if a specific role has access to a module based on the dynamic matrix in localDB.
@@ -70,5 +71,6 @@ export const ALL_MODULES: AppModule[] = [
   'audit_logs', 
   'data_import', 
   'settings', 
-  'trash'
+  'trash',
+  'contracts'
 ];

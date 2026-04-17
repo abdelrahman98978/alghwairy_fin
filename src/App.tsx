@@ -58,6 +58,7 @@ import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
 import CommunicationsView from './components/CommunicationsView';
+import { ContractsView } from './components/ContractsView';
 
 
 const translations = {
@@ -73,6 +74,7 @@ const translations = {
     nav: {
       dashboard: 'لوحة التحكم',
       customers: 'العملاء والشركاء',
+      contracts: 'إدارة العقود',
       accounting: 'المحاسبة السيادية',
       invoices: 'الفواتير السيادية',
       prepayments: 'الدفعات المقدمة',
@@ -1439,6 +1441,7 @@ export default function App() {
       case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
+      case 'contracts': return <ContractsView />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1496,6 +1499,7 @@ export default function App() {
               {!isCollapsed && <div style={{ padding: '1rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
               {hasPermission(userRole, 'dashboard') && <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'customers') && <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'contracts') && <NavItem icon={<FileText size={16} />} label={t.nav.contracts} active={activeTab === 'contracts'} onClick={() => setActiveTab('contracts')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 

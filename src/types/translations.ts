@@ -140,6 +140,14 @@ export interface Translations {
     adjustment_type: string;
     credit_adj: string;
     debit_adj: string;
+    journal: string;
+    general_ledger: string;
+    daily: string;
+    monthly: string;
+    yearly: string;
+    profit_loss: string;
+    ledger_summary: string;
+    statement_number: string;
   };
   tax: {
     title: string;
@@ -285,6 +293,32 @@ export interface Translations {
     total_due_label?: string;
     print_invoice_label?: string;
     close_label?: string;
+    internal_invoice: string;
+    final_invoice: string;
+    statement_number: string;
+    bol_number: string;
+    operation_number: string;
+    customs_fees: string;
+    port_fees: string;
+    inventory_total: string;
+    final_profit: string;
+    client_name_label: string;
+    barcode: string;
+    remove_tax: string;
+  };
+  contracts: {
+    lang: string;
+    title: string;
+    client_contracts: string;
+    transport_contracts: string;
+    add_contract: string;
+    contract_date: string;
+    expiry_date: string;
+    terms: string;
+    transporter_name: string;
+    transport_fees: string;
+    client_name: string;
+    status: string;
   };
   expenses: {
     lang: string;
