@@ -224,7 +224,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2rem' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, maxWidth: '500px', background: 'var(--surface-container-low)', padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
                 <Search size={18} color="var(--outline)" />
@@ -309,7 +309,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
            <div className="card">
               <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', marginBottom: '1.5rem', fontWeight: 800, borderBottom: '1px solid var(--surface-container-high)', paddingBottom: '0.8rem' }}>{t.activity}</h3>
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                  <TimelineEvent title="Balance Match" status="Success" time="10m ago" color="var(--success)" />
                  <TimelineEvent title="Credit Raise Request" status="Under Review" time="2h ago" color="var(--secondary)" />
                  <TimelineEvent title="Auto-Credit Freeze" status="Limit Exceeded" time="Yesterday" color="var(--error)" />

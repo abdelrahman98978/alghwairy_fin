@@ -388,12 +388,18 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
           <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.items_title}</h3>
         </div>
 
-        <div className="flex gap-4 mb-4">
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
           {(['invoice', 'settlement', 'internal'] as const).map(mode => (
             <button 
               key={mode}
               onClick={() => setInvoiceMode(mode)}
-              className={`px-6 py-2 rounded-xl font-bold transition ${invoiceMode === mode ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+              className="btn-executive"
+              style={{ 
+                background: invoiceMode === mode ? 'var(--primary)' : 'var(--surface-container-high)', 
+                color: invoiceMode === mode ? 'white' : 'var(--on-surface-variant)',
+                border: 'none',
+                fontWeight: 800
+              }}
             >
               {mode === 'invoice' ? (t.lang === 'ar' ? 'فاتورة نهائية' : 'Final Invoice') : 
                mode === 'settlement' ? (t.lang === 'ar' ? 'تسوية داخلية' : 'Internal Settlement') : 

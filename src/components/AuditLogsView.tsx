@@ -52,12 +52,12 @@ export default function AuditLogsView({ showToast, t }: Props) {
 
   const getActionIcon = (action: string) => {
     const act = action.toLowerCase();
-    if (act.includes('add') || act.includes('insert') || act.includes('issue')) return <Plus size={14} className="text-success" />;
-    if (act.includes('delete') || act.includes('revoke') || act.includes('trash')) return <Trash2 size={14} className="text-error" />;
-    if (act.includes('login') || act.includes('auth') || act.includes('shield')) return <ShieldCheck size={14} className="text-primary" />;
-    if (act.includes('biometric') || act.includes('fingerprint')) return <Fingerprint size={14} className="text-secondary" />;
-    if (act.includes('payment') || act.includes('trx') || act.includes('financial')) return <CreditCard size={14} className="text-secondary" />;
-    if (act.includes('settings') || act.includes('update')) return <Settings size={14} className="text-on-surface-variant" />;
+    if (act.includes('add') || act.includes('insert') || act.includes('issue')) return <Plus size={14} style={{ color: 'var(--success)' }} />;
+    if (act.includes('delete') || act.includes('revoke') || act.includes('trash')) return <Trash2 size={14} style={{ color: 'var(--error)' }} />;
+    if (act.includes('login') || act.includes('auth') || act.includes('shield')) return <ShieldCheck size={14} style={{ color: 'var(--primary)' }} />;
+    if (act.includes('biometric') || act.includes('fingerprint')) return <Fingerprint size={14} style={{ color: 'var(--secondary)' }} />;
+    if (act.includes('payment') || act.includes('trx') || act.includes('financial')) return <CreditCard size={14} style={{ color: 'var(--secondary)' }} />;
+    if (act.includes('settings') || act.includes('update')) return <Settings size={14} style={{ color: 'var(--on-surface-variant)' }} />;
     return <Activity size={14} />;
   };
 

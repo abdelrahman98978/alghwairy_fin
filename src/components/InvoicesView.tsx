@@ -121,35 +121,52 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
   });
 
   return (
-    <div className="p-6" dir="rtl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="view-container slide-in" dir="rtl">
+      <div className="view-header">
         <div>
-          <h1 className="text-3xl font-black text-slate-800">نظام المحاسبة والشحن</h1>
-          <p className="text-slate-500 font-bold mt-1">تخليص جمركي - لوجستيات - أرباح تلقائية</p>
+          <h1 className="page-title">نظام المحاسبة والشحن</h1>
+          <p className="page-subtitle">تخليص جمركي - لوجستيات - أرباح تلقائية</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-black">إنشاء فاتورة</button>
+        <button onClick={() => setShowAddModal(true)} className="btn-executive">إنشاء فاتورة</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
         <MetricCard title="الإيرادات" value={invoices.reduce((sum, i) => sum + i.total, 0)} color="blue" />
         <MetricCard title="الأرباح" value={invoices.reduce((sum, i) => sum + (i.profit || 0), 0)} color="green" />
         <MetricCard title="المخزون" value={invoices.reduce((sum, i) => sum + (i.cargo_value || 0), 0)} color="orange" />
         <MetricCard title="الرسوم" value={invoices.reduce((sum, i) => sum + ((i.customs_fees || 0) + (i.port_fees || 0)), 0)} color="slate" />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <table className="w-full text-right">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <table className="sovereign-table">
           <thead>
-            <tr className="bg-slate-50 border-b"><th className="px-6 py-4">البيان/العملية</th><th className="px-6 py-4">العميل</th><th className="px-6 py-4">الأرباح</th><th className="px-6 py-4">الإجمالي</th><th className="px-6 py-4">الحالة</th></tr>
+            <tr>
+              <th>البيان/العملية</th>
+              <th>العميل</th>
+              <th>الأرباح</th>
+              <th>الإجمالي</th>
+              <th>الحالة</th>
+            </tr>
           </thead>
           <tbody>
             {filteredInvoices.map(inv => (
-              <tr key={inv.id} className="border-b hover:bg-slate-50 cursor-pointer" onClick={() => { setSelectedInvoice(inv); setShowPreviewModal(true); }}>
-                <td className="px-6 py-4 font-black">{inv.operation_number || inv.reference_number}</td>
-                <td className="px-6 py-4 font-bold">{inv.customers?.name || 'عميل'}</td>
-                <td className="px-6 py-4 text-green-600 font-black">{inv.profit?.toLocaleString()}</td>
-                <td className="px-6 py-4 text-blue-600 font-black">{inv.total.toLocaleString()}</td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-black ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{inv.status === 'paid' ? 'مدفوعة' : 'انتظار'}</span></td>
+              <tr key={inv.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedInvoice(inv); setShowPreviewModal(true); }}>
+                <td style={{ fontWeight: '900' }}>{inv.operation_number || inv.reference_number}</td>
+                <td style={{ fontWeight: '700' }}>{inv.customers?.name || 'عميل'}</td>
+                <td style={{ color: 'var(--color-success)', fontWeight: '900' }}>{inv.profit?.toLocaleString()}</td>
+                <td style={{ color: 'var(--color-primary)', fontWeight: '900' }}>{inv.total.toLocaleString()}</td>
+                <td>
+                  <span style={{ 
+                    padding: '4px 8px', 
+                    borderRadius: 'var(--radius-full)', 
+                    fontSize: '12px', 
+                    fontWeight: '900',
+                    backgroundColor: inv.status === 'paid' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                    color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-warning)'
+                  }}>
+                    {inv.status === 'paid' ? 'مدفوعة' : 'انتظار'}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -157,30 +174,54 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-auto">
-            <h2 className="text-2xl font-black mb-6">فاتورة شحن جديدة</h2>
-            <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
-               <select className="col-span-1 p-3 border rounded-xl font-bold" value={formData.customerId} onChange={e => setFormData({...formData, customerId: e.target.value})}>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '800px' }}>
+            <div className="modal-header">
+              <h2 className="modal-title">فاتورة شحن جديدة</h2>
+            </div>
+            <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
+               <select className="input-executive" value={formData.customerId} onChange={e => setFormData({...formData, customerId: e.target.value})}>
                  <option value="">اختر العميل</option>
                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                </select>
-               <select className="col-span-1 p-3 border rounded-xl font-bold" value={formData.invoiceType} onChange={e => setFormData({...formData, invoiceType: e.target.value})}>
+               <select className="input-executive" value={formData.invoiceType} onChange={e => setFormData({...formData, invoiceType: e.target.value})}>
                  <option value="final">فاتورة نهائية</option>
                  <option value="internal">فاتورة داخلية</option>
                </select>
-               <input type="text" placeholder="رقم العملية" className="p-3 border rounded-xl" value={formData.operationNumber} onChange={e => setFormData({...formData, operationNumber: e.target.value})} />
-               <input type="text" placeholder="رقم البيان" className="p-3 border rounded-xl" value={formData.statementNumber} onChange={e => setFormData({...formData, statementNumber: e.target.value})} />
-               <input type="text" placeholder="رقم البوليصة (BOL)" className="p-3 border rounded-xl" value={formData.bolNumber} onChange={e => setFormData({...formData, bolNumber: e.target.value})} />
-               <input type="number" placeholder="قيمة الشحنة (المخزون)" className="p-3 border rounded-xl" value={formData.cargoValue} onChange={e => setFormData({...formData, cargoValue: e.target.value})} />
+               <input type="text" placeholder="رقم العملية" className="input-executive" value={formData.operationNumber} onChange={e => setFormData({...formData, operationNumber: e.target.value})} />
+               <input type="text" placeholder="رقم البيان" className="input-executive" value={formData.statementNumber} onChange={e => setFormData({...formData, statementNumber: e.target.value})} />
+               <input type="text" placeholder="رقم البوليصة (BOL)" className="input-executive" value={formData.bolNumber} onChange={e => setFormData({...formData, bolNumber: e.target.value})} />
+               <input type="number" placeholder="قيمة الشحنة (المخزون)" className="input-executive" value={formData.cargoValue} onChange={e => setFormData({...formData, cargoValue: e.target.value})} />
                
-               <div className="col-span-2 border-t pt-4 mt-2"><h4 className="font-black text-sm mb-2 text-slate-500">التكاليف والإيرادات</h4></div>
-               <div className="flex flex-col"><label className="text-[10px] font-bold mr-2">إجمالي التحصيل (الإيراد)</label><input type="number" placeholder="قيمة الخدمة" className="p-3 border rounded-xl bg-blue-50 font-black" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} /></div>
-               <div className="flex flex-col"><label className="text-[10px] font-bold mr-2">رسوم الجمارك</label><input type="number" placeholder="رسوم الجمارك" className="p-3 border rounded-xl bg-red-50" value={formData.customsFees} onChange={e => setFormData({...formData, customsFees: e.target.value})} /></div>
-               <div className="flex flex-col"><label className="text-[10px] font-bold mr-2">رسوم الموانئ</label><input type="number" placeholder="رسوم الموانئ" className="p-3 border rounded-xl bg-red-50" value={formData.portFees} onChange={e => setFormData({...formData, portFees: e.target.value})} /></div>
-               <div className="flex flex-col"><label className="text-[10px] font-bold mr-2">أجور النقل</label><input type="number" placeholder="أجور النقل" className="p-3 border rounded-xl bg-red-50" value={formData.transportFees} onChange={e => setFormData({...formData, transportFees: e.target.value})} /></div>
-               <div className="flex flex-col"><label className="text-[10px] font-bold mr-2">مصروفات إضافية (نقل)</label><input type="number" placeholder="مصروفات إضافية" className="p-3 border rounded-xl bg-red-50" value={formData.transportExpenses} onChange={e => setFormData({...formData, transportExpenses: e.target.value})} /></div>
-               <button type="submit" className="col-span-2 bg-slate-900 text-white p-4 rounded-2xl font-black mt-4">حفظ الفاتورة والترحيل للمحاسبة</button>
+               <div style={{ gridColumn: 'span 2', marginTop: 'var(--spacing-sm)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--border-color)' }}>
+                 <h4 style={{ fontWeight: '900', color: 'var(--color-text-secondary)' }}>التكاليف والإيرادات</h4>
+               </div>
+               
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                 <label style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>إجمالي التحصيل (الإيراد)</label>
+                 <input type="number" placeholder="قيمة الخدمة" className="input-executive" style={{ backgroundColor: '#eff6ff', fontWeight: '900' }} value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
+               </div>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                 <label style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>رسوم الجمارك</label>
+                 <input type="number" placeholder="رسوم الجمارك" className="input-executive" style={{ backgroundColor: '#fef2f2' }} value={formData.customsFees} onChange={e => setFormData({...formData, customsFees: e.target.value})} />
+               </div>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                 <label style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>رسوم الموانئ</label>
+                 <input type="number" placeholder="رسوم الموانئ" className="input-executive" style={{ backgroundColor: '#fef2f2' }} value={formData.portFees} onChange={e => setFormData({...formData, portFees: e.target.value})} />
+               </div>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                 <label style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>أجور النقل</label>
+                 <input type="number" placeholder="أجور النقل" className="input-executive" style={{ backgroundColor: '#fef2f2' }} value={formData.transportFees} onChange={e => setFormData({...formData, transportFees: e.target.value})} />
+               </div>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                 <label style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>مصروفات إضافية (نقل)</label>
+                 <input type="number" placeholder="مصروفات إضافية" className="input-executive" style={{ backgroundColor: '#fef2f2' }} value={formData.transportExpenses} onChange={e => setFormData({...formData, transportExpenses: e.target.value})} />
+               </div>
+
+               <div style={{ gridColumn: 'span 2', display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+                 <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--border-color)' }}>إلغاء</button>
+                 <button type="submit" className="btn-executive" style={{ backgroundColor: 'var(--color-primary)' }}>حفظ الفاتورة والترحيل للمحاسبة</button>
+               </div>
             </form>
           </div>
         </div>
@@ -194,16 +235,17 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 }
 
 function MetricCard({ title, value, color }: { title: string; value: number; color: 'blue' | 'green' | 'orange' | 'slate' }) {
-  const c = { 
-    blue: 'bg-blue-50 text-blue-700', 
-    green: 'bg-green-50 text-green-700', 
-    orange: 'bg-orange-50 text-orange-700', 
-    slate: 'bg-slate-50 text-slate-700' 
+  const colorMap = { 
+    blue: { bg: 'rgba(59, 130, 246, 0.1)', text: '#1d4ed8', border: 'rgba(59, 130, 246, 0.2)' },
+    green: { bg: 'rgba(16, 185, 129, 0.1)', text: '#047857', border: 'rgba(16, 185, 129, 0.2)' },
+    orange: { bg: 'rgba(245, 158, 11, 0.1)', text: '#b45309', border: 'rgba(245, 158, 11, 0.2)' },
+    slate: { bg: 'var(--bg-secondary)', text: 'var(--color-text)', border: 'var(--border-color)' }
   };
+  const c = colorMap[color];
   return (
-    <div className={`p-6 rounded-2xl border ${c[color]}`}>
-      <p className="text-xs font-black opacity-70">{title}</p>
-      <h3 className="text-xl font-black">{value.toLocaleString()} <span className="text-[10px]">SAR</span></h3>
+    <div className="card" style={{ backgroundColor: c.bg, color: c.text, border: `1px solid ${c.border}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <p style={{ fontSize: '12px', fontWeight: '900', opacity: 0.8, margin: 0 }}>{title}</p>
+      <h3 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>{value.toLocaleString()} <span style={{ fontSize: '10px' }}>SAR</span></h3>
     </div>
   );
 }
@@ -227,49 +269,89 @@ function InvoicePreview({ invoice, settings, onClose }: InvoicePreviewProps) {
   });
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur flex justify-center p-4 z-[100] overflow-auto">
-      <div className="bg-white p-10 w-[210mm] shadow-2xl relative text-right" dir="rtl">
-        <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-slate-100 rounded-full no-print">X</button>
-        <div className="flex justify-between border-b-4 border-slate-900 pb-6 mb-6">
-           <div><h1 className="text-2xl font-black">{settings.companyName}</h1><p className="text-sm font-bold opacity-60">تخليص جمركي ولوجستيات</p></div>
-           <div className="text-left"><div className="bg-slate-900 text-white px-4 py-2 font-black">{invoice.invoice_type === 'final' ? 'فاتورة نهائية' : 'فاتورة داخلية'}</div></div>
-        </div>
-        <div className="grid grid-cols-2 gap-8 mb-8">
-           <div className="bg-slate-50 p-4 rounded-xl"><h4 className="font-black mb-2 border-b border-slate-200 pb-1">العميل</h4><p className="font-bold text-lg">{invoice.customers?.name}</p><p className="text-xs mt-2">تاريخ الإصدار: {new Date(invoice.created_at).toLocaleDateString()}</p></div>
-           <div className="bg-blue-50 p-4 rounded-xl"><h4 className="font-black mb-2 border-b border-blue-200 pb-1">بيانات الخدمة</h4>
-             <p className="text-sm font-bold">رقم العملية: {invoice.operation_number}</p>
-             <p className="text-sm font-bold">رقم البيان: {invoice.statement_number}</p>
-             <p className="text-sm font-bold">رقم البوليصة: {invoice.bol_number || 'N/A'}</p>
+    <div className="modal-overlay" style={{ zIndex: 100, overflow: 'auto', padding: '20px' }} dir="rtl">
+      <div className="card" style={{ 
+        width: '210mm', 
+        minHeight: '297mm', 
+        margin: '0 auto', 
+        position: 'relative', 
+        backgroundColor: '#fff', 
+        padding: '10mm',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' 
+      }}>
+        <button onClick={onClose} className="btn-executive" style={{ position: 'absolute', top: '20px', left: '20px', padding: '8px 16px', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-text)', border: '1px solid var(--border-color)' }}>
+            إغلاق
+        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '4px solid var(--color-primary)', paddingBottom: '24px', marginBottom: '24px' }}>
+           <div>
+               <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>{settings.companyName}</h1>
+               <p style={{ fontSize: '14px', fontWeight: 'bold', opacity: 0.6, margin: 0 }}>تخليص جمركي ولوجستيات</p>
+           </div>
+           <div style={{ textAlign: 'left' }}>
+               <div style={{ backgroundColor: 'var(--color-primary)', color: '#fff', padding: '8px 16px', fontWeight: '900', borderRadius: '4px' }}>
+                   {invoice.invoice_type === 'final' ? 'فاتورة نهائية' : 'فاتورة داخلية'}
+               </div>
            </div>
         </div>
-        <table className="w-full mb-8">
-           <thead className="bg-slate-900 text-white"><tr><th className="p-3">الوصف</th><th className="p-3">المبلغ</th></tr></thead>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+           <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+               <h4 style={{ fontWeight: '900', marginBottom: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '4px' }}>العميل</h4>
+               <p style={{ fontWeight: 'bold', fontSize: '18px', margin: '0 0 8px 0' }}>{invoice.customers?.name}</p>
+               <p style={{ fontSize: '12px', margin: 0 }}>تاريخ الإصدار: {new Date(invoice.created_at).toLocaleDateString()}</p>
+           </div>
+           <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+             <h4 style={{ fontWeight: '900', marginBottom: '8px', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '4px', color: '#1d4ed8' }}>بيانات الخدمة</h4>
+             <p style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 4px 0' }}>رقم العملية: {invoice.operation_number}</p>
+             <p style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 4px 0' }}>رقم البيان: {invoice.statement_number}</p>
+             <p style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>رقم البوليصة: {invoice.bol_number || 'N/A'}</p>
+           </div>
+        </div>
+        <table style={{ width: '100%', marginBottom: '32px', borderCollapse: 'collapse' }}>
+           <thead style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}>
+               <tr>
+                   <th style={{ padding: '12px', textAlign: 'right' }}>الوصف</th>
+                   <th style={{ padding: '12px', textAlign: 'center' }}>المبلغ</th>
+               </tr>
+           </thead>
            <tbody>
-             <tr className="border-b"><td className="p-4 font-bold">خدمات التخليص الجمركي واللوجستي</td><td className="p-4 text-center font-bold">{invoice.amount.toLocaleString()} ر.س</td></tr>
-             {invoice.customs_fees ? <tr className="border-b bg-slate-50"><td className="p-2 pr-4 text-sm">رسوم الجمارك</td><td className="p-2 text-center text-sm">{invoice.customs_fees.toLocaleString()} ر.س</td></tr> : null}
-             {invoice.port_fees ? <tr className="border-b bg-slate-50"><td className="p-2 pr-4 text-sm">أجور الموانئ</td><td className="p-2 text-center text-sm">{invoice.port_fees.toLocaleString()} ر.س</td></tr> : null}
-             {invoice.transport_fees ? <tr className="border-b bg-slate-50"><td className="p-2 pr-4 text-sm">أجور النقل</td><td className="p-2 text-center text-sm">{invoice.transport_fees.toLocaleString()} ر.س</td></tr> : null}
+             <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                 <td style={{ padding: '16px', fontWeight: 'bold' }}>خدمات التخليص الجمركي واللوجستي</td>
+                 <td style={{ padding: '16px', textAlign: 'center', fontWeight: 'bold' }}>{invoice.amount.toLocaleString()} ر.س</td>
+             </tr>
+             {invoice.customs_fees ? <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}><td style={{ padding: '8px 16px', fontSize: '14px' }}>رسوم الجمارك</td><td style={{ padding: '8px 16px', textAlign: 'center', fontSize: '14px' }}>{invoice.customs_fees.toLocaleString()} ر.س</td></tr> : null}
+             {invoice.port_fees ? <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}><td style={{ padding: '8px 16px', fontSize: '14px' }}>أجور الموانئ</td><td style={{ padding: '8px 16px', textAlign: 'center', fontSize: '14px' }}>{invoice.port_fees.toLocaleString()} ر.س</td></tr> : null}
+             {invoice.transport_fees ? <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}><td style={{ padding: '8px 16px', fontSize: '14px' }}>أجور النقل</td><td style={{ padding: '8px 16px', textAlign: 'center', fontSize: '14px' }}>{invoice.transport_fees.toLocaleString()} ر.س</td></tr> : null}
            </tbody>
         </table>
-        <div className="flex justify-between items-start mt-auto pt-8 border-t">
-           <div className="flex flex-col items-center">
-             <div style={{ padding: '10px', border: '2px solid #001a33', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 'auto', paddingTop: '32px', borderTop: '1px solid var(--border-color)' }}>
+           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+             <div style={{ padding: '10px', border: '2px solid var(--color-primary)', borderRadius: '12px' }}>
                 <QRCodeSVG value={sovereignQRData} size={110} level="H" includeMargin />
              </div>
-             <p className="text-[10px] text-center mt-2 font-black text-slate-800">التحقق السيادي QR</p>
-             <div className="mt-4">
-                <p className="text-[8px] font-bold text-center mb-1 opacity-60">تتبع الباركود النشط</p>
+             <p style={{ fontSize: '10px', textAlign: 'center', marginTop: '8px', fontWeight: '900', color: 'var(--color-primary)' }}>التحقق السيادي QR</p>
+             <div style={{ marginTop: '16px' }}>
+                <p style={{ fontSize: '8px', fontWeight: 'bold', textAlign: 'center', marginBottom: '4px', opacity: 0.6 }}>تتبع الباركود النشط</p>
                 <BarcodeSVG value={`${invoice.operation_number || invoice.id}-${invoice.bol_number || 'N/A'}`} />
              </div>
            </div>
-           <div className="w-1/2 space-y-2">
-              <div className="flex justify-between font-bold border-b pb-1 text-slate-500"><span>إجمالي المخزون (Cargo Value):</span><span>{invoice.cargo_value?.toLocaleString()} ر.س</span></div>
-              <div className="flex justify-between font-black text-xl border-b-2 border-slate-900 pb-1 mt-4"><span>المبلغ المستحق:</span><span>{invoice.total.toLocaleString()} ر.س</span></div>
-              <div className="flex justify-between font-black text-green-700 bg-green-50 p-2 rounded-lg text-lg"><span>صافي الربح التلقائي:</span><span>{invoice.profit?.toLocaleString()} ر.س</span></div>
+           <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '4px', color: 'var(--color-text-secondary)' }}>
+                  <span>إجمالي المخزون (Cargo Value):</span>
+                  <span>{invoice.cargo_value?.toLocaleString()} ر.س</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '20px', borderBottom: '2px solid var(--color-primary)', paddingBottom: '4px', marginTop: '16px' }}>
+                  <span>المبلغ المستحق:</span>
+                  <span>{invoice.total.toLocaleString()} ر.س</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', color: '#047857', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '8px', borderRadius: '8px', fontSize: '18px' }}>
+                  <span>صافي الربح التلقائي:</span>
+                  <span>{invoice.profit?.toLocaleString()} ر.س</span>
+              </div>
            </div>
         </div>
-        <div className="mt-12 text-center text-[10px] text-slate-400 border-t pt-2 no-print">هذه الفاتورة تم إنشاؤها تلقائياً بواسطة نظام الغويري المحاسبي</div>
+        <div style={{ marginTop: '48px', textAlign: 'center', fontSize: '10px', color: 'var(--color-text-secondary)', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>هذه الفاتورة تم إنشاؤها تلقائياً بواسطة نظام الغويري المحاسبي</div>
       </div>
     </div>
   );
 }
+
