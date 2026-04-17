@@ -69,6 +69,20 @@ export interface LedgerAccount {
   balance: number;
 }
 
+export interface FixedAsset {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  purchase_date: string;
+  purchase_value: number;
+  depreciation_rate: number; // yearly percentage
+  salvage_value: number;
+  category: string;
+  useful_life: number; // in years
+  created_at: string;
+  status: 'active' | 'disposed';
+}
+
 interface DBSchema {
   version: number;
   customers: any[];
@@ -88,6 +102,7 @@ interface DBSchema {
   tax_returns: any[];
   petty_cash: any[];
   role_permissions: any[];
+  fixed_assets: FixedAsset[];
   scheduled_reports: { id: string, name: string, type: string, frequency: string, nextRun: string, status: string }[];
   sync_settings: {
     last_sync: string;
@@ -123,13 +138,16 @@ const DEFAULT_DB: DBSchema = {
     { id: 'acc-5', name: 'Sales Revenue', name_ar: 'إيرادات المبيعات', type: 'revenue', balance: 350000 },
     { id: 'acc-6', name: 'Expenses', name_ar: 'المصروفات', type: 'expense', balance: 85000 },
     { id: 'acc-7', name: 'Transport Expenses', name_ar: 'مصاريف النقل', type: 'expense', balance: 12000 },
-    { id: 'acc-8', name: 'Customs Duties', name_ar: 'الرسوم الجمركية', type: 'expense', balance: 50000 },
-    { id: 'acc-9', name: 'Port Fees', name_ar: 'رسوم الموانئ', type: 'expense', balance: 8000 }
+    { id: 'acc-8', name: 'Depreciation Expense', name_ar: 'مصروف الإهلاك', type: 'expense', balance: 0 },
+    { id: 'acc-9', name: 'Accumulated Depreciation', name_ar: 'مجمع الإهلاك', type: 'asset', balance: 0 },
+    { id: 'acc-10', name: 'Customs Duties', name_ar: 'الرسوم الجمركية', type: 'expense', balance: 50000 },
+    { id: 'acc-11', name: 'Port Fees', name_ar: 'رسوم الموانئ', type: 'expense', balance: 8000 }
   ],
   shipments: [],
   tax_returns: [],
   petty_cash: [],
   role_permissions: [],
+  fixed_assets: [],
   scheduled_reports: [
     { id: '1', name: 'تقرير الأرباح اليومي', type: 'Profit', frequency: 'Daily (11 PM)', nextRun: '2024-05-20', status: 'Active' },
     { id: '2', name: 'كشف الأستاذ الشهري', type: 'Ledger', frequency: 'Monthly', nextRun: '2024-06-01', status: 'Active' },
