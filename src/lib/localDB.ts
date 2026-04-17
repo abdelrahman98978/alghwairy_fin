@@ -41,6 +41,9 @@ export interface Invoice {
   profit?: number;
   customers?: any;
   items?: { description: string; amount: number }[];
+  zatca_certified?: boolean;
+  zatca_xml?: string;
+  zatca_cert_date?: string;
 }
 
 export interface JournalEntry {
@@ -83,6 +86,34 @@ export interface FixedAsset {
   status: 'active' | 'disposed';
 }
 
+export interface Product {
+  id: string;
+  sku: string;
+  name_ar: string;
+  name_en: string;
+  category: string;
+  unit: string;
+  purchase_price: number;
+  selling_price: number;
+  quantity_on_hand: number;
+  min_stock_level: number;
+  tax_rate: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InventoryMovement {
+  id: string;
+  product_id: string;
+  type: 'in' | 'out' | 'adjustment' | 'return';
+  quantity: number;
+  unit_price: number;
+  date: string;
+  reference_type: 'invoice' | 'purchase_order' | 'manual';
+  reference_id: string;
+  notes?: string;
+}
+
 interface DBSchema {
   version: number;
   customers: any[];
@@ -112,6 +143,8 @@ interface DBSchema {
   };
   backups?: any[];
   audit_logs?: any[];
+  products: Product[];
+  inventory_movements: InventoryMovement[];
 }
 
 const DEFAULT_DB: DBSchema = {
@@ -158,7 +191,9 @@ const DEFAULT_DB: DBSchema = {
     sync_folder: '',
     device_id: 'NODE-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
     auto_sync: false
-  }
+  },
+  products: [],
+  inventory_movements: []
 };
 
 // Paths for Electron fs access
@@ -273,6 +308,25 @@ export const localDB = {
     updateBalance(entry.credit_account, entry.amount, false);
     
     writeToDisk(db);
+    return inserted;
+  },
+
+  addInventoryMovement: (movement: Omit<InventoryMovement, 'id'>) => {
+    const inserted = localDB.insert('inventory_movements', movement);
+    
+    // Update Product Stock Level
+    const db = readFromDisk();
+    const product = db.products.find(p => p.id === movement.product_id);
+    if (product) {
+      if (movement.type === 'in' || movement.type === 'return') {
+        product.quantity_on_hand += movement.quantity;
+      } else if (movement.type === 'out' || movement.type === 'adjustment') {
+        product.quantity_on_hand -= movement.quantity;
+      }
+      product.updated_at = new Date().toISOString();
+      writeToDisk(db);
+    }
+    
     return inserted;
   },
 

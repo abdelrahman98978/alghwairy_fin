@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus,
   Trash2,
@@ -6,20 +6,21 @@ import {
   Receipt,
   X,
   CheckCircle2,
-  ArrowUpRight,
   BookOpen,
-  PieChart,
+  PieChart as LucidePieChart,
   Calendar,
   Download,
-  TrendingUp,
-  TrendingDown,
   Activity,
   BarChart as LucideBarChart,
   ShieldCheck,
+  TrendingUp,
+  TrendingDown,
   DollarSign,
   Briefcase,
   Search,
-  Save
+  Package,
+  AlertTriangle,
+  Share2
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -33,14 +34,14 @@ import {
   Cell,
   LineChart,
   Line,
-  Legend,
   PieChart,
   Pie
 } from 'recharts';
-import { localDB, FixedAsset } from '../lib/localDB';
-import { generateZatcaQR } from '../lib/zatca';
+import { localDB } from '../lib/localDB';
+import type { FixedAsset, Invoice, JournalEntry, LedgerAccount, Product } from '../lib/localDB';
+import { generateZatcaQR, generateZatcaXML } from '../lib/zatca';
 import type { Translations } from '../types/translations';
-import type { JournalEntry, LedgerAccount, Invoice } from '../lib/localDB';
+import type { JSX } from 'react';
 
 interface Props {
   showToast: (msg: string, type?: string) => void;
@@ -48,9 +49,223 @@ interface Props {
   t: Translations['accounting'] & { lang: string, nav_title?: string };
 }
 
-type TabType = 'invoice' | 'journal' | 'ledger' | 'reports' | 'contracts' | 'assets';
+type TabType = 'invoice' | 'journal' | 'ledger' | 'reports' | 'contracts' | 'assets' | 'inventory';
 
-export default function AccountingView({ showToast, logActivity, t }: Props) {
+interface SummaryRowProps {
+  label: string;
+  value: string | number;
+  isBold?: boolean;
+  currency?: string;
+}
+
+interface RecentTrxProps {
+  id: string;
+  client: string;
+  amount: number | string;
+  onShare: () => void;
+  onCertify?: () => void;
+  isCertified: boolean;
+}
+
+interface ReportMetricProps {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  isSuccess?: boolean;
+}
+
+interface SummaryMetricProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  primary?: boolean;
+}
+
+interface QuickActionCardProps {
+  title: string;
+  desc: string;
+  onClick: () => void;
+  icon: React.ReactNode;
+}
+
+interface ReportsViewProps {
+  isAr: boolean;
+  invoices: Invoice[];
+  journalEntries: JournalEntry[];
+  ledgerAccounts: LedgerAccount[];
+  downloadCSV: (data: any[], filename: string) => void;
+  activeReportTab: 'profit' | 'trial' | 'balance_sheet' | 'vat';
+  setActiveReportTab: (tab: 'profit' | 'trial' | 'balance_sheet' | 'vat') => void;
+  setActiveTab: (tab: TabType) => void;
+}
+
+interface ContractsSubViewProps {
+  isAr: boolean;
+  contracts: any[];
+  setShowContractModal: (show: boolean) => void;
+}
+
+interface InventoryManagementProps {
+  products: Product[];
+  isAr: boolean;
+  setShowProductModal: (show: boolean) => void;
+  onRestock: (id: string) => void;
+}
+
+interface AssetsViewProps {
+  assets: FixedAsset[];
+  isAr: boolean;
+  setShowAssetModal: (show: boolean) => void;
+  onRunDepreciation: () => void;
+}
+
+interface ManualJournalModalProps {
+  newEntry: { date: string; description: string; debit_account: string; credit_account: string; amount: string; reference: string };
+  setNewEntry: (entry: { date: string; description: string; debit_account: string; credit_account: string; amount: string; reference: string }) => void;
+  ledgerAccounts: LedgerAccount[];
+  onClose: () => void;
+  onSave: () => void;
+  isAr: boolean;
+}
+
+interface LedgerDetailModalProps {
+  account: LedgerAccount;
+  journalEntries: JournalEntry[];
+  onClose: () => void;
+  isAr: boolean;
+}
+
+interface ContractModalProps {
+  contractType: 'client' | 'transporter';
+  newContract: { entity_name: string; value: string; expiry_date: string; terms: string };
+  setNewContract: (c: { entity_name: string; value: string; expiry_date: string; terms: string }) => void;
+  onClose: () => void;
+  onSave: () => void;
+  isAr: boolean;
+}
+
+interface AssetModalProps {
+  newAsset: Partial<FixedAsset>;
+  setNewAsset: (a: Partial<FixedAsset>) => void;
+  onClose: () => void;
+  onSave: () => void;
+  isAr: boolean;
+}
+
+interface ProductModalProps {
+  newProduct: Partial<Product>;
+  setNewProduct: (p: Partial<Product>) => void;
+  onClose: () => void;
+  onSave: () => void;
+  isAr: boolean;
+}
+
+interface Invoice {
+  id: string;
+  customer_id: string;
+  amount: number;
+  vat: number;
+  total: number;
+  status: string;
+  reference_number: string;
+  is_settlement: boolean;
+  created_at: string;
+  invoice_type?: 'internal' | 'final';
+  statement_number?: string;
+  bol_number?: string;
+  operation_number?: string;
+  customs_fees?: number;
+  port_fees?: number;
+  transport_fees?: number;
+  cargo_value?: number;
+  transport_expenses?: number;
+  profit?: number;
+  customers?: any;
+  items?: { description: string; amount: number }[];
+  zatca_certified?: boolean;
+  zatca_xml?: string;
+  zatca_cert_date?: string;
+}
+
+interface JournalEntry {
+  id: string;
+  date: string;
+  description: string;
+  reference_type: string;
+  reference_id: string;
+  debit_account: string;
+  credit_account: string;
+  amount: number;
+  status: 'posted' | 'draft';
+  reference?: string;
+  debit_acc?: string;
+  credit_acc?: string;
+  is_automated?: boolean;
+}
+
+interface LedgerAccount {
+  id: string;
+  code?: string;
+  name: string;
+  name_ar: string;
+  name_en?: string;
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  balance: number;
+}
+
+interface Product {
+  id: string;
+  sku: string;
+  name_ar: string;
+  name_en: string;
+  category: string;
+  unit: string;
+  purchase_price: number;
+  selling_price: number;
+  quantity_on_hand: number;
+  min_stock_level: number;
+  tax_rate: number;
+}
+
+interface FixedAsset {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  purchase_date: string;
+  purchase_value: number;
+  depreciation_rate: number;
+  salvage_value: number;
+  category: string;
+  useful_life: number;
+  created_at: string;
+  status: 'active' | 'disposed';
+}
+
+interface InvoicePreviewModalProps {
+  clientName: string;
+  taxId: string;
+  items: { desc: string; amount: number }[];
+  subtotal: number;
+  vat: number;
+  total: number;
+  isSettlement: boolean;
+  declarationNumber: string;
+  bolNumber: string;
+  operationNumber: string;
+  customsFees: string | number;
+  portFees: string | number;
+  transportExpenses: string | number;
+  inventoryValue: string | number;
+  vatRate: number;
+  onDismiss: () => void;
+  onPrint: () => void;
+  onWhatsApp: () => void;
+  t: any;
+  settings: any;
+}
+
+export default function AccountingView({ showToast, logActivity, t }: Props): JSX.Element {
+  const isAr = t.lang === 'ar';
   const [activeTab, setActiveTab] = useState<TabType>('invoice');
   const [loading, setLoading] = useState(false);
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
@@ -77,7 +292,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
   const [ledgerAccounts, setLedgerAccounts] = useState<LedgerAccount[]>([]);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [activeReportTab, setActiveReportTab] = useState<'profit' | 'trial' | 'balance_sheet'>('profit');
+  const [activeReportTab, setActiveReportTab] = useState<'profit' | 'trial' | 'balance_sheet' | 'vat'>('profit');
   const [showJournalModal, setShowJournalModal] = useState(false);
   const [selectedLedgerAccount, setSelectedLedgerAccount] = useState<LedgerAccount | null>(null);
   const [newJournalEntry, setNewJournalEntry] = useState({
@@ -102,6 +317,32 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     depreciation_rate: 10,
     category: 'Equipment',
     useful_life: 5
+  });
+  
+  // Inventory State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+    sku: '',
+    name_ar: '',
+    name_en: '',
+    category: '',
+    unit: 'pcs',
+    purchase_price: 0,
+    selling_price: 0,
+    quantity_on_hand: 0,
+    min_stock_level: 5,
+    tax_rate: 15
+  });
+
+  // Contracts State
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractType, _setContractType] = useState<'client' | 'transporter'>('client');
+  const [newContract, setNewContract] = useState({
+    entity_name: '',
+    value: '',
+    expiry_date: new Date().toISOString().split('T')[0],
+    terms: ''
   });
 
   const [settings] = useState({
@@ -148,16 +389,55 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
 
       const assets = localDB.getAll('fixed_assets');
       setFixedAssets(Array.isArray(assets) ? assets : []);
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
+      
+      const prods = localDB.getAll('products');
+      setProducts(Array.isArray(prods) ? prods : []);
+    } catch (e) {
+      console.error("Error fetching data:", e);
     }
   }, []);
+
+  const certifyInvoice = (invoice: Invoice) => {
+    try {
+      const xml = generateZatcaXML(invoice);
+      localDB.update('invoices', invoice.id, {
+        zatca_certified: true,
+        zatca_xml: xml,
+        zatca_cert_date: new Date().toISOString()
+      });
+      showToast(isAr ? 'تم تصديق الفاتورة مع زاتكا بنجاح' : 'Invoice certified with ZATCA successfully', 'success');
+      logActivity('ZATCA Phase 2 Compliance Certification', 'invoice', invoice.id);
+      fetchData();
+    } catch (err) {
+      showToast(isAr ? 'خطأ في تصديق الفاتورة' : 'Error in certification process', 'error');
+    }
+  };
+
+  const saveProduct = () => {
+    try {
+      if (!newProduct.name_ar || !newProduct.sku) {
+        showToast(isAr ? 'الرجاء إدخال الاسم والرمز' : 'Please enter name and SKU', 'error');
+        return;
+      }
+      localDB.insert('products', newProduct);
+      showToast(isAr ? 'تم حفظ المنتج بنجاح' : 'Product saved successfully', 'success');
+      logActivity('Inventory Product Created', 'product', newProduct.sku);
+      setNewProduct({
+        sku: '', name_ar: '', name_en: '', category: '', unit: 'pcs',
+        purchase_price: 0, selling_price: 0, quantity_on_hand: 0, min_stock_level: 5, tax_rate: 15
+      });
+      setShowProductModal(false);
+      fetchData();
+    } catch (err) {
+      showToast(isAr ? 'خطأ في حفظ المنتج' : 'Error saving product', 'error');
+    }
+  };
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const isAr = t.lang === 'ar';
+
   
   const calculateVAT = () => {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -396,8 +676,6 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
         <ReportMetric label={isAr ? 'تكاليف التشغيل المباشرة' : 'Direct Operational Costs'} value={totalCosts.toLocaleString()} icon={<TrendingDown size={22} />} />
         <ReportMetric label={isAr ? 'صافي الأرباح التشغيلية' : 'Net Operating Profit'} value={netProfit.toLocaleString()} icon={<TrendingUp size={22} />} isSuccess />
         <ReportMetric label={isAr ? 'العقود النشطة' : 'Active Contracts'} value={activeContractCount.toString()} icon={<Briefcase size={22} />} />
-        
-        </div>
 
         <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '1rem' }}>
            <QuickActionCard 
@@ -415,7 +693,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
            <QuickActionCard 
              title={isAr ? 'تحليل الضريبة' : 'VAT Analysis'} 
              desc={isAr ? 'مراجعة ضريبة القيمة المضافة' : 'Review VAT status'} 
-             onClick={() => { setActiveTab('reports'); setActiveReportTab('vat' as any); }} 
+             onClick={() => { setActiveTab('reports'); setActiveReportTab('vat'); }} 
              icon={<ShieldCheck size={24} />} 
            />
         </div>
@@ -558,6 +836,8 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
                   id={inv.reference_number || ''} 
                   client={inv.customer_id || ''} 
                   amount={(inv.total || 0).toLocaleString()} 
+                  isCertified={!!inv.zatca_certified}
+                  onCertify={() => certifyInvoice(inv)}
                   onShare={() => showToast('Share feature active', 'info')}
                 />
              ))}
@@ -646,7 +926,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-          <PieChart size={24} /> {t.general_ledger}
+          <LucidePieChart size={24} /> {t.general_ledger}
         </h3>
         <div className="search-box-executive" style={{ width: '300px' }}>
           <Search size={18} />
@@ -663,12 +943,12 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {ledgerAccounts
           .filter(a => 
-            (a.name_ar.toLowerCase().includes(ledgerSearch.toLowerCase()) || 
-             a.name_en?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
-             a.code.includes(ledgerSearch)) &&
-            (a.name_ar.toLowerCase().includes(searchTerm.toLowerCase()) || 
-             a.name_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             a.code.includes(searchTerm))
+             (a.name_ar.toLowerCase().includes(ledgerSearch.toLowerCase()) || 
+              a.name_en?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+              a.code?.includes(ledgerSearch)) &&
+             (a.name_ar.toLowerCase().includes(searchTerm.toLowerCase()) || 
+              a.name_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              a.code?.includes(searchTerm))
           )
           .map((account) => (
           <div key={account.code} className="card-ledger-premium" onClick={() => setSelectedLedgerAccount(account)} style={{ cursor: 'pointer' }}>
@@ -760,9 +1040,26 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
               <TabButton active={activeTab === 'ledger'} onClick={() => setActiveTab('ledger')} label={t.ledger_summary} icon={<LucideBarChart size={18} />} />
               <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} label={isAr ? 'التقارير' : 'Reports'} icon={<Activity size={18} />} />
               <TabButton active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} label={isAr ? 'الأصول' : 'Assets'} icon={<TrendingUp size={18} />} />
+              <TabButton active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} label={isAr ? 'المخزون' : 'Inventory'} icon={<Package size={18} />} />
            </div>
            
-           <button onClick={() => localDB.exportData('sovereign_backup')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1.4rem', fontSize: '0.9rem' }}>
+           <button onClick={() => {
+              try {
+                const data = localDB.exportJSON();
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `alghwairy_fiscal_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast(isAr ? 'تم تصدير النسخة الاحتياطية بنجاح' : 'Backup exported successfully', 'success');
+              } catch (e) {
+                showToast(isAr ? 'فشل تصدير النسخة الاحتياطية' : 'Failed to export backup', 'error');
+              }
+           }} className="btn-sovereign-outline" style={{ padding: '0.6rem 1.4rem', fontSize: '0.9rem' }}>
               <Download size={18} /> {isAr ? 'نسخة احتياطية' : 'Backup'}
            </button>
         </div>
@@ -773,9 +1070,17 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
       {activeTab === 'invoice' && renderInvoiceEditor()}
       {activeTab === 'journal' && renderJournal()}
       {activeTab === 'ledger' && renderLedger()}
-      {activeTab === 'reports' && <ReportsView isAr={isAr} invoices={invoices} journalEntries={journalEntries} ledgerAccounts={ledgerAccounts} downloadCSV={downloadCSV} activeReportTab={activeReportTab} setActiveReportTab={setActiveReportTab} />}
+      {activeTab === 'reports' && <ReportsView isAr={isAr} invoices={invoices} journalEntries={journalEntries} ledgerAccounts={ledgerAccounts} downloadCSV={downloadCSV} activeReportTab={activeReportTab} setActiveReportTab={setActiveReportTab} setActiveTab={setActiveTab} />}
       {activeTab === 'contracts' && <ContractsSubView contracts={contracts} isAr={isAr} setShowContractModal={setShowContractModal} />}
       {activeTab === 'assets' && <AssetsView assets={fixedAssets} isAr={isAr} setShowAssetModal={setShowAssetModal} onRunDepreciation={handleRunDepreciation} />}
+      {activeTab === 'inventory' && (
+        <InventoryManagement 
+          products={products} 
+          isAr={isAr} 
+          setShowProductModal={setShowProductModal} 
+          onRestock={(_id: string) => showToast(isAr ? 'طلب إعادة طلب مسجل' : 'Restock request logged', 'info')}
+        />
+      )}
 
       {showJournalModal && (
         <ManualJournalModal 
@@ -842,22 +1147,32 @@ export default function AccountingView({ showToast, logActivity, t }: Props) {
           isAr={isAr} 
         />
       )}
+
+      {showProductModal && (
+        <ProductModal 
+          newProduct={newProduct} 
+          setNewProduct={setNewProduct} 
+          onClose={() => setShowProductModal(false)} 
+          onSave={saveProduct} 
+          isAr={isAr} 
+        />
+      )}
     </div>
   );
 }
 
 // --- Specialized Sub-Views ---
 
-function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadCSV, activeReportTab, setActiveReportTab }: any) {
+function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadCSV, activeReportTab, setActiveReportTab, setActiveTab }: ReportsViewProps) {
   const metrics = useMemo(() => {
-    const rev = invoices.reduce((s: number, i: any) => s + (i.amount || 0), 0);
-    const cost = invoices.reduce((s: number, i: any) => s + (i.transport_expenses || 0), 0);
-    const prof = invoices.reduce((s: number, i: any) => s + (i.profit || 0), 0);
+    const rev = invoices.reduce((s: number, i: Invoice) => s + (i.amount || 0), 0);
+    const cost = invoices.reduce((s: number, i: Invoice) => s + (i.transport_expenses || 0), 0);
+    const prof = invoices.reduce((s: number, i: Invoice) => s + (i.profit || 0), 0);
     
     // Calculate total general expenses (manual entries to Expense accounts)
-    const genExps = journalEntries.filter((e: any) => 
+    const genExps = journalEntries.filter((e: JournalEntry) => 
       !e.is_automated && (e.debit_account.includes('مصروف') || e.debit_account.includes('Expense'))
-    ).reduce((s: number, e: any) => s + e.amount, 0);
+    ).reduce((s: number, e: JournalEntry) => s + e.amount, 0);
 
     return { rev, cost, prof, genExps, net: prof - genExps, margin: rev > 0 ? (((prof - genExps) / rev) * 100).toFixed(1) : 0 };
   }, [invoices, journalEntries]);
@@ -871,7 +1186,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                <button onClick={() => setActiveReportTab('profit')} className={`tab-btn-small ${activeReportTab === 'profit' ? 'active' : ''}`}>{isAr ? 'قائمة الدخل' : 'Income Statement'}</button>
                <button onClick={() => setActiveReportTab('trial')} className={`tab-btn-small ${activeReportTab === 'trial' ? 'active' : ''}`}>{isAr ? 'ميزان المراجعة' : 'Trial Balance'}</button>
                <button onClick={() => setActiveReportTab('balance_sheet')} className={`tab-btn-small ${activeReportTab === 'balance_sheet' ? 'active' : ''}`}>{isAr ? 'الميزانية العمومية' : 'Balance Sheet'}</button>
-               <button onClick={() => setActiveReportTab('vat' as any)} className={`tab-btn-small ${activeReportTab === ('vat' as any) ? 'active' : ''}`}>{isAr ? 'تحليل الضريبة' : 'VAT Analysis'}</button>
+               <button onClick={() => setActiveReportTab('vat')} className={`tab-btn-small ${activeReportTab === 'vat' ? 'active' : ''}`}>{isAr ? 'تحليل الضريبة' : 'VAT Analysis'}</button>
             </div>
             <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1rem' }}><Download size={16} /> Export CSV</button>
           </div>
@@ -894,8 +1209,8 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                   <Activity size={20} />
                   {isAr ? 'منحنى الإيرادات (آخر 10 عمليات)' : 'Revenue Trend (Latest 10)'}
                 </h4>
-                <ResponsiveContainer width="100%" height="300">
-                  <LineChart data={invoices.slice(-10).map(i => ({ date: i.date, amount: i.amount }))}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={invoices.slice(-10).map((i: Invoice) => ({ date: i.created_at, amount: i.amount }))}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                     <XAxis dataKey="date" hide />
                     <YAxis tick={{fill: 'var(--on-surface)', fontWeight: 800, fontSize: 12}} axisLine={false} tickLine={false} />
@@ -910,7 +1225,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                    title={isAr ? 'تقرير الربحية' : 'Profit Report'} 
                    desc={isAr ? 'مراجعة الأداء المالي للفترة' : 'Review financial performance'} 
                    onClick={() => setActiveTab('reports')} 
-                   icon={<BarChart size={24} />} 
+                   icon={<LucideBarChart size={24} />} 
                  />
                  <QuickActionCard 
                    title={isAr ? 'إهلاك الأصول' : 'Asset Depreciation'} 
@@ -921,7 +1236,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                  <QuickActionCard 
                    title={isAr ? 'تحليل الضريبة' : 'VAT Analysis'} 
                    desc={isAr ? 'مراجعة ضريبة القيمة المضافة' : 'Review VAT status'} 
-                   onClick={() => { setActiveTab('reports'); setActiveReportTab('vat' as any); }} 
+                   onClick={() => { setActiveTab('reports'); setActiveReportTab('vat'); }} 
                    icon={<ShieldCheck size={24} />} 
                  />
               </div>
@@ -965,7 +1280,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
 
           {activeReportTab === 'trial' && <TrialBalanceView ledgerAccounts={ledgerAccounts} isAr={isAr} />}
           {activeReportTab === 'balance_sheet' && <BalanceSheetView ledgerAccounts={ledgerAccounts} isAr={isAr} />}
-          {activeReportTab === ('vat' as any) && <VATAnalysisView invoices={invoices} isAr={isAr} />}
+          {activeReportTab === 'vat' && <VATAnalysisView invoices={invoices} isAr={isAr} />}
        </div>
     </div>
   );
@@ -1131,7 +1446,7 @@ function BalanceSheetView({ ledgerAccounts, isAr }: any) {
   );
 }
 
-function ManualJournalModal({ newEntry, setNewEntry, ledgerAccounts, onClose, onSave, isAr }: any) {
+function ManualJournalModal({ newEntry, setNewEntry, ledgerAccounts, onClose, onSave, isAr }: ManualJournalModalProps) {
   return (
     <div className="modal-overlay-premium fade-in">
       <div className="modal-card shadow-elite slide-up" style={{ maxWidth: '600px' }}>
@@ -1176,7 +1491,7 @@ function ManualJournalModal({ newEntry, setNewEntry, ledgerAccounts, onClose, on
   );
 }
 
-function LedgerDetailModal({ account, journalEntries, onClose, isAr }: any) {
+function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDetailModalProps) {
   const balance = account.balance;
   return (
     <div className="modal-overlay-premium fade-in">
@@ -1203,7 +1518,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: any) {
                   </tr>
                </thead>
                <tbody>
-                  {journalEntries.map((e: any) => {
+                  {journalEntries.map((e: JournalEntry) => {
                     const isDebit = e.debit_account === account.name_ar || e.debit_account === account.name;
                     return (
                       <tr key={e.id}>
@@ -1227,7 +1542,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: any) {
   );
 }
 
-function ContractsSubView({ contracts, isAr, setShowContractModal }: any) {
+function ContractsSubView({ contracts, isAr, setShowContractModal }: ContractsSubViewProps) {
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -1278,7 +1593,7 @@ function ContractsSubView({ contracts, isAr, setShowContractModal }: any) {
 
 // --- Helper Components ---
 
-function SummaryRow({ label, value, isBold, currency }: any) {
+function SummaryRow({ label, value, isBold, currency }: SummaryRowProps) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: '0.95rem', opacity: 0.9, fontWeight: 750 }}>{label}</span>
@@ -1287,20 +1602,37 @@ function SummaryRow({ label, value, isBold, currency }: any) {
   );
 }
 
-function RecentTrx({ id, client, amount, onShare }: any) {
+function RecentTrx({ id, client, amount, onShare, onCertify, isCertified }: RecentTrxProps) {
   return (
-    <div className="recent-trx-row" onClick={onShare}>
-       <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '0.9rem', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{id}</p>
+    <div className="recent-trx-row" style={{ borderInlineStart: `4px solid ${isCertified ? 'var(--success)' : 'transparent'}` }}>
+       <div style={{ flex: 1 }} onClick={onShare}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+             <p style={{ fontSize: '0.9rem', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{id}</p>
+             {isCertified && <ShieldCheck size={14} style={{ color: 'var(--success)' }} />}
+          </div>
           <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: '0.2rem 0', fontWeight: 700 }}>{client}</p>
        </div>
-       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <span style={{ fontWeight: 1000, fontSize: '1rem', color: 'var(--primary)' }}>{amount} <small>SAR</small></span>
-          <ArrowUpRight size={14} style={{ color: 'var(--success)' }} />
+       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ textAlign: 'end' }}>
+             <span style={{ fontWeight: 1000, fontSize: '1rem', color: 'var(--primary)' }}>{amount} <small>SAR</small></span>
+             {isCertified && <p style={{ fontSize: '0.6rem', color: 'var(--success)', fontWeight: 900, margin: 0 }}>ZATCA CERTIFIED</p>}
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+             {!isCertified && (
+               <button onClick={onCertify} className="btn-action-small" title="Certify with ZATCA">
+                 <ShieldCheck size={14} />
+               </button>
+             )}
+             <button onClick={onShare} className="btn-action-small">
+               <Share2 size={14} />
+             </button>
+          </div>
        </div>
        <style>{`
-          .recent-trx-row { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-bottom: 1px solid var(--surface-container-low); cursor: pointer; transition: 0.2s; border-radius: 12px; }
-          .recent-trx-row:hover { background: var(--surface-container-low); transform: scale(1.02); }
+          .recent-trx-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; border-bottom: 1px solid var(--surface-container-low); transition: 0.2s; border-radius: 12px; }
+          .recent-trx-row:hover { background: var(--surface-container-low); }
+          .btn-action-small { padding: 0.4rem; border: 1px solid var(--surface-container-high); background: var(--surface); borderRadius: 8px; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+          .btn-action-small:hover { border-color: var(--primary); color: var(--primary); }
        `}</style>
     </div>
   );
@@ -1319,7 +1651,7 @@ function TabButton({ active, onClick, label, icon }: any) {
   );
 }
 
-function ReportMetric({ label, value, icon, isSuccess }: any) {
+function ReportMetric({ label, value, icon, isSuccess }: ReportMetricProps) {
   return (
     <div className="report-metric-card">
       <div className={`icon-box ${isSuccess ? 'success' : ''}`}>{icon}</div>
@@ -1339,7 +1671,7 @@ function ReportMetric({ label, value, icon, isSuccess }: any) {
   );
 }
 
-function SummaryMetric({ label, value, icon, primary }: any) {
+function SummaryMetric({ label, value, icon, primary }: SummaryMetricProps) {
   return (
     <div className={`summ-met ${primary ? 'prim' : ''}`}>
        <div className="icon">{icon}</div>
@@ -1368,7 +1700,7 @@ function StatementRow({ label, value, isTotal, isHighlight }: any) {
   );
 }
 
-function QuickActionCard({ title, desc, onClick, icon }: any) {
+function QuickActionCard({ title, desc, onClick, icon }: QuickActionCardProps) {
   return (
     <button className="quick-action-card glass-premium" onClick={onClick}>
       <div className="icon-box">{icon}</div>
@@ -1424,7 +1756,7 @@ function QuickActionCard({ title, desc, onClick, icon }: any) {
   );
 }
 
-function ContractModal({ contractType, newContract, setNewContract, onClose, onSave, isAr }: any) {
+function ContractModal({ contractType, newContract, setNewContract, onClose, onSave, isAr }: ContractModalProps) {
     return (
         <div className="modal-overlay-premium fade-in">
             <div className="modal-card shadow-elite slide-up">
@@ -1468,7 +1800,7 @@ function InvoicePreviewModal({
   clientName, taxId, items, subtotal, vat, total, isSettlement, 
   declarationNumber, bolNumber, operationNumber, customsFees, portFees, 
   transportExpenses, inventoryValue, vatRate, onDismiss, onPrint, onWhatsApp, t, settings 
-}: any) {
+}: InvoicePreviewModalProps) {
     const isAr = t.lang === 'ar';
     const invoiceId = useMemo(() => Math.random().toString(36).substr(2, 6).toUpperCase(), []);
     
@@ -1500,7 +1832,7 @@ function InvoicePreviewModal({
                     <MetadataBox label={isAr ? 'رقم البيان' : 'DEC NO'} value={declarationNumber} />
                     <MetadataBox label={isAr ? 'رقم البوليصة' : 'BOL NO'} value={bolNumber} />
                     <MetadataBox label={isAr ? 'رقم العملية' : 'OP NO'} value={operationNumber} />
-                    <MetadataBox label={isAr ? 'قيمة الشحنة' : 'CARGO'} value={`${parseFloat(inventoryValue).toLocaleString()} SAR`} />
+                    <MetadataBox label={isAr ? 'قيمة الشحنة' : 'CARGO'} value={`${parseFloat(String(inventoryValue)).toLocaleString()} SAR`} />
                  </div>
 
                  <div style={{ marginBottom: '3rem' }}>
@@ -1523,9 +1855,9 @@ function InvoicePreviewModal({
                                 <td style={{ padding: '1.5rem 1rem', textAlign: 'left', fontWeight: 1000 }}>{it.amount.toLocaleString()}</td>
                             </tr>
                         ))}
-                        {parseFloat(customsFees) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>أمانات الجمارك</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(customsFees).toLocaleString()}</td></tr>}
-                        {parseFloat(portFees) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>رسوم الموانئ</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(portFees).toLocaleString()}</td></tr>}
-                        {parseFloat(transportExpenses) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>أجور النقل</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(transportExpenses).toLocaleString()}</td></tr>}
+                        {parseFloat(String(customsFees)) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>أمانات الجمارك</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(String(customsFees)).toLocaleString()}</td></tr>}
+                        {parseFloat(String(portFees)) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>رسوم الموانئ</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(String(portFees)).toLocaleString()}</td></tr>}
+                        {parseFloat(String(transportExpenses)) > 0 && <tr><td style={{ padding: '1rem', fontWeight: 700, opacity: 0.6 }}>أجور النقل</td><td style={{ padding: '1rem', textAlign: 'left', fontWeight: 900 }}>{parseFloat(String(transportExpenses)).toLocaleString()}</td></tr>}
                     </tbody>
                  </table>
 
@@ -1584,7 +1916,7 @@ function SumRow({ label, value }: any) {
         <span>{value} SAR</span>
     </div>
   );
-}function AssetsView({ assets, isAr, setShowAssetModal, onRunDepreciation }: any) {
+}function AssetsView({ assets, isAr, setShowAssetModal, onRunDepreciation }: AssetsViewProps) {
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -1624,7 +1956,7 @@ function SumRow({ label, value }: any) {
   );
 }
 
-function AssetModal({ newAsset, setNewAsset, onClose, onSave, isAr }: any) {
+function AssetModal({ newAsset, setNewAsset, onClose, onSave, isAr }: AssetModalProps) {
     return (
         <div className="modal-overlay-premium fade-in">
             <div className="modal-card shadow-elite slide-up">
@@ -1660,4 +1992,135 @@ function AssetModal({ newAsset, setNewAsset, onClose, onSave, isAr }: any) {
         </div>
     );
 }
+
+function InventoryManagement({ products, isAr, setShowProductModal, onRestock }: InventoryManagementProps) {
+  return (
+    <div className="fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+          <div>
+            <h3 style={{ fontWeight: 1000, color: 'var(--primary)', margin: 0 }}>{isAr ? 'إدارة المستودعات والمخزون' : 'Inventory & Warehouse Management'}</h3>
+            <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>{isAr ? 'تتبع الكميات وطلبات إعادة التموين' : 'Track quantities and replenishment requests'}</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button onClick={() => setShowProductModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'إضافة صنف' : 'Add Item'}</button>
+          </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {products.map((p: any) => {
+            const lowStock = p.quantity_on_hand <= p.min_stock_level;
+            return (
+              <div key={p.id} className="card-contract-elite" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ padding: '1rem', background: lowStock ? 'rgba(239, 68, 68, 0.1)' : 'rgba(212, 167, 106, 0.1)', borderRadius: '15px' }}>
+                      <Package size={24} style={{ color: lowStock ? 'var(--error)' : 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, color: 'var(--primary)', fontWeight: 1000, fontSize: '1.1rem' }}>{isAr ? p.name_ar : p.name_en}</h4>
+                      <p style={{ margin: '0.2rem 0 0', opacity: 0.5, fontWeight: 800, fontSize: '0.8rem' }}>SKU: {p.sku} | {p.category}</p>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6, fontWeight: 900 }}>{isAr ? 'الكمية' : 'Stock'}</p>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 1000, color: lowStock ? 'var(--error)' : 'var(--success)' }}>
+                        {p.quantity_on_hand} <small style={{ fontSize: '0.8rem', opacity: 0.7 }}>{p.unit}</small>
+                      </span>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6, fontWeight: 900 }}>{isAr ? 'سعر البيع' : 'Sale Price'}</p>
+                      <span style={{ fontSize: '1.2rem', fontWeight: 1000, color: 'var(--primary)' }}>{p.selling_price} <small>SAR</small></span>
+                    </div>
+                    <div>
+                      {lowStock && (
+                        <button onClick={() => onRestock(p.id)} className="btn-action-small" style={{ color: 'var(--error)', borderColor: 'var(--error)', background: 'rgba(239,68,68,0.05)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <AlertTriangle size={16} /> <span style={{ fontWeight: 900 }}>{isAr ? 'إعادة طلب' : 'Restock'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+              </div>
+            );
+          })}
+          {products.length === 0 && (
+            <div className="card glass-premium" style={{ textAlign: 'center', padding: '5rem' }}>
+              <Package size={60} style={{ opacity: 0.2, marginBottom: '1.5rem' }} />
+              <p className="empty-state-text" style={{ fontSize: '1.2rem' }}>{isAr ? 'المخزن فارغ حالياً' : 'Warehouse is empty'}</p>
+              <button onClick={() => setShowProductModal(true)} className="btn-sovereign-outline" style={{ marginTop: '1rem' }}>{isAr ? 'إضافة أول منتج' : 'Add First Product'}</button>
+            </div>
+          )}
+      </div>
+    </div>
+  );
+}
+
+function ProductModal({ newProduct, setNewProduct, onClose, onSave, isAr }: ProductModalProps) {
+    return (
+        <div className="modal-overlay-premium fade-in">
+            <div className="modal-card shadow-elite slide-up" style={{ maxWidth: '600px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
+                    <h3 style={{ margin: 0, fontWeight: 1000 }}>{isAr ? 'إضافة صنف جديد' : 'Add New Product'}</h3>
+                    <button onClick={onClose} className="btn-close-elite"><X size={24} /></button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                        <div className="form-group-premium">
+                            <label>SKU (رمز الصنف)</label>
+                            <input type="text" value={newProduct.sku} onChange={e => setNewProduct({...newProduct, sku: e.target.value})} className="input-premium" />
+                        </div>
+                        <div className="form-group-premium">
+                            <label>{isAr ? 'الاسم (عربي)' : 'Name (AR)'}</label>
+                            <input type="text" value={newProduct.name_ar} onChange={e => setNewProduct({...newProduct, name_ar: e.target.value})} className="input-premium" />
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div className="form-group-premium">
+                          <label>{isAr ? 'التصنيف' : 'Category'}</label>
+                          <input type="text" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="input-premium" />
+                      </div>
+                      <div className="form-group-premium">
+                          <label>{isAr ? 'الوحدة' : 'Unit'}</label>
+                          <select value={newProduct.unit} onChange={e => setNewProduct({...newProduct, unit: e.target.value})} className="input-premium">
+                            <option value="pcs">Pcs</option>
+                            <option value="kg">KG</option>
+                            <option value="ton">Ton</option>
+                            <option value="pallet">Pallet</option>
+                          </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group-premium">
+                            <label>{isAr ? 'سعر الشراء' : 'Purchase Price'}</label>
+                            <input type="number" value={newProduct.purchase_price} onChange={e => setNewProduct({...newProduct, purchase_price: parseFloat(e.target.value)})} className="input-premium" />
+                        </div>
+                        <div className="form-group-premium">
+                            <label>{isAr ? 'سعر البيع' : 'Selling Price'}</label>
+                            <input type="number" value={newProduct.selling_price} onChange={e => setNewProduct({...newProduct, selling_price: parseFloat(e.target.value)})} className="input-premium" />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(212, 167, 106, 0.05)', padding: '1.2rem', borderRadius: '14px' }}>
+                        <div className="form-group-premium">
+                            <label>{isAr ? 'الكمية الافتتاحية' : 'Opening Stock'}</label>
+                            <input type="number" value={newProduct.quantity_on_hand || 0} onChange={e => setNewProduct({...newProduct, quantity_on_hand: parseFloat(e.target.value)})} className="input-premium" />
+                        </div>
+                        <div className="form-group-premium">
+                            <label>{isAr ? 'حد إعادة الطلب' : 'Min Stock Level'}</label>
+                            <input type="number" value={newProduct.min_stock_level} onChange={e => setNewProduct({...newProduct, min_stock_level: parseFloat(e.target.value)})} className="input-premium" />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                        <button onClick={onSave} className="btn-sovereign-primary" style={{ flex: 2 }}>{isAr ? 'حفظ الصنف' : 'Save Item'}</button>
+                        <button onClick={onClose} className="btn-sovereign-outline" style={{ flex: 1 }}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
