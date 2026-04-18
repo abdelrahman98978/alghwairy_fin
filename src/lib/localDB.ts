@@ -49,6 +49,7 @@ export interface Invoice {
   zatca_xml?: string;
   zatca_cert_date?: string;
   paid_amount?: number;
+  notes?: string;
 }
 
 export interface JournalEntry {
