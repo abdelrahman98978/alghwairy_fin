@@ -1912,10 +1912,13 @@ export default function App() {
                   {lang === 'ar' ? 'منشئ النظام' : 'SYSTEM CREATOR'}
                </div>
                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#abc8f5', marginTop: '0.2rem', opacity: 0.9 }}>
-                  Abdelhman Abusalif
+                  Abdel Rahman Abusalif
                </div>
                <div style={{ fontSize: '0.55rem', color: 'var(--secondary)', marginTop: '0.05rem', opacity: 0.7 }}>
                   966543389314
+               </div>
+               <div style={{ fontSize: '0.5rem', marginTop: '0.6rem', color: 'var(--secondary)', fontWeight: 800, opacity: 0.8, letterSpacing: '1px' }}>
+                  v1.0.0 STABLE BUILD
                </div>
             </div>
           )}
