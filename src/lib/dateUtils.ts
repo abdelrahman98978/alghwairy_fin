@@ -6,15 +6,31 @@
 
 /** Maps app lang string to BCP-47 locale tag */
 export const langToLocale = (lang: string): string =>
-  lang === 'ar' ? 'ar-SA' : 'en-GB';
+  lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB';
 
 /**
  * Format a date string or Date object to a short date.
- * e.g. Arabic → ١٨/٤/٢٠٢٦  |  English → 18/04/2026
+ * e.g. Arabic → ١٨/٠٤/٢٠٢٦ (if ar-SA) or 18/04/2026 (if ar-SA-u-nu-latn)
  */
-export const fmtDate = (date: string | Date, lang: string): string => {
+export const fmtDate = (date: string | Date | undefined | null, lang: string): string => {
+  if (!date) return '—';
   const locale = langToLocale(lang);
-  const d = typeof date === 'string' ? new Date(date) : date;
+  let d: Date;
+  try {
+    d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) {
+      // Fallback for some non-standard strings
+      const parts = String(date).split(/[-/]/);
+      if (parts.length === 3) {
+        // Assume YYYY-MM-DD or DD-MM-YYYY
+        if (parts[0].length === 4) d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        else d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+    }
+  } catch {
+    return '—';
+  }
+
   if (isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(locale, {
     day: '2-digit',
@@ -25,9 +41,9 @@ export const fmtDate = (date: string | Date, lang: string): string => {
 
 /**
  * Format a date string to a human-readable long date.
- * e.g. Arabic → الجمعة، ١٨ أبريل ٢٠٢٦  |  English → Friday, 18 April 2026
  */
-export const fmtDateLong = (date: string | Date, lang: string): string => {
+export const fmtDateLong = (date: string | Date | undefined | null, lang: string): string => {
+  if (!date) return '—';
   const locale = langToLocale(lang);
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '—';
@@ -42,11 +58,12 @@ export const fmtDateLong = (date: string | Date, lang: string): string => {
 /**
  * Format time only (HH:MM)
  */
-export const fmtTime = (date: string | Date, lang: string): string => {
+export const fmtTime = (date: string | Date | undefined | null, lang: string): string => {
+  if (!date) return '—';
   const locale = langToLocale(lang);
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '—';
-  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
 /**

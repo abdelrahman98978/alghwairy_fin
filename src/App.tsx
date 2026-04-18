@@ -146,7 +146,66 @@ const translations = {
       compliance_audit: 'تدقيق هيئة الزكاة والضريبة',
       compliance_footer: 'كافة الحركات المالية المجمعة متوافقة تماماً مع معايير هيئة الزكاة والضريبة والجمارك (المرحلة الثانية).',
       export_report: 'تصدير التقرير التحليلي',
+      export_csv: 'تصدير بيانات CSV',
+      print_report: 'طباعة التقرير الكامل',
       jan: 'يناير', feb: 'فبراير', mar: 'مارس', apr: 'أبريل', may: 'مايو', jun: 'يونيو'
+    },
+    customers: {
+      title: 'إدارة العملاء والشركاء',
+      subtitle: 'الملف الموحد للعملاء والناقلين والموردين والمديونيات الرقمية.',
+      add_customer: 'إضافة كيان جديد',
+      customer: 'عميل',
+      partner: 'شريك استراتيجي',
+      carrier: 'ناقل / شركة شحن',
+      name: 'اسم الكيان',
+      phone: 'رقم التواصل',
+      email: 'البريد الإلكتروني',
+      tax_number: 'الرقم الضريبي',
+      address: 'العنوان الوطني',
+      balance: 'الرصيد الحالي',
+      total_credit: 'إجمالي الائتمان النشط',
+      partners_count: 'عدد الشركاء المسجلين',
+      pending_reviews: 'طلبات بانتظار المراجعة',
+      expired_contracts: 'اتفاقيات منتهية',
+      search_placeholder: 'بحث عن شريك بالاسم أو الرقم الضريبي...',
+      all_categories: 'كافة التصنيفات',
+      print: 'طباعة',
+      export: 'تصدير',
+      table: {
+        entity: 'الكيان / الشركة',
+        sector: 'القطاع',
+        credit: 'الرصيد المخصص',
+        roi: 'نسبة الاستخدام',
+        last_op: 'آخر عملية',
+        options: 'خيارات'
+      },
+      activity: 'النشاطات الأخيرة',
+      modal: {
+        title: 'شريك سيادي جديد',
+        name: 'الاسم القانوني للكيان',
+        phone: 'الهاتف',
+        category: 'الفئة',
+        limit: 'الحد الائتماني (SAR)',
+        cancel: 'إلغاء',
+        submit: 'حفظ السجل الآمن'
+      },
+      lang: 'ar',
+      profile: {
+        financial_kpis: 'المؤشرات المالية للكيان',
+        documents: 'المستندات والوثائق الرقمية',
+        invoices_tab: 'الفواتير والعمليات',
+        statements_tab: 'كشوفات الحساب',
+        contracts_tab: 'العقود والاتفاقيات',
+        documents_tab: 'الأرشيف الرقمي',
+        upload_area: 'اسحب وأفلت المستندات هنا (PDF/صور)',
+        allowed_files: 'صيغ الملفات المسموحة: PDF, PNG, JPG, WebP',
+        delete_doc_confirm: 'هل أنت متأكد من حذف هذا المستند؟',
+        total_balance: 'رصيد المديونية العالقة',
+        total_paid: 'إجمالي التحصيلات المرحلة',
+        total_invoices: 'عدد الفواتير المصدرة',
+        no_docs: 'لا توجد مستندات مرفقة لهذا الكيان',
+        not_found: 'لم يتم العثور على عملاء حالياً'
+      }
     },
     accounting: {
       invoice_editor: 'محرر الفواتير التحليلي',
@@ -178,7 +237,11 @@ const translations = {
       yearly: 'سنوي',
       profit_loss: 'الأرباح والخسائر',
       ledger_summary: 'ملخص الأستاذ',
-      statement_number: 'رقم الكشف'
+      statement_number: 'رقم الكشف',
+      ledger_title: 'سجل القيود المحاسبية',
+      post_entry: 'ترحيل القيد',
+      journal_desc: 'متابعة وتدقيق القيود اليومية المرحلة.',
+      posting_success: 'تم ترحيل القيد بنجاح'
     },
     contracts: {
       lang: 'ar',
@@ -227,40 +290,28 @@ const translations = {
       period_label: 'فترة استحقاق الراتب',
       sif_export: 'تصدير ملف حماية الأجور (SIF)',
       secure_record: 'حفظ السجل الآمن',
-      cancel: 'إلغاء'
+      cancel: 'إلغاء',
+      enroll_success: 'تم تسجيل الموظف سيادياً بنجاح',
+      certify_confirm: 'جاري توثيق مسيرات الرواتب السيادية...',
+      certify_success: 'تم اعتماد رواتب المؤسسة بنجاح',
+      certify_payroll: 'اعتماد المسيرات',
+      certified_badge: 'تم الاعتماد السيادي',
+      no_pending: 'لا توجد مسيرات معلقة لهذه الفترة',
+      sif_success: 'تم توليد ملف SIF الخاص بحماية الأجور',
+      audit_progress: 'جاري التدقيق...',
+      no_records: 'لا توجد سجلات لهذه الفترة',
+      slip: {
+        preview_title: 'معاينة مسير الراتب',
+        earnings: 'الاستحقاقات',
+        deductions: 'الاستقطاعات',
+        net: 'صافي الراتب',
+        description: 'البيان',
+        base: 'الراتب الأساسي',
+        allowances: 'البدلات',
+        gosi: 'التأمينات الاجتماعية'
+      }
     },
-    customers: {
-      title: 'إدارة العملاء والشركاء',
-      subtitle: 'قاعدة البيانات الموحدة للائتمان، المديونيات، والعلاقات التجارية الإستراتيجية.',
-      print: 'طباعة',
-      export: 'تصدير',
-      add_customer: 'إضافة عميل جديد',
-      total_credit: 'إجمالي الائتمان النشط',
-      partners_count: 'عدد الشركاء المسجلين',
-      pending_reviews: 'طلبات بانتظار المراجعة',
-      expired_contracts: 'اتفاقيات منتهية',
-      search_placeholder: 'بحث عن شريك بالاسم أو الرقم الضريبي...',
-      all_categories: 'كافة التصنيفات',
-      table: {
-        entity: 'الكيان / الشركة',
-        sector: 'القطاع',
-        credit: 'الرصيد المخصص',
-        roi: 'نسبة الاستخدام',
-        last_op: 'آخر عملية',
-        options: 'خيارات'
-      },
-      activity: 'النشاطات الأخيرة',
-      modal: {
-        title: 'شريك سيادي جديد',
-        name: 'الاسم القانوني للكيان',
-        phone: 'الهاتف',
-        category: 'الفئة',
-        limit: 'الحد الائتماني (SAR)',
-        cancel: 'إلغاء',
-        submit: 'حفظ السجل الآمن'
-      },
-      lang: 'ar'
-    },
+
     invoices: {
       title: 'إدارة الفواتير والتحصيلات',
       subtitle: 'إصدار ومتابعة الفواتير الضريبية المتوافقة مع معايير هيئة الزكاة والضريبة (ZATCA).',
@@ -286,13 +337,26 @@ const translations = {
         options: 'خيارات'
       },
       modal: {
-        title: 'إصدار فاتورة ضريبية',
-        client_label: 'اختيار العميل / الشريك',
-        amount_label: 'المبلغ المفوتر (قبل الضريبة)',
-        ref_label: 'رقم المرجع (اختياري)',
+        title: 'إصدار فاتورة ضريبية لوجستية',
+        client_label: 'العميل المستفيد',
+        carrier_label: 'الناقل / شركة الشحن',
+        type_label: 'نوع الفاتورة',
+        final_type: 'فاتورة نهائية',
+        internal_type: 'فاتورة داخلية',
+        operation_num: 'رقم العملية الموحد',
+        statement_num: 'رقم البيان الجمركي',
+        bol_num: 'رقم البوليصة (BOL)',
+        cargo_val: 'قيمة الشحنة / المخزون',
+        total_collection: 'إجمالي مبلغ التحصيل',
+        customs_fees: 'رسوم الجمارك',
+        port_fees: 'أجور الموانئ',
+        transport_fees: 'أجور النقل',
+        extra_expenses: 'مصروفات إضافية',
+        amount_label: 'صافي الإيراد',
+        ref_label: 'المؤشر / المرجع',
         cancel: 'إلغاء',
-        submit: 'إصدار وتوثيق (ZATCA)',
-        whatsapp_share: 'إرسال عبر واتساب (WhatsApp)'
+        submit: 'حفظ الفاتورة والترحيل للمحاسبة',
+        whatsapp_share: 'إرسال عبر واتساب'
       },
       confirm_delete: 'هل أنت متأكد من حذف هذه الفاتورة؟',
       delete_success: 'تم حذف الفاتورة بنجاح.',
@@ -765,6 +829,10 @@ const translations = {
       profit_loss: 'Profit & Loss',
       ledger_summary: 'Ledger Summary',
       statement_number: 'Statement No.',
+      ledger_title: 'General Accounting Ledger',
+      post_entry: 'Post Entry',
+      journal_desc: 'Review and audit posted journal entries.',
+      posting_success: 'Journal entry posted successfully',
       lang: 'en'
     },
     contracts: {
@@ -814,7 +882,26 @@ const translations = {
       period_label: 'Payroll Period',
       sif_export: 'Export WPS SIF File',
       secure_record: 'Save Secure Record',
-      cancel: 'Cancel'
+      cancel: 'Cancel',
+      enroll_success: 'Staff record secured under sovereign ledger.',
+      certify_confirm: 'Certifying Sovereign Payroll Records...',
+      certify_success: 'Sovereign Payroll Certification Successful',
+      certify_payroll: 'Certify Payroll',
+      certified_badge: 'Sovereign Certified',
+      no_pending: 'No pending payrolls for this period',
+      sif_success: 'WPS SIF File Generated Successfully',
+      audit_progress: 'Audit in progress...',
+      no_records: 'No records for this period',
+      slip: {
+        preview_title: 'SALARY SLIP PREVIEW',
+        earnings: 'Earnings',
+        deductions: 'Deductions',
+        net: 'NET SALARY',
+        description: 'Description',
+        base: 'Base Salary',
+        allowances: 'Allowances',
+        gosi: 'GOSI'
+      }
     },
     customers: {
       lang: 'en',
@@ -828,12 +915,15 @@ const translations = {
       table_status: 'Ledger Status',
       last_trx: 'Last Sovereign TRX',
       active_badge: 'Active Profile',
+      print: 'Print',
       total_credit: 'Total Active Credit',
       partners_count: 'Registered Partners',
       pending_reviews: 'Pending Reviews',
       expired_contracts: 'Expired Contracts',
       search_placeholder: 'Search for partner by name or VAT...',
       all_categories: 'All Categories',
+      loading: 'Searching Secure Database...',
+      no_customers: 'No customers found currently',
       table: {
         entity: 'Entity / Company',
         sector: 'Sector',
@@ -845,14 +935,48 @@ const translations = {
       activity: 'Recent Activity',
       modal: {
         title: 'New Sovereign Partner',
+        edit_title: 'Edit Customer',
         name: 'Entity Legal Name',
         phone: 'Phone',
         category: 'Category',
         limit: 'Credit Limit (SAR)',
         cancel: 'Cancel',
-        submit: 'Secure Record'
+        submit: 'Secure Record',
+        save_changes: 'Save Changes'
       },
-      print: 'Print'
+      profile: {
+        title: 'Customer/Partner Profile',
+        whatsapp: 'WhatsApp',
+        email: 'Email',
+        financial_kpis: 'Entity Financial KPIs',
+        revenue: 'Total Revenue',
+        profit: 'Net Profit',
+        invoice_count: 'Invoices Count',
+        doc_count: 'Documents Count',
+        tabs: {
+          invoices: 'Invoices & Operations',
+          docs: 'Documents & Files',
+          info: 'Basic Info'
+        },
+        invoices_header: 'Linked Invoices & Operations',
+        no_invoices: 'No linked invoices or financial operations',
+        drop_zone: 'Drag & drop documents here or click to choose',
+        uploading: 'Uploading file...',
+        allowed_formats: 'PDF · PNG · JPG · WebP — Max: 10 MB',
+        no_docs: 'No documents attached yet',
+        upload_first: 'Upload your first document above',
+        delete_doc_confirm: 'Are you sure you want to permanently delete this document?'
+      },
+      notifications: {
+        name_required: 'Name required',
+        success_update: 'Customer updated successfully',
+        success_trash: 'Customer moved to trash',
+        delete_confirm: 'Are you sure you want to delete this customer?',
+        error_loading: 'Error loading customers',
+        error_saving: 'Error saving client',
+        error_updating: 'Error updating client',
+        error_deleting: 'Error deleting client'
+      }
     },
     invoices: {
       lang: 'en',
@@ -868,7 +992,19 @@ const translations = {
       active_title: 'Active Sovereign Invoices',
       search_placeholder: 'Search invoices...',
       print: 'Print List',
-      add_title: 'Create Sovereign Invoice',
+      add_title: 'Sovereign Logistic Invoice',
+      client_label: 'Beneficiary Client',
+      carrier_label: 'Carrier / Shipping Line',
+      statement_label: 'Statement of Account No.',
+      bol_label: 'Bill of Lading / Airway Bill',
+      operation_label: 'Operation / File No.',
+      port_fees_label: 'Port & Terminal Fees',
+      customs_fees_label: 'Customs Duties Fees',
+      inventory_fees_label: 'Inventory & Storage',
+      other_fees_label: 'Other Handling Fees',
+      profit_label: 'Logistic Net Profit',
+      apply_tax: 'Apply VAT (15%)',
+      save_invoice: 'Certify & Save Invoice',
       stats: {
         total_due: 'Total Receivables',
         collected: 'Collections (MTD)',
@@ -925,7 +1061,13 @@ const translations = {
       final_profit: 'Net Profit',
       client_name_label: 'Client Name',
       barcode: 'QR / Barcode',
-      remove_tax: 'Remove VAT'
+      remove_tax: 'Remove VAT',
+      notifications: {
+        success_mark_paid: 'Invoice marked as paid.',
+        success_create: 'Invoice created successfully.',
+        error_create: 'Error creating invoice.',
+        error_delete: 'Error deleting invoice.'
+      }
     },
     expenses: {
       lang: 'en',
@@ -1163,6 +1305,92 @@ const translations = {
       employee_picker: 'Responsible Staff Member',
       lang: 'en'
     },
+    marketing: {
+      lang: 'en',
+      title: 'Sovereign Marketing',
+      subtitle: 'Campaign management and institutional growth analytics.',
+      create_campaign: 'Create Sovereign Campaign',
+      active_campaigns: 'Active Campaigns',
+      total_reach: 'Total Reach',
+      conv_rate: 'Conversion Rate',
+      roi_multiplier: 'ROI Multiplier',
+      table: {
+        identity: 'Campaign Identity',
+        status: 'Status',
+        reach: 'Reach',
+        engagement: 'Engagement',
+        leads: 'Leads',
+        budget: 'Budget (SAR)'
+      },
+      tabs: {
+        campaigns: 'Campaigns',
+        audiences: 'Audiences',
+        automation: 'Automation',
+        analytics: 'Analytics',
+        email: 'Email',
+        intelligence: 'Intelligence'
+      },
+      add_modal: {
+        title: 'New Sovereign Campaign',
+        name: 'Campaign Name',
+        budget: 'Allocated Budget (SAR)',
+        start_date: 'Start Date',
+        category: 'Target Category'
+      },
+      status: {
+        active: 'Active',
+        scheduled: 'Scheduled',
+        completed: 'Completed'
+      },
+      categories: {
+        institutional: 'Institutional',
+        sovereign: 'Sovereign',
+        consumer: 'Consumer'
+      },
+      cancel: 'Cancel',
+      launched_at: 'Launch Date',
+      intelligence_title: 'Sovereign Marketing Intel',
+      intelligence_accuracy: 'Forecast Accuracy',
+      intelligence_savings: 'Projected Savings',
+      intelligence_recommendation: 'System Recommendation',
+      activate_recommendations: 'Activate Smart Recs',
+      platform_performance_title: 'Platform Performance',
+      node_email: 'Email Node',
+      node_google: 'Google Node',
+      node_x: 'X Node',
+      node_linkedin: 'LinkedIn Node',
+      ai_automation_title: 'AI Automation',
+      ai_automation_desc: 'Auto-optimize campaign budget based on performance.',
+      apply_optimization: 'Apply Optimization',
+      last_audit: 'Last Audit',
+      secure_node_active: 'Secure Node Active',
+      filter: 'Filter',
+      complete_campaign_data: 'Please complete campaign data',
+      campaign_created_success: 'Campaign created successfully',
+      scheduled_emails_success: 'Emails scheduled successfully',
+      ai_optimization_applied_success: 'AI Optimization applied',
+      email_composer_title: 'Institutional Email Composer',
+      email_subject_placeholder: 'Subject line...',
+      email_content_placeholder: 'Email body...',
+      broadcast_to_all: 'Broadcast to All',
+      templates_label: 'Ready Templates',
+      institutional_welcome_series: 'Institutional Welcome Series',
+      abandoned_cart_retargeting: 'Abandoned Cart Retargeting',
+      sovereign_loyalty_nodes: 'Sovereign Loyalty Nodes',
+      trigger_label: 'Trigger',
+      intelligent_conversion_audit: 'Intelligent Conversion Audit',
+      sovereign_forecast_accuracy: 'Sovereign Forecast Accuracy',
+      projected_savings: 'Projected Savings',
+      ai_recommendation_text: 'AI Recommendation',
+      activate_ai_recommendations: 'Activate AI Recommendations',
+      search_campaigns_placeholder: 'Search campaigns...',
+      filter_label: 'Filter',
+      platform_performance_matrix: 'Platform Performance Matrix',
+      sovereign_email_node: 'Sovereign Email Node',
+      google_ads_search: 'Google Ads Search',
+      x_sovereign_presence: 'X Sovereign Presence',
+      linkedin_institutional: 'LinkedIn Institutional'
+    }
   }
 };
 
@@ -1176,6 +1404,10 @@ export interface Transaction {
   created_at: string;
   currency?: string;
   payment_method?: string;
+  zatca_certified?: boolean;
+  zatca_xml?: string;
+  zatca_cert_date?: string;
+  paid_amount?: number;
 }
 
 export interface NotificationItem {

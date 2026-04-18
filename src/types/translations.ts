@@ -197,9 +197,28 @@ export interface Translations {
     gosi_deduction: string;
     print_slip: string;
     period_label: string;
+    enroll_success: string;
+    certify_confirm: string;
+    certify_success: string;
+    certify_payroll: string;
+    certified_badge: string;
+    no_pending: string;
+    sif_success: string;
+    audit_progress: string;
+    no_records: string;
     sif_export: string;
     secure_record: string;
     cancel: string;
+    slip: {
+      preview_title: string;
+      earnings: string;
+      deductions: string;
+      net: string;
+      description: string;
+      base: string;
+      allowances: string;
+      gosi: string;
+    };
   };
   customers: {
     lang: string;

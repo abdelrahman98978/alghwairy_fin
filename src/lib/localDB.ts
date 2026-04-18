@@ -42,10 +42,13 @@ export interface Invoice {
   transport_expenses?: number;
   profit?: number;
   customers?: any;
+  carrier_id?: string;
+  carrier?: any;
   items?: { description: string; amount: number }[];
   zatca_certified?: boolean;
   zatca_xml?: string;
   zatca_cert_date?: string;
+  paid_amount?: number;
 }
 
 export interface JournalEntry {

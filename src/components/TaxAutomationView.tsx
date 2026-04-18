@@ -11,7 +11,9 @@ import {
   Printer,
   Package,
   Globe,
-  Coins
+  Coins,
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import { fmtDate } from '../lib/dateUtils';
@@ -36,6 +38,8 @@ interface TaxProps {
 
 export default function TaxAutomationView({ showToast, logActivity, t }: TaxProps) {
   const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [vatSummary, setVatSummary] = useState({ totalVat: 0, count: 0, purchasesVat: 0, netVat: 0 });
   const [customsSummary, setCustomsSummary] = useState({ duties: 0, municipal: 0, platform: 0, totalValue: 0, declarations: 0 });
   const [taxReturns, setTaxReturns] = useState<TaxReturn[]>([]);
@@ -53,20 +57,26 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
         let platform = 0;
         let totalValue = 0;
         
-        (trxs as Transaction[]).forEach((trx: Transaction) => {
+        const periodTrxs = (trxs as Transaction[]).filter(trx => {
+          const d = trx.created_at?.split('T')[0];
+          return d && d >= startDate && d <= endDate;
+        });
+
+        periodTrxs.forEach((trx: Transaction) => {
            const amount = Number(trx.amount || 0);
            const desc = (trx.description || '').toLowerCase();
+           const type = (trx.type || '').toLowerCase();
            
-           // VAT Logic
-           if (trx.type === 'income' || trx.type === 'إيراد / فاتورة صاردة') {
+           // VAT Logic (15% Saudi VAT)
+           if (type.includes('income') || type.includes('إيراد') || type.includes('تحصيل')) {
               incomeVat += amount * 0.15;
               totalValue += amount;
-           } else if (trx.type === 'expense' || trx.type === 'مصروف') {
+           } else if (type.includes('expense') || type.includes('مصروف') || type.includes('دفع')) {
               expensesVat += amount * 0.15;
            }
 
            // Customs Intelligence Logic
-           if (desc.includes('جمارك') || desc.includes('duty') || desc.includes('رسوم جمركية')) {
+           if (desc.includes('جمارك') || desc.includes('duty') || desc.includes('رسم جمركي')) {
               duties += amount;
            } else if (desc.includes('بلدي') || desc.includes('municipal')) {
               municipal += amount;
@@ -79,7 +89,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
           totalVat: incomeVat,
           purchasesVat: expensesVat,
           netVat: incomeVat - expensesVat,
-          count: trxs.length
+          count: periodTrxs.length
         });
 
         setCustomsSummary({
@@ -87,11 +97,13 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
           municipal,
           platform,
           totalValue,
-          declarations: shipments.length || 128 // Fallback for demo if shipments empty
+          declarations: shipments.length || 0
         });
 
-    } catch (err) {}
-  }, []);
+    } catch (err) {
+      console.error('Tax calculation error:', err);
+    }
+  }, [startDate, endDate]);
 
   const fetchTaxReturns = useCallback(() => {
     try {
@@ -106,6 +118,10 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
   }, [calculateTaxIntelligence, fetchTaxReturns]);
 
   const handleGenerateReport = async () => {
+    if (vatSummary.count === 0) {
+      showToast(t.lang === 'en' ? 'No transactions in selected period' : 'لا يوجد عمليات في الفترة المختارة', 'error');
+      return;
+    }
     setLoading(true);
     setSyncStatus('Institutional Audit...');
     showToast(t.lang === 'en' ? 'Generating Institutional Customs & Tax Certificate...' : 'جاري توليد شهادة الامتثال الضريبي والجمركي المؤسسية...', 'success');
@@ -114,13 +130,12 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
     setTimeout(() => setSyncStatus('Authority Signature...'), 2000);
 
     setTimeout(async () => {
-      const year = new Date().getFullYear();
       const randNo = Math.floor(1000 + Math.random() * 9000);
-      const referenceNo = `ALGH-CUSTOMS-VAT-${year}-${randNo}`;
+      const referenceNo = `ALGH-TAX-${new Date(startDate).getMonth()+1}-${new Date(endDate).getMonth()+1}-${randNo}`;
 
       const newReturn = {
         reference_no: referenceNo,
-        title: t.lang === 'ar' ? `إقرار الجمارك والضريبة - ${year}` : `Customs & Tax Return - ${year}`,
+        title: t.lang === 'ar' ? `إقرار الجمارك والضريبة لفترة ${startDate} : ${endDate}` : `Customs & Tax Return ${startDate} to ${endDate}`,
         total_amount: vatSummary.netVat + customsSummary.duties,
         status: 'Certified (Institutional)',
         type: 'Customs' as const
@@ -128,8 +143,8 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
 
       try {
           const record = localDB.insert('tax_returns', newReturn);
-          await logActivity('Generated Institutional Audit: ' + referenceNo, 'tax_returns', record.id);
-          showToast(t.lang === 'ar' ? 'تم اعتماد الإقرار الجمركي والضريبي الموحد.' : 'Unified Customs & Tax Return certified.', 'success');
+          await logActivity('Generated Tax Summary: ' + referenceNo, 'tax_returns', record.id);
+          showToast(t.lang === 'ar' ? 'تم اعتماد الإقرار بنجاح.' : 'Return certified successfully.', 'success');
           fetchTaxReturns();
       } catch (err) {
           showToast('Error saving record', 'error');
@@ -147,27 +162,43 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
            <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
            <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', border: '1px solid var(--surface-container-high)', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'var(--surface-container-low)', color: 'var(--success)' }}>
-              <Activity size={18} className={loading ? 'spin-animation' : ''} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 900, fontFamily: 'Tajawal' }}>{syncStatus}</span>
-           </div>
+         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--surface-container)', padding: '0.4rem 1rem', borderRadius: '12px', border: '1px solid var(--outline-variant)' }}>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--on-surface)', fontFamily: 'Inter', fontSize: '0.85rem', fontWeight: 600, outline: 'none' }}
+              />
+              <span style={{ opacity: 0.5 }}>→</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--on-surface)', fontFamily: 'Inter', fontSize: '0.85rem', fontWeight: 600, outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', border: '1px solid var(--surface-container-high)', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'var(--surface-container-low)', color: 'var(--success)' }}>
+               <Activity size={18} className={loading ? 'spin-animation' : ''} />
+               <span style={{ fontSize: '0.85rem', fontWeight: 900, fontFamily: 'Tajawal' }}>{syncStatus}</span>
+            </div>
+             <button 
+                onClick={() => window.print()}
+                className="btn-executive" 
+                style={{ border: 'none', padding: '0.8rem 1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)' }}
+             >
+                <Printer size={18} /> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
+             </button>
             <button 
-               onClick={() => window.print()}
+               disabled={loading || vatSummary.count === 0}
+               onClick={handleGenerateReport}
                className="btn-executive" 
-               style={{ border: 'none', padding: '0.8rem 1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)' }}
+               style={{ border: 'none', padding: '0.8rem 2rem' }}
             >
-               <Printer size={18} /> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
+               <Sparkles size={18} /> {loading ? '...' : (t.lang === 'en' ? 'Institutional Certification' : 'الاعتماد المؤسسي (ZATCA)')}
             </button>
-           <button 
-              disabled={loading || vatSummary.count === 0}
-              onClick={handleGenerateReport}
-              className="btn-executive" 
-              style={{ border: 'none', padding: '0.8rem 2rem' }}
-           >
-              <Sparkles size={18} /> {loading ? '...' : (t.lang === 'en' ? 'Institutional Certification' : 'الاعتماد المؤسسي (ZATCA)')}
-           </button>
-        </div>
+         </div>
       </header>
 
       {/* Compliance Master Card - Enhanced for Customs */}
@@ -260,11 +291,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                       {taxReturns.map((tax) => (
                          <TaxRecordItem 
                             key={tax.id}
-                            id={tax.reference_no} 
-                            title={tax.title} 
-                            amount={Number(tax.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})} 
-                            status={tax.status} 
-                            date={fmtDate(tax.created_at, t.lang)}
+                            tax={tax}
                             showToast={showToast} 
                             t={t}
                          />
@@ -333,15 +360,15 @@ function InsightItem({ icon, title, desc, bg, color }: any) {
   );
 }
 
-function TaxRecordItem({ id, title, amount, status, date, showToast, t }: any) {
-  const downloadTaxReturn = (tax: any) => {
+function TaxRecordItem({ tax, showToast, t }: any) {
+  const downloadTaxReturn = (tdata: any) => {
     const data = {
       institution: "مؤسسة الغويري للتخليص الجمركي",
       certificate_type: "Unified Customs & Tax Return",
-      reference: tax.reference_no,
-      date_certified: new Date(tax.created_at).toLocaleString(),
-      amount_sar: tax.total_amount,
-      status: tax.status,
+      reference: tdata.reference_no,
+      date_certified: new Date(tdata.created_at).toLocaleString(),
+      amount_sar: tdata.total_amount,
+      status: tdata.status,
       compliance_engine: "ZATCA Phase 2 (Institutional - Alghwairy Sovereign)",
       security_signature: "ALGH-" + Math.random().toString(36).substring(2, 15).toUpperCase()
     };
@@ -351,12 +378,27 @@ function TaxRecordItem({ id, title, amount, status, date, showToast, t }: any) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${tax.reference_no}.json`;
+    link.download = `${tdata.reference_no}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     showToast(t.lang === 'ar' ? 'تم تحميل الإقرار بنجاح إلى مجلد التنزيلات.' : 'Tax return downloaded to your system Downloads folder.', 'success');
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = `*شهادة امتثال ضريبي وجمركي*\n\n` +
+                 `المرجع: ${tax.reference_no}\n` +
+                 `البيان: ${tax.title}\n` +
+                 `المبلغ: ${Number(tax.total_amount).toLocaleString()} ر.س\n\n` +
+                 `صادر عن: منظومة الغويري السيادية`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleShareEmail = () => {
+    const subject = `Tax Return Certificate - ${tax.reference_no}`;
+    const body = `Attached is the tax return summary for ${tax.title}.\n\nTotal Amount: ${Number(tax.total_amount).toLocaleString()} SAR\nStatus: ${tax.status}\n\nGenerated by Alghwairy Sovereign Finance.`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   return (
@@ -366,25 +408,39 @@ function TaxRecordItem({ id, title, amount, status, date, showToast, t }: any) {
              <FileCheck size={20} />
           </div>
           <div>
-             <h4 style={{ fontSize: '0.95rem', fontWeight: 900, margin: '0 0 0.3rem 0', color: 'var(--primary)' }}>{title}</h4>
+             <h4 style={{ fontSize: '0.95rem', fontWeight: 900, margin: '0 0 0.3rem 0', color: 'var(--primary)' }}>{tax.title}</h4>
              <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0, display: 'flex', gap: '0.6rem', fontWeight: 700 }}>
-                <span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{id}</span>
+                <span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{tax.reference_no}</span>
                 <span>•</span>
-                <span>{date}</span>
+                <span>{fmtDate(tax.created_at, t.lang)}</span>
              </p>
           </div>
        </div>
-       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary)', margin: '0 0 0.3rem 0' }}>{amount} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></p>
-            <span style={{ fontSize: '0.7rem', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)', padding: '0.3rem 1rem', borderRadius: '20px', fontWeight: 900 }}>{status}</span>
+            <p style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary)', margin: '0 0 0.3rem 0' }}>{Number(tax.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></p>
+            <span style={{ fontSize: '0.7rem', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)', padding: '0.3rem 1rem', borderRadius: '20px', fontWeight: 900 }}>{tax.status}</span>
           </div>
-          <button 
-            onClick={() => downloadTaxReturn({ reference_no: id, title, total_amount: parseFloat(amount.replace(/,/g, '')), status, created_at: date })}
-            style={{ width: 44, height: 44, background: 'var(--surface-container-low)', border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)', transition: 'all 0.2s' }}
-          >
-             <Download size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <button 
+              onClick={handleShareWhatsApp}
+              style={{ width: 40, height: 40, background: 'var(--surface-container-low)', color: '#25D366', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+               <MessageSquare size={18} />
+            </button>
+            <button 
+              onClick={handleShareEmail}
+              style={{ width: 40, height: 40, background: 'var(--surface-container-low)', color: 'var(--primary)', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+               <Mail size={18} />
+            </button>
+            <button 
+              onClick={() => downloadTaxReturn(tax)}
+              style={{ width: 40, height: 40, background: 'var(--surface-container-low)', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)' }}
+            >
+               <Download size={18} />
+            </button>
+          </div>
        </div>
     </div>
   );
