@@ -50,7 +50,6 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
   const loadData = useCallback(() => {
     const invs = localDB.getActive('invoices') as Invoice[];
     const custs = localDB.getActive('customers') as any[];
-    const settingsData = localDB.getActive('settings')?.[0] || settings;
     const joined = invs.map(inv => ({
       ...inv,
       customers: custs.find(c => c.id === inv.customer_id),
@@ -59,47 +58,6 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
     setInvoices(joined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     setCustomers(custs);
   }, [settings]);
-
-  const generateZatcaQR = (invoice: Invoice) => {
-    try {
-      const seller = settings.companyName;
-      const vatNo = settings.taxNumber;
-      const date = invoice.created_at;
-      const total = invoice.total.toString();
-      const vatAmount = invoice.vat.toString();
-
-      const toTlv = (tag: number, value: string) => {
-        const encoder = new TextEncoder();
-        const bValue = encoder.encode(value);
-        const bTag = new Uint8Array([tag]);
-        const bLen = new Uint8Array([bValue.length]);
-        const combined = new Uint8Array(bTag.length + bLen.length + bValue.length);
-        combined.set(bTag);
-        combined.set(bLen, bTag.length);
-        combined.set(bValue, bTag.length + bLen.length);
-        return combined;
-      };
-
-      const t1 = toTlv(1, seller);
-      const t2 = toTlv(2, vatNo);
-      const t3 = toTlv(3, date);
-      const t4 = toTlv(4, total);
-      const t5 = toTlv(5, vatAmount);
-
-      const all = new Uint8Array(t1.length + t2.length + t3.length + t4.length + t5.length);
-      let offset = 0;
-      [t1, t2, t3, t4, t5].forEach(t => { all.set(t, offset); offset += t.length; });
-
-      // Convert Uint8Array to Base64 in a browser-safe way
-      let binary = '';
-      const bytes = new Uint8Array(all);
-      for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
-      return btoa(binary);
-    } catch (e) {
-      console.error('QR Gen Error:', e);
-      return invoice.reference_number;
-    }
-  };
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter(inv => {
@@ -211,13 +169,11 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       vat, 
       total,
       status: 'pending',
-      reference_number: formData.reference || `ALGH-${new Date().getFullYear()}-${(Math.max(0, ...invoices.map(inv => parseInt(inv.reference_number?.split('-')[2]) || 0)) + 1).toString().padStart(4, '0')}`,
-      operation_number: formData.operationNumber || `OP-${(Math.max(0, ...invoices.map(inv => parseInt(inv.operation_number?.split('-')[1]) || 0)) + 1).toString().padStart(4, '0')}`,
+      reference_number: formData.reference || `ALGH-${new Date().getFullYear()}-${(Math.max(0, ...invoices.map(inv => parseInt(inv.reference_number?.split('-')[2] ?? '0') || 0)) + 1).toString().padStart(4, '0')}`,
+      operation_number: formData.operationNumber || `OP-${(Math.max(0, ...invoices.map(inv => parseInt(inv.operation_number?.split('-')[1] ?? '0') || 0)) + 1).toString().padStart(4, '0')}`,
       is_settlement: formData.isSettlement,
       invoice_type: formData.invoiceType as 'internal' | 'final',
       statement_number: formData.statementNumber,
-      bol_number: formData.bolNumber,
-      operation_number: formData.operationNumber,
       customs_fees: customs, 
       port_fees: port,
       transport_fees: transport, 
@@ -662,6 +618,34 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
     return `${ar} / ${en}`;
   };
 
+  const generateZatcaQR = (inv: Invoice) => {
+    try {
+      const seller = settings.companyName;
+      const vatNo = settings.taxNumber;
+      const date = inv.created_at;
+      const total = inv.total.toString();
+      const vatAmount = inv.vat.toString();
+      const toTlv = (tag: number, value: string) => {
+        const encoder = new TextEncoder();
+        const bValue = encoder.encode(value);
+        const bTag = new Uint8Array([tag]);
+        const bLen = new Uint8Array([bValue.length]);
+        const combined = new Uint8Array(bTag.length + bLen.length + bValue.length);
+        combined.set(bTag); combined.set(bLen, bTag.length); combined.set(bValue, bTag.length + bLen.length);
+        return combined;
+      };
+      const t1 = toTlv(1, seller); const t2 = toTlv(2, vatNo); const t3 = toTlv(3, date);
+      const t4 = toTlv(4, total); const t5 = toTlv(5, vatAmount);
+      const all = new Uint8Array(t1.length + t2.length + t3.length + t4.length + t5.length);
+      let offset = 0;
+      [t1, t2, t3, t4, t5].forEach(t => { all.set(t, offset); offset += t.length; });
+      let binary = '';
+      const bytes = new Uint8Array(all);
+      for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
+      return btoa(binary);
+    } catch (e) { return inv.reference_number; }
+  };
+
   const handleDownloadPDF = () => {
     const element = pdfRef.current;
     if (!element) return;
@@ -687,16 +671,36 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
     <div className="modal-overlay invoice-print-overlay" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
       <style>{`
         @media print {
-          body * { visibility: hidden !important; }
-          .invoice-print-overlay { position: absolute !important; inset: 0 !important; background: white !important; padding: 0 !important; overflow: visible !important; }
-          .invoice-print-overlay .no-print { display: none !important; }
-          .print-content, .print-content * { visibility: visible !important; }
-          .print-content { 
-            position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important;
-            height: 297mm !important; margin: 0 !important; padding: 15mm !important;
-            box-shadow: none !important; border: none !important; overflow: hidden !important;
-          }
           @page { size: A4; margin: 0; }
+          body { visibility: hidden !important; background: white !important; margin: 0 !important; padding: 0 !important; }
+          .invoice-print-overlay { 
+            position: absolute !important; 
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: white !important; 
+            padding: 0 !important; 
+            margin: 0 !important;
+            overflow: visible !important; 
+            display: block !important;
+            visibility: visible !important;
+          }
+          .invoice-print-overlay .no-print { display: none !important; }
+          .print-content { 
+            visibility: visible !important;
+            width: 100% !important;
+            max-width: 210mm !important;
+            margin: 0 auto !important; 
+            padding: 15mm !important;
+            box-shadow: none !important; 
+            border: none !important; 
+            overflow: visible !important;
+            height: auto !important;
+            position: relative !important;
+            background: white !important;
+          }
+          .print-content * { visibility: visible !important; }
+          .print-summary-box { break-inside: avoid; }
         }
       `}</style>
 
@@ -730,7 +734,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
 
       {/* A4 Page Content */}
       <div ref={pdfRef} className="print-content" style={{
-        width: '210mm', minHeight: '297mm', margin: '0 auto', backgroundColor: '#fff', padding: '15mm',
+        width: '100%', maxWidth: '210mm', minHeight: '297mm', margin: '0 auto', backgroundColor: '#fff', padding: '15mm',
         color: 'black', direction: printLang === 'en' ? 'ltr' : 'rtl', fontFamily: 'Tajawal',
         boxSizing: 'border-box', position: 'relative'
       }}>
@@ -806,7 +810,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
         </table>
 
         {/* Summary Sections */}
-        <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', borderTop: '2px solid #001a33', paddingTop: '20px' }}>
+        <div className="print-summary-box" style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', borderTop: '2px solid #001a33', paddingTop: '20px' }}>
           <div>
              <div style={{ padding: '15px', background: '#fff9f2', borderRadius: '10px', border: '1px dashed #d4a76a', marginBottom: '15px' }}>
                 <h4 style={{ margin: '0 0 5px', fontSize: '0.85rem', color: '#001a33' }}>{getLabel('بيانات السداد', 'Payment Details')}</h4>

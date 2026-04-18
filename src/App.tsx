@@ -797,8 +797,40 @@ const translations = {
       growth_chart: 'Growth & Resources',
       compliance_audit: 'ZATCA Compliance Audit',
       compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
-      export_report: 'Export Analytical Report',
       jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun'
+    },
+    reports: {
+      lang: 'en',
+      title: 'Analytical Intelligence & Sovereign Metrics',
+      subtitle: 'Comprehensive view of liquidity performance, profitability, and resource distribution.',
+      revenue: 'Total Revenue',
+      expenses: 'Total Expenses',
+      net_income: 'Net Distributable Profit',
+      historical_high: 'Historical High',
+      operating_costs: 'Operating Costs',
+      quarterly_target: 'Quarterly Target',
+      summary_ledger: 'Sovereign General Ledger',
+      tax_est: 'Tax & Zakat (15%)',
+      growth_chart: 'Growth & Resources',
+      compliance_audit: 'ZATCA Compliance Audit',
+      compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
+      export_report: 'Export Analytical Report',
+      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun',
+      export: 'Export CSV',
+      print: 'Print Report',
+      manual_trx: 'Add Settlement Entry',
+      income: 'Income',
+      expense: 'Expense',
+      net_position: 'Net Financial Position',
+      extracting_intelligence: 'Analyzing data...',
+      table: {
+        id: 'TRX ID',
+        description: 'Description',
+        type: 'Type',
+        value: 'Value',
+        status: 'Status',
+        date: 'Date'
+      }
     },
     invoices: {
       title: 'Invoices & Receipts',
@@ -1059,104 +1091,6 @@ const translations = {
         error_saving: 'Error saving client',
         error_updating: 'Error updating client',
         error_deleting: 'Error deleting client'
-      }
-    },
-    invoices: {
-      lang: 'en',
-      title: 'Invoice Management',
-      subtitle: 'Documenting sovereign transactions and tax invoicing.',
-      new_invoice: 'Issue Official Invoice',
-      export_csv: 'Export CSV Ledger',
-      table_num: 'Invoice #',
-      table_client: 'Client',
-      table_amount: 'Gross Amount',
-      table_date: 'Filing Date',
-      table_status: 'Audit Status',
-      active_title: 'Active Sovereign Invoices',
-      search_placeholder: 'Search invoices...',
-      print: 'Print List',
-      add_title: 'Sovereign Logistic Invoice',
-      client_label: 'Beneficiary Client',
-      carrier_label: 'Carrier / Shipping Line',
-      statement_label: 'Statement of Account No.',
-      bol_label: 'Bill of Lading / Airway Bill',
-      operation_label: 'Operation / File No.',
-      port_fees_label: 'Port & Terminal Fees',
-      customs_fees_label: 'Customs Duties Fees',
-      inventory_fees_label: 'Inventory & Storage',
-      other_fees_label: 'Other Handling Fees',
-      profit_label: 'Logistic Net Profit',
-      apply_tax: 'Apply VAT (15%)',
-      save_invoice: 'Certify & Save Invoice',
-      stats: {
-        total_due: 'Total Receivables',
-        collected: 'Collections (MTD)',
-        overdue: 'Overdue Arrears',
-        zatca_certified: 'ZATCA Certified'
-      },
-      table: {
-        number: 'Invoice / Ref No.',
-        client: 'Client',
-        date: 'Issue Date',
-        amount: 'Net Amount',
-        tax: 'VAT 15%',
-        total: 'Grand Total',
-        status: 'Payment Status',
-        preview: 'Preview & Print',
-        options: 'Options'
-      },
-      preview: {
-        print: 'Print Invoice',
-        whatsapp: 'Send WhatsApp',
-        email: 'Send Email',
-        mark_paid: 'Confirm Payment',
-        close: 'Close'
-      },
-      modal: {
-        title: 'Issue Tax Invoice',
-        client_label: 'Select Client / Partner',
-        amount_label: 'Amount (Before VAT)',
-        ref_label: 'Ref Code (Optional)',
-        cancel: 'Cancel',
-        submit: 'Issue & Certify (ZATCA)',
-        whatsapp_share: 'Share via WhatsApp'
-      },
-      confirm_delete: 'Confirm sovereign invoice deletion?',
-      delete_success: 'Invoice deleted successfully.',
-      wa_invoice_template: 'Dear Client, your invoice {{number}} for {{total}} is ready. View: {{link}}',
-      status_paid: 'Paid',
-      status_pending: 'Pending',
-      copy_link_success: 'Link copied to clipboard',
-      settlement_badge: 'Tax Settlement',
-      edit_invoice: 'Edit Invoice',
-      status_label: 'Status',
-      save_changes: 'Save Changes',
-      wa_preview_title: 'WhatsApp Preview',
-      wa_preview_subtitle: 'Official broadcast via WhatsApp',
-      wa_send_now: 'Send Now',
-      simplified_invoice: 'Simplified Tax Invoice',
-      shareable_link_success: 'Link generated',
-      whatsapp_preview: 'Preview',
-      wa_phone_label: 'Phone Number',
-      wa_review_desc: 'Review message before sending',
-      cancel: 'Cancel',
-      internal_invoice: 'Internal Invoice',
-      final_invoice: 'Final Invoice',
-      statement_number: 'Statement No.',
-      bol_number: 'B/L Number',
-      operation_number: 'Operation No.',
-      customs_fees: 'Customs Fees',
-      port_fees: 'Port Fees',
-      inventory_total: 'Inventory Total',
-      final_profit: 'Net Profit',
-      client_name_label: 'Client Name',
-      barcode: 'QR / Barcode',
-      remove_tax: 'Remove VAT',
-      notifications: {
-        success_mark_paid: 'Invoice marked as paid.',
-        success_create: 'Invoice created successfully.',
-        error_create: 'Error creating invoice.',
-        error_delete: 'Error deleting invoice.'
       }
     },
     expenses: {
@@ -1567,7 +1501,7 @@ export default function App() {
     };
   }, [lang, systemSettings]);
 
-  const reportsT = useMemo(() => ({...t.reports, ...t.dashboard, lang}), [t.reports, t.dashboard, lang]);
+  const reportsT = useMemo(() => ({...t.reports, lang}), [t.reports, lang]);
 
   const handleActivation = (key: string) => {
     setActivationError('');
