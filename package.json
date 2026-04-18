@@ -28,7 +28,7 @@
   },
   "build": {
     "appId": "com.algh.sovereign.ledger",
-    "productName": "Alghwairy Customs Clearance",
+    "productName": "الميزان السيادي - مؤسسة الغويري",
     "directories": {
       "output": "release",
       "buildResources": "assets"

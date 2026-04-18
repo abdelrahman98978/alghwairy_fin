@@ -9,7 +9,8 @@ import {
   AlertCircle,
   ShieldAlert,
   Key,
-  Database
+  Database,
+  Smartphone
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
@@ -29,6 +30,12 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryInput, setRecoveryInput] = useState('');
   const [recoverySuccess, setRecoverySuccess] = useState(false);
+  
+  // 2FA State
+  const [show2FA, setShow2FA] = useState(false);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [pendingUser, setPendingUser] = useState<any>(null);
+  const [verifying2FA, setVerifying2FA] = useState(false);
 
   // Recovery Key
   const MASTER_RECOVERY_KEY = 'ALGHWAIRY-RECOVERY-2026';
@@ -60,9 +67,16 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
            const users = localDB.getActive('user_roles');
            const userRecord = users.find((u: any) => u.name === username);
 
+
            if (userRecord && userRecord.password === password) {
               setFailedAttempts(0);
-              onLogin(userRecord.role || selectedRole, username);
+              if (userRecord.totp_enabled) {
+                 setPendingUser(userRecord);
+                 setShow2FA(true);
+                 setLoading(false);
+              } else {
+                 onLogin(userRecord.role || selectedRole, username);
+              }
            } else if ((username === 'عبدالله الغويري' || username === 'admin') && (password === 'admin' || password === '123456')) {
               setFailedAttempts(0);
               onLogin(selectedRole, username || 'عبدالله الغويري');
@@ -111,12 +125,17 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
       setScanStatus('scanning');
       
       // Use rawId for robust verification
-      const isVerified = await biometricService.verify(bioData.rawId || bioData.id);
+      const isVerified = await biometricService.verify(bioData.rawId || bioData.id, username);
       
       if (isVerified) {
         setScanStatus('success');
         setTimeout(() => {
-          onLogin(userRecord.role || 'admin', username);
+          if (userRecord.totp_enabled) {
+             setPendingUser(userRecord);
+             setShow2FA(true);
+          } else {
+             onLogin(userRecord.role || 'admin', username);
+          }
           setShowBiometric(false);
         }, 800);
       } else {
@@ -125,10 +144,32 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
         setTimeout(() => setShowBiometric(false), 2000);
       }
 
-    } catch (err: any) {
-      setScanStatus('failed');
-      setError('خطأ في التواصل مع حساس البصمة.');
-      setTimeout(() => setShowBiometric(false), 2000);
+    } catch (err) {
+      console.error('Biometric Login Error:', err);
+      setError('حدث خطأ أثناء الاتصال بنظام الأمان الحيوي.');
+      setShowBiometric(false);
+    }
+  };
+
+  const verifyTOTPLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingUser) return;
+    
+    setVerifying2FA(true);
+    setError('');
+    
+    try {
+        const isValid = await biometricService.verifyTOTP(twoFACode, pendingUser.totp_secret);
+        if (isValid) {
+            onLogin(pendingUser.role || 'admin', pendingUser.name);
+        } else {
+            setError('كود التحقق غير صحيح. يرجى المحاولة مرة أخرى.');
+            setTwoFACode('');
+        }
+    } catch (err) {
+        setError('خطأ في عملية التحقق.');
+    } finally {
+        setVerifying2FA(false);
     }
   };
 
@@ -257,18 +298,45 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                </button>
             </form>
 
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                <button 
                 type="button" 
                 onClick={handleBiometricLogin}
                 disabled={isLocked}
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.5 }}
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
                 >
-                  <Fingerprint size={14} /> استخدام البصمة المحلية
+                  <Fingerprint size={14} /> تسجيل الدخول بالبصمة
                </button>
+
+               {(localDB.get('user_roles').find((u: any) => u.name === username)?.totp_enabled) && (
+                 <button 
+                  type="button" 
+                  onClick={() => setShow2FA(true)}
+                  disabled={isLocked}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
+                  >
+                    <Smartphone size={14} /> استخدام رمز Google Auth
+                 </button>
+               )}
             </div>
          </div>
       </div>
+
+
+      {showBiometric && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.9)', backdropFilter: 'blur(15px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', color: 'white' }}>
+               <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 2rem' }}>
+                  {scanStatus === 'scanning' && <div className="scanning-line"></div>}
+                  <Fingerprint size={120} color={scanStatus === 'success' ? '#4AA96C' : scanStatus === 'failed' ? '#BA1A1A' : 'var(--secondary)'} style={{ opacity: scanStatus === 'scanning' ? 0.5 : 1, transition: 'all 0.3s ease' }} />
+               </div>
+               <h3 style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Tajawal' }}>
+                  {scanStatus === 'scanning' ? 'جاري مسح البصمة...' : scanStatus === 'success' ? 'تم التحقق بنجاح' : 'فشل التحقق'}
+               </h3>
+               <p style={{ opacity: 0.7, fontWeight: 700 }}>{username}</p>
+            </div>
+        </div>
+      )}
 
       {showRecovery && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.85)', backdropFilter: 'blur(20px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
@@ -313,16 +381,36 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
         </div>
       )}
 
-      {showBiometric && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,26,51,0.6)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="card" style={{ width: '100%', maxWidth: '360px', padding: '2rem', textAlign: 'center' }}>
-               <div style={{ width: 70, height: 70, borderRadius: '50%', background: 'var(--surface-container-low)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  <Fingerprint size={36} color={scanStatus === 'success' ? 'var(--success)' : 'var(--primary)'} />
+      {show2FA && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.9)', backdropFilter: 'blur(25px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+            <div className="card shadow-executive" style={{ width: '100%', maxWidth: '380px', padding: '2.5rem', textAlign: 'center', background: 'white', borderRadius: '24px' }}>
+               <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0, 26, 51, 0.05)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                  <Smartphone size={32} />
                </div>
-               <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>
-                 {scanStatus === 'scanning' ? 'جاري التحقق المحلي...' : 'تم بنجاح'}
-               </h3>
-               <p style={{ opacity: 0.7, fontWeight: 600, fontSize: '0.85rem' }}>يتم استخدام البيانات الحيوية المسجلة محلياً</p>
+               
+               <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>تحقق Google Authenticator</h3>
+               <p style={{ opacity: 0.7, fontWeight: 700, fontSize: '0.8rem', marginBottom: '2rem' }}>يرجى إدخال رمز التحقق المكون من 6 أرقام من تطبيقك الجوال.</p>
+
+               <form onSubmit={verifyTOTPLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <input 
+                    type="text" 
+                    placeholder="000 000" 
+                    className="login-input"
+                    maxLength={6}
+                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.8rem', fontWeight: 900, background: '#f8f9fa' }}
+                    value={twoFACode}
+                    onChange={(e) => setTwoFACode(e.target.value)}
+                    autoFocus
+                  />
+                  
+                  <button type="submit" disabled={verifying2FA || twoFACode.length < 6} className="btn-executive" style={{ width: '100%', justifyContent: 'center', padding: '1rem', background: 'var(--primary)', color: 'var(--secondary)' }}>
+                     {verifying2FA ? <Loader2 size={18} className="spin" /> : 'تحقق ودخول'}
+                  </button>
+                  
+                  <button type="button" onClick={() => setShow2FA(false)} style={{ background: 'none', border: 'none', color: 'var(--on-surface-variant)', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }}>
+                     إلغاء
+                  </button>
+               </form>
             </div>
         </div>
       )}

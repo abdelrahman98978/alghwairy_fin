@@ -18,8 +18,12 @@ import {
   FolderOpen,
   Network,
   Volume2,
-  Monitor
+  Monitor,
+  Smartphone,
+  ShieldAlert,
+  QrCode
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
 
@@ -41,6 +45,20 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     current: '',
     new: '',
     confirm: ''
+  });
+
+  const [totpData, setTotpData] = useState<{
+    secret: string;
+    uri: string;
+    qrVisible: boolean;
+    verificationCode: string;
+    enabled: boolean;
+  }>({
+    secret: localStorage.getItem('sov_totp_secret') || '',
+    uri: '',
+    qrVisible: false,
+    verificationCode: '',
+    enabled: localStorage.getItem('sov_totp_enabled') === 'true'
   });
 
   const [settings, setSettings] = useState({
@@ -105,17 +123,14 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
   };
 
   const enrollBiometric = async () => {
-    if (!biometricService.isSupported()) {
-        showToast(t.lang === 'en' ? 'Biometrics not supported' : 'جهازك لا يدعم البصمة', 'error');
-        return;
-    }
+    // Removed hardware-only check to allow Sovereign Virtual Key fallback
     setIsEnrolling(true);
     try {
       const bioResult = await biometricService.enroll(userName);
       const bioData = { 
         id: bioResult.id, 
         rawId: bioResult.rawId, 
-        type: 'windows-hello', 
+        type: bioResult.isVirtual ? 'sovereign-virtual' : 'windows-hello', 
         date: new Date().toISOString() 
       };
       
@@ -126,8 +141,13 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
           localDB.insert('user_roles', { name: userName, role: 'admin', biometric_key: JSON.stringify(bioData) });
       }
       
-      await logActivity('Enrolled REAL Biometric ID (Windows Hello)', 'security', bioResult.id);
-      showToast(t.lang === 'en' ? 'Biometric ID Linked' : 'تم ربط البصمة الحقيقية بنجاح', 'success');
+      await logActivity(`Enrolled ${bioResult.isVirtual ? 'Virtual' : 'REAL'} Biometric ID`, 'security', bioResult.id);
+      showToast(
+        t.lang === 'en' 
+          ? `Biometric ${bioResult.isVirtual ? 'PIN' : 'ID'} Linked` 
+          : `تم ربط ${bioResult.isVirtual ? 'رمز الأمان' : 'البصمة الحقيقية'} بنجاح`, 
+        'success'
+      );
     } catch (err: any) {
       console.error(err);
       showToast(t.lang === 'en' ? 'Enrollment Cancelled or Failed' : 'تم إلغاء أو فشل تسجيل البصمة', 'error');
@@ -167,7 +187,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
             showToast(t.lang === 'en' ? 'Authenticating via Windows Hello...' : 'جاري التحقق عبر البصمة الجمركية...', 'info');
             
             // Fix: Use rawId or fallback to id for robust verification
-            const isVerified = await biometricService.verify(bioData.rawId || bioData.id);
+            const isVerified = await biometricService.verify(bioData.rawId || bioData.id, userName);
             
             if (!isVerified) {
                 showToast(t.lang === 'en' ? 'Biometric Authentication Failed' : 'فشل التحقق من الهوية الحيوية', 'error');
@@ -203,6 +223,54 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     a.download = `alghwairy_backup_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     showToast(t.lang === 'en' ? 'Local backup exported' : 'تم تصدير النسخة الاحتياطية بنجاح', 'success');
+  };
+
+  const generateTOTP = () => {
+    const secret = biometricService.generateTOTPSecret();
+    const issuer = "AlghwairySovereign";
+    const account = userName;
+    const uri = `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}`;
+    
+    setTotpData({
+        ...totpData,
+        secret,
+        uri,
+        qrVisible: true
+    });
+    showToast(t.lang === 'en' ? 'Sovereign Secret Generated' : 'تم توليد المفتاح السيادي', 'info');
+  };
+
+  const verifyAndEnableTOTP = async () => {
+    const isValid = await biometricService.verifyTOTP(totpData.verificationCode, totpData.secret);
+    if (isValid) {
+        localStorage.setItem('sov_totp_secret', totpData.secret);
+        localStorage.setItem('sov_totp_enabled', 'true');
+        setTotpData({ ...totpData, enabled: true, qrVisible: false, verificationCode: '' });
+        
+        const users = localDB.findBy('user_roles', 'name', userName);
+        if (users.length > 0) {
+            localDB.update('user_roles', users[0].id, { totp_enabled: true, totp_secret: totpData.secret });
+        }
+
+        await logActivity('Enabled 2FA (Authenticator)', 'security', 'totp_setup');
+        showToast(t.lang === 'en' ? 'Authenticator Enabled' : 'تم تفعيل تطبيق التحقق بنجاح', 'success');
+    } else {
+        showToast(t.lang === 'en' ? 'Invalid Code' : 'رمز غير صحيح', 'error');
+    }
+  };
+
+  const disableTOTP = async () => {
+    localStorage.removeItem('sov_totp_secret');
+    localStorage.removeItem('sov_totp_enabled');
+    setTotpData({ ...totpData, enabled: false, secret: '', uri: '', qrVisible: false });
+    
+    const users = localDB.findBy('user_roles', 'name', userName);
+    if (users.length > 0) {
+        localDB.update('user_roles', users[0].id, { totp_enabled: false, totp_secret: null });
+    }
+    
+    await logActivity('Disabled 2FA (Authenticator)', 'security', 'totp_disabled');
+    showToast(t.lang === 'en' ? 'Authenticator Disabled' : 'تم تعطيل تطبيق التحقق', 'info');
   };
 
   const themes = [
@@ -437,6 +505,68 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                       {userName} - {t.lang === 'ar' ? 'البصمة النشطة: مفعلة' : 'Active Biometric: VERIFIED'}
                    </p>
                 </div>
+
+                {/* Google Authenticator Section */}
+                <div style={{ padding: '1.5rem', borderRadius: '18px', border: totpData.enabled ? '1px solid var(--success)' : '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
+                   <h4 style={{ fontSize: '1.1rem', fontWeight: 950, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <Smartphone size={20} /> {t.lang === 'en' ? 'Two-Factor Authentication' : 'التحقق بخطوتين (Google Authenticator)'}
+                   </h4>
+                   
+                   {!totpData.enabled ? (
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8 }}>{t.lang === 'en' ? 'Add an extra layer of security using Google or Microsoft Authenticator.' : 'أضف طبقة حماية إضافية لحسابك باستخدام تطبيق Google Authenticator.'}</p>
+                        
+                        {!totpData.qrVisible ? (
+                           <button onClick={generateTOTP} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', width: 'fit-content' }}>
+                              <QrCode size={18} /> {t.lang === 'en' ? 'Setup Authenticator' : 'إعداد تطبيق التحقق'}
+                           </button>
+                        ) : (
+                           <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', background: 'white', padding: '1.5rem', borderRadius: '14px' }}>
+                              <div style={{ padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid #eee' }}>
+                                 <QRCodeSVG value={totpData.uri} size={160} />
+                              </div>
+                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                 <p style={{ margin: 0, fontWeight: 800, fontSize: '0.85rem' }}>{t.lang === 'en' ? '1. Scan this QR code with your app' : '1. امسح الرمز عبر تطبيق التحقق'}</p>
+                                 <p style={{ margin: 0, fontWeight: 800, fontSize: '0.85rem' }}>{t.lang === 'en' ? '2. Enter the 6-digit code to verify' : '2. أدخل الرمز المكون من 6 أرقام للتأكيد'}</p>
+                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <input 
+                                       type="text" 
+                                       placeholder="000000" 
+                                       className="input-executive" 
+                                       maxLength={6}
+                                       value={totpData.verificationCode}
+                                       onChange={e => setTotpData({...totpData, verificationCode: e.target.value})}
+                                       style={{ width: '120px', textAlign: 'center', letterSpacing: '4px' }}
+                                    />
+                                    <button onClick={verifyAndEnableTOTP} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none' }}>
+                                       {t.lang === 'en' ? 'Verify & Enable' : 'تأكيد وتفعيل'}
+                                    </button>
+                                 </div>
+                                 <button onClick={() => setTotpData({...totpData, qrVisible: false})} style={{ background: 'none', border: 'none', color: 'var(--error)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', textAlign: 'left' }}>
+                                    {t.lang === 'en' ? 'Cancel Setup' : 'إلغاء الإعداد'}
+                                 </button>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                   ) : (
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                           <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(74, 169, 108, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <ShieldCheck size={24} color="#4AA96C" />
+                           </div>
+                           <div>
+                              <p style={{ margin: 0, fontWeight: 900, color: '#4AA96C' }}>{t.lang === 'en' ? 'Authenticator Active' : 'تطبيق التحقق نشط'}</p>
+                              <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>{t.lang === 'en' ? 'Secure login with 2FA is enabled' : 'تسجيل الدخول المؤمن بـ 2FA مفعل حالياً'}</p>
+                           </div>
+                        </div>
+                        <button onClick={disableTOTP} className="btn-executive" style={{ background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)', border: '1px solid var(--error)', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                           <ShieldAlert size={14} /> {t.lang === 'en' ? 'Disable' : 'تعطيل'}
+                        </button>
+                     </div>
+                   )}
+                </div>
+
                 <div style={{ padding: '1.5rem', borderRadius: '18px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
                    <h4 style={{ fontSize: '1rem', fontWeight: 900, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                       <ShieldCheck size={18} /> {t.lang === 'en' ? 'Security Credentials' : 'بيانات الوصول الأمنية'}

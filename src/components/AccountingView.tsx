@@ -994,10 +994,6 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
         </div>
 
-        <style>{`
-          .search-box-executive { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.4rem 1.2rem; borderRadius: 12px; border: 1px solid var(--surface-container-high); }
-        `}</style>
-
         <div className="table-container">
           <table className="sovereign-table-premium">
             <thead>

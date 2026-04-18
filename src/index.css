@@ -636,87 +636,60 @@ body {
 /*  PRINT STYLES - Professional A4 Invoice       */
 /* ============================================= */
 @media print {
-  /* 1. Reset and Isolate */
+  @page {
+    size: A4 portrait;
+    margin: 0; /* Let the content control margins for precision */
+  }
+
   html, body {
     background: #fff !important;
+    color: #000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
-    height: auto !important;
-    width: 210mm !important; /* Force A4 Width */
-  }
-
-  /* 2. Sovereign Isolation Technique */
-  /* Hide everything at the top level */
-  body > * {
-    visibility: hidden !important;
-  }
-
-  /* Specifically show ONLY the print overlay and its contents */
-  .invoice-print-overlay,
-  .invoice-print-overlay * {
-    visibility: visible !important;
-  }
-
-  /* 3. Force Full Redirection of UI Layout */
-  .invoice-print-overlay {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
     width: 210mm !important;
     height: auto !important;
-    background: #fff !important;
-    display: block !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    z-index: 99999 !important;
-    visibility: visible !important;
-  }
-
-  /* 4. A4 Precision Content */
-  .print-content {
-    display: block !important;
-    width: 210mm !important;
-    margin: 0 !important;
-    padding: 8mm 12mm !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    border: none !important;
-    visibility: visible !important;
     overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* 5. Hide Action Elements */
+  /* Robust Isolation: Hide everything except the printable container */
+  #root > *:not(.printable-area),
+  #root > div:not(.printable-area),
+  .modal-overlay:not(.printable-area),
   .no-print,
   button,
   .btn-executive,
   .sidebar,
   .view-header {
     display: none !important;
-    visibility: hidden !important;
   }
 
-  /* 6. Formatting & Color Accuracy */
-  .print-content, .print-content * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* 7. Page Setup */
-  @page {
-    size: A4 portrait;
-    margin: 0; /* Removes browser headers/footers */
-  }
-
-  /* 8. Fix nested tables and containers */
-  .app-layout, .main-stage, .view-container, #root {
-    background: transparent !important;
+  /* Force the printable area to the top left and ensure it expands */
+  .printable-area {
     display: block !important;
-    padding: 0 !important;
+    visibility: visible !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    height: auto !important;
     margin: 0 !important;
-    border: none !important;
-    visibility: visible !important; /* Parents must be visible for children to show if using visibility hidden at top */
+    padding: 10mm !important; /* Internal A4 padding */
+    background: #fff !important;
+    z-index: 99999 !important;
+    overflow: visible !important;
+  }
+
+  /* Fix for potential flexbox/grid clipping in parents */
+  * {
+    overflow: visible !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #eee !important;
   }
 }
 
