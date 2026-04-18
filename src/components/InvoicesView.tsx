@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import {
-  Package, Printer, Download, ShieldCheck, CheckCircle2, MessageCircle, Mail, Plus, DollarSign, TrendingUp, FileText, X, Edit, Trash2, Search, FileSpreadsheet
+  Package, Download, ShieldCheck, CheckCircle2, MessageCircle, Mail, Plus, DollarSign, TrendingUp, FileText, X, Edit, Trash2, Search, FileSpreadsheet
 } from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Invoice } from '../lib/localDB';
@@ -532,7 +532,6 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                   }} className="btn-executive" style={{ background: 'var(--success)', color: '#fff', border: 'none' }}>
                     <Download size={16} /> CSV
                   </button>
-                  <button onClick={() => window.print()} className="btn-executive"><Printer size={16} /> {t.invoices.preview.print}</button>
                   <button onClick={() => setShowSummaryModal(false)} className="btn-executive" style={{ background: '#eee', color: '#333' }}><X size={16} /></button>
                 </div>
              </div>
@@ -672,35 +671,73 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
       <style>{`
         @media print {
           @page { size: A4; margin: 0; }
-          body { visibility: hidden !important; background: white !important; margin: 0 !important; padding: 0 !important; }
-          .invoice-print-overlay { 
-            position: absolute !important; 
-            left: 0 !important;
-            top: 0 !important;
+          
+          /* Hard reset for all elements */
+          * { 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Hide everything in the document */
+          body > *, 
+          #root > *,
+          .dashboard-container,
+          .sidebar,
+          .main-content > *:not(.invoice-print-overlay),
+          .kpi-grid,
+          .card,
+          header, 
+          nav {
+            display: none !important;
+          }
+
+          /* Show ONLY the invoice overlay and ensure it fills the page */
+          html, body { 
+            background: white !important;
             width: 100% !important;
-            background: white !important; 
-            padding: 0 !important; 
+            height: auto !important;
             margin: 0 !important;
-            overflow: visible !important; 
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+
+          body { visibility: hidden !important; }
+
+          .invoice-print-overlay { 
             display: block !important;
             visibility: visible !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            z-index: 999999 !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
+
           .invoice-print-overlay .no-print { display: none !important; }
+          
           .print-content { 
             visibility: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
             width: 100% !important;
             max-width: 210mm !important;
             margin: 0 auto !important; 
             padding: 15mm !important;
             box-shadow: none !important; 
             border: none !important; 
-            overflow: visible !important;
-            height: auto !important;
-            position: relative !important;
             background: white !important;
+            min-height: 297mm !important;
+            height: auto !important;
+            overflow: visible !important;
           }
+
           .print-content * { visibility: visible !important; }
-          .print-summary-box { break-inside: avoid; }
+          .print-summary-box { break-inside: avoid; margin-bottom: 20px; }
+          .invoice-footer { margin-top: auto !important; padding-top: 20px !important; }
         }
       `}</style>
 
@@ -714,7 +751,6 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
           ))}
         </div>
         <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <button onClick={() => window.print()} className="btn-executive"><Printer size={20} /> {t.invoices.preview.print}</button>
           <button onClick={handleDownloadPDF} className="btn-executive" style={{ background: '#fff', color: '#001a33' }}><FileText size={20} /> PDF</button>
           
           <a href={`https://wa.me/?text=${encodeURIComponent(`${getLabel('عزيزي العميل، فاتورتكم جاهزة. المبلغ:', 'Dear Customer, your invoice is ready. Amount:')} ${invoice.total} SAR`)}`} 
@@ -736,7 +772,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
       <div ref={pdfRef} className="print-content" style={{
         width: '100%', maxWidth: '210mm', minHeight: '297mm', margin: '0 auto', backgroundColor: '#fff', padding: '15mm',
         color: 'black', direction: printLang === 'en' ? 'ltr' : 'rtl', fontFamily: 'Tajawal',
-        boxSizing: 'border-box', position: 'relative'
+        boxSizing: 'border-box', position: 'relative', display: 'flex', flexDirection: 'column'
       }}>
         {/* Decorative Top */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '8px', background: 'linear-gradient(90deg, #001a33 0%, #d4a76a 50%, #001a33 100%)' }}></div>
@@ -841,7 +877,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
         )}
 
         {/* Footer */}
-        <div style={{ position: 'absolute', bottom: '15mm', left: '15mm', right: '15mm', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+        <div className="invoice-footer" style={{ marginTop: 'auto', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '20px' }}>
           <p style={{ fontSize: '0.7rem', color: '#999', margin: 0 }}>{getLabel('صدرت هذه الفاتورة إلكترونياً وهي خاضعة لأنظمة هيئة الزكاة والضريبة والجمارك', 'This invoice is electronically generated and subject to ZATCA regulations')}</p>
         </div>
       </div>
