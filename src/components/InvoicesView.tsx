@@ -211,8 +211,8 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       vat, 
       total,
       status: 'pending',
-      reference_number: formData.reference || `ALGH-${new Date().getFullYear()}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      operation_number: formData.operationNumber || `OP-${(invoices.length + 1).toString().padStart(4, '0')}`,
+      reference_number: formData.reference || `ALGH-${new Date().getFullYear()}-${(Math.max(0, ...invoices.map(inv => parseInt(inv.reference_number?.split('-')[2]) || 0)) + 1).toString().padStart(4, '0')}`,
+      operation_number: formData.operationNumber || `OP-${(Math.max(0, ...invoices.map(inv => parseInt(inv.operation_number?.split('-')[1]) || 0)) + 1).toString().padStart(4, '0')}`,
       is_settlement: formData.isSettlement,
       invoice_type: formData.invoiceType as 'internal' | 'final',
       statement_number: formData.statementNumber,
@@ -331,7 +331,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
             />
           </div>
           <button onClick={() => setShowSummaryModal(true)} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-            <FileSpreadsheet size={16} /> {t.lang === 'ar' ? 'تقرير ملخص' : 'Summary Report'}
+            <FileSpreadsheet size={16} /> {t.invoices.summary_report}
           </button>
           <button onClick={() => { resetForm(); setShowAddModal(true); }} className="btn-executive" style={{ border: 'none' }}>
             <Plus size={18} /> {t.invoices.new_invoice}
@@ -340,7 +340,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       </header>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         <KPICard title={t.invoices.stats.total_due} value={totalRevenue} icon={<DollarSign size={22} />} color="var(--primary)" t={t} />
         <KPICard title={t.invoices.profit_label} value={totalProfit} icon={<TrendingUp size={22} />} color="var(--success)" t={t} />
         <KPICard title={t.invoices.inventory_total} value={totalCargo} icon={<Package size={22} />} color="var(--secondary)" t={t} />
@@ -351,7 +351,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
         <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{t.invoices.active_title}</h3>
-          <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>ZATCA PHASE II READY</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>{t.invoices.zatca_ready}</span>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -545,17 +545,20 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
         <div className="modal-overlay" style={{ zIndex: 6000, background: 'rgba(0,0,0,0.95)', padding: '40px' }}>
           <div className="card" style={{ maxWidth: '1000px', margin: '0 auto', background: '#fff', maxHeight: '90vh', overflowY: 'auto' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid #eee', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
-                <h3 style={{ margin: 0, fontWeight: 950, color: '#001a33' }}>{t.lang === 'ar' ? 'تقرير ملخص الفواتير' : 'Invoices Summary Report'}</h3>
+                <h3 style={{ margin: 0, fontWeight: 950, color: '#001a33' }}>{t.invoices.summary_title}</h3>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => {
                     const csvRows = [
-                      ['Invoice Number', 'Client', 'Date', 'Amount', 'VAT', 'Total', 'Profit', 'Status'].join(','),
+                      ['Reference', 'Client', 'Carrier', 'BOL', 'Date', 'Amount', 'VAT', 'Customs/Fees', 'Total', 'Profit', 'Status'].join(','),
                       ...filteredInvoices.map(inv => [
                         inv.operation_number || inv.reference_number,
                         inv.customers?.name?.replace(/,/g, ' '),
-                        inv.date,
+                        inv.carrier?.name?.replace(/,/g, ' ') || 'N/A',
+                        inv.bol_number || 'N/A',
+                        new Date(inv.created_at).toLocaleDateString(),
                         inv.amount,
                         inv.vat,
+                        (inv.customs_fees || 0) + (inv.port_fees || 0) + (inv.transport_fees || 0),
                         inv.total,
                         inv.profit || 0,
                         inv.status
@@ -580,7 +583,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
              <div className="print-content" style={{ padding: '40px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                   <h1 style={{ color: '#001a33', margin: 0 }}>{settings.companyName}</h1>
-                  <p style={{ color: '#d4a76a', fontWeight: 700 }}>{t.lang === 'ar' ? 'كشف ملخص الفواتير والتحصيلات' : 'Invoices & Collections Summary'}</p>
+                  <p style={{ color: '#d4a76a', fontWeight: 700 }}>{t.invoices.summary_subtitle}</p>
                   <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>
                     {dateFilter.start && `From: ${dateFilter.start}`} {dateFilter.end && `To: ${dateFilter.end}`}
                   </p>
@@ -612,7 +615,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                     <tr style={{ background: '#f8f9fa', fontWeight: 950 }}>
                       <td colSpan={4} style={{ padding: '15px 10px', textAlign: 'right' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
                       <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--success)' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</td>
-                      <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--primary)' }}>{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()} SAR</td>
+                      <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--primary)' }}>{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()} <span style={{fontSize: '0.8rem', opacity: 0.6}}>{t.lang === 'ar' ? 'ر.س' : 'SAR'}</span></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -702,7 +705,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)', gap: '5px' }}>
           {['ar', 'en', 'both'].map(l => (
             <button key={l} onClick={() => setPrintLang(l as any)} style={{ padding: '8px 20px', borderRadius: '12px', border: 'none', background: printLang === l ? 'var(--primary)' : 'transparent', color: printLang === l ? 'var(--secondary)' : '#fff', fontWeight: 900, cursor: 'pointer' }}>
-               {l === 'ar' ? 'العربية' : l === 'en' ? 'English' : 'Bilingual'}
+               {l === 'ar' ? 'العربية' : l === 'en' ? 'English' : t.invoices.bilingual}
             </button>
           ))}
         </div>
@@ -755,7 +758,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
                 {getLabel(invoice.invoice_type === 'final' ? 'فاتورة ضريبية' : 'فاتورة داخلية', invoice.invoice_type === 'final' ? 'TAX INVOICE' : 'INTERNAL')}
              </div>
              <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 950 }}>{invoice.operation_number || invoice.id.substring(0,8)}</p>
-             <p style={{ margin: '5px 0', opacity: 0.7, fontWeight: 800 }}>{getLabel('التاريخ', 'Date')}: {invoice.date}</p>
+             <p style={{ margin: '5px 0', opacity: 0.7, fontWeight: 800 }}>{getLabel('التاريخ', 'Date')}: {new Date(invoice.created_at).toLocaleDateString()}</p>
              <p style={{ margin: '5px 0', color: invoice.status === 'paid' ? '#2e7d32' : '#ed6c02', fontWeight: 950 }}>
                 {invoice.status === 'paid' ? getLabel('مـدفوعة', 'PAID') : getLabel('بانتظار السداد', 'PENDING')}
              </p>
@@ -842,20 +845,3 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
   );
 }
 
-function TotalLine({ label, value, isTotal }: { label: string; value: number | string; isTotal?: boolean }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: isTotal ? '#001a33' : 'inherit' }}>
-      <span style={{ fontSize: isTotal ? '1.1rem' : '0.9rem', fontWeight: isTotal ? 950 : 700 }}>{label}:</span>
-      <span style={{ fontSize: isTotal ? '1.3rem' : '1rem', fontWeight: 950 }}>{value.toLocaleString()} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>SAR</span></span>
-    </div>
-  );
-}
-
-function MetaField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p style={{ margin: 0, fontSize: '0.75rem', color: '#d4a76a', fontWeight: 800 }}>{label}:</p>
-      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: '#001a33' }}>{value}</p>
-    </div>
-  );
-}
