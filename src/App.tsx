@@ -792,7 +792,13 @@ const translations = {
         pending_settlement: 'Pending Settlement',
         bank_reconciliation: 'Bank Reconciliation',
         tax_deadline: 'Tax Deadline'
-      }
+      },
+      tax_est: 'Tax & Zakat (15%)',
+      growth_chart: 'Growth & Resources',
+      compliance_audit: 'ZATCA Compliance Audit',
+      compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
+      export_report: 'Export Analytical Report',
+      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun'
     },
     invoices: {
       title: 'Invoices & Receipts',
@@ -874,13 +880,6 @@ const translations = {
       status_label: 'Status',
       save_changes: 'Save Changes',
       lang: 'en'
-    },
-      tax_est: 'Tax & Zakat (15%)',
-      growth_chart: 'Growth & Resources',
-      compliance_audit: 'ZATCA Compliance Audit',
-      compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
-      export_report: 'Export Analytical Report',
-      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun'
     },
     accounting: {
       invoice_editor: 'Analytical Invoice Editor',
