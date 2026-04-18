@@ -1507,15 +1507,23 @@ export default function App() {
     setActivationError('');
     let expiryDate: Date | 'lifetime' | null = null;
     
-    if (key === 'LEDGER-PRO-2026') {
+    const keyUpper = key.trim().toUpperCase();
+    
+    if (keyUpper === 'ALGH-LIFETIME-PRO-2026' || keyUpper === 'LEDGER-PRO-2026') {
       expiryDate = 'lifetime';
-    } else if (key.startsWith('LEDGER-S10-')) {
+    } else if (keyUpper === 'ALGH-10D-PRO-2026') {
       expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 10);
-    } else if (key.startsWith('LEDGER-M30-')) {
+    } else if (keyUpper === 'ALGH-30D-PRO-2026') {
+      expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+    } else if (keyUpper.startsWith('LEDGER-S10-')) {
+      expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 10);
+    } else if (keyUpper.startsWith('LEDGER-M30-')) {
       expiryDate = new Date();
       expiryDate.setMonth(expiryDate.getMonth() + 1);
-    } else if (key.startsWith('LEDGER-LIF-')) {
+    } else if (keyUpper.startsWith('LEDGER-LIF-')) {
       expiryDate = 'lifetime';
     } else {
       setActivationError(lang === 'ar' ? 'مفتاح التنشيط غير صالح' : 'Invalid activation key');
@@ -2164,6 +2172,11 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
            <p style={{ color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.95rem' }}>
               {lang === 'ar' ? 'يرجى إدخال مفتاح الترسيم القانوني للمتابعة' : 'Please enter your legal license key to proceed'}
            </p>
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', fontWeight: 800 }}>10 DAYS</span>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', fontWeight: 800 }}>30 DAYS</span>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--primary)', color: 'var(--secondary)', fontWeight: 800 }}>LIFETIME</span>
+           </div>
         </header>
 
         <form onSubmit={(e) => { e.preventDefault(); onActivate(key); }}>
