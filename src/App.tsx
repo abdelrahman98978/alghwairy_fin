@@ -336,6 +336,13 @@ const translations = {
         preview: 'معاينة وطباعة',
         options: 'خيارات'
       },
+      preview: {
+        print: 'طباعة الفاتورة',
+        whatsapp: 'مشاركة عبر واتساب',
+        email: 'إرسال بريد',
+        mark_paid: 'تأكيد السداد',
+        close: 'إغلاق'
+      },
       modal: {
         title: 'إصدار فاتورة ضريبية لوجستية',
         client_label: 'العميل المستفيد',
@@ -1021,6 +1028,13 @@ const translations = {
         status: 'Payment Status',
         preview: 'Preview & Print',
         options: 'Options'
+      },
+      preview: {
+        print: 'Print Invoice',
+        whatsapp: 'Send WhatsApp',
+        email: 'Send Email',
+        mark_paid: 'Confirm Payment',
+        close: 'Close'
       },
       modal: {
         title: 'Issue Tax Invoice',
@@ -1718,7 +1732,7 @@ export default function App() {
       case 'dashboard': return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
       case 'customers': return <CustomersView showToast={showToast} logActivity={logActivity} t={{...t.customers, lang}} />;
       case 'accounting': return <AccountingView showToast={showToast} logActivity={logActivity} t={{...t.accounting, lang}} />;
-      case 'invoices': return <InvoicesView showToast={showToast} logActivity={logActivity} t={{...t.invoices, lang}} />;
+      case 'invoices': return <InvoicesView showToast={showToast} logActivity={logActivity} t={t} />;
       case 'prepayments': return <PrepaymentsView showToast={showToast} logActivity={logActivity} t={{...t.prepayments, lang}} />;
       case 'expenses': return <ExpensesView showToast={showToast} logActivity={logActivity} t={t.expenses} lang={lang} />;
       case 'payroll': return <PayrollView showToast={showToast} logActivity={logActivity} t={{...t.payroll, lang}} />;

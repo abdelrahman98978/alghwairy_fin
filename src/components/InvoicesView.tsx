@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import html2pdf from 'html2pdf.js';
 import {
   Package, Printer, Download, ShieldCheck, CheckCircle2, MessageCircle, Mail, Plus, DollarSign, TrendingUp, FileText, X
 } from 'lucide-react';
@@ -312,6 +313,7 @@ function KPICard({ title, value, icon, color, t }: { title: string; value: numbe
 }
 
 function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice: Invoice; settings: any; onClose: () => void; onMarkPaid?: (id: string) => void; t: any }) {
+  const pdfRef = useRef<HTMLDivElement>(null);
   const sovereignQRData = JSON.stringify({
     op: invoice.operation_number || invoice.id,
     client: invoice.customers?.name || 'Customer',
@@ -400,12 +402,30 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
     document.body.removeChild(a); URL.revokeObjectURL(url);
   };
 
+  const handleDownloadPDF = () => {
+    const element = pdfRef.current;
+    if (!element) return;
+    
+    const opt = {
+      margin: 10,
+      filename: `Sovereign-Invoice-${invoice.operation_number || invoice.id}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    (html2pdf() as any).set(opt).from(element).save();
+  };
+
   return (
     <div className="modal-overlay invoice-print-overlay" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Toolbar */}
       <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1rem', display: 'flex', justifyContent: 'center', gap: '0.8rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <Printer size={20} /> {t.invoices.preview.print}
+        </button>
+        <button onClick={handleDownloadPDF} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <FileText size={20} /> {t.lang === 'ar' ? 'تحميل PDF' : 'Download PDF'}
         </button>
         <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', padding: '0.9rem 1.8rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <MessageCircle size={20} /> {t.invoices.preview.whatsapp}
@@ -432,7 +452,7 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
       </div>
 
       {/* A4 Page */}
-      <div className="print-content" style={{
+      <div ref={pdfRef} className="print-content" style={{
         width: '210mm', minHeight: '297mm', margin: '0 auto', position: 'relative',
         backgroundColor: '#fff', padding: '15mm', color: 'black', direction: t.lang === 'ar' ? 'rtl' : 'ltr',
         fontFamily: 'Tajawal', borderRadius: '4px', boxShadow: '0 25px 80px rgba(0,0,0,0.3)'

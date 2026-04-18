@@ -278,6 +278,13 @@ export interface Translations {
       preview: string;
       options: string;
     };
+    preview: {
+      print: string;
+      whatsapp: string;
+      email: string;
+      mark_paid: string;
+      close: string;
+    };
     modal: {
       title: string;
       client_label: string;
