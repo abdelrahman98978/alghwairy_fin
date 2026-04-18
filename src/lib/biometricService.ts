@@ -51,8 +51,8 @@ export const biometricService = {
           challenge,
           rp: {
             name: "Alghwairy Sovereign Ledger",
-            // Use current host or a static ID for app:// protocol consistency
-            id: window.location.hostname || "alghwairy-sovereign-ledger"
+            // Do NOT set rp.id — let the browser derive it from the current origin.
+            // Setting it explicitly breaks enrollment under custom protocols (app://)
           },
           user: {
             id: userID,

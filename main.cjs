@@ -47,8 +47,10 @@ function createWindow() {
   if (isDev) {
     win.loadURL('http://localhost:5173');
   } else {
-    const indexPath = path.join(__dirname, 'dist/index.html');
-    win.loadFile(indexPath);
+    // IMPORTANT: Use the custom 'app://' protocol instead of file://
+    // file:// is NOT a secure context, so WebAuthn/biometrics will fail.
+    // The 'app' scheme was registered as privileged+secure at the top of this file.
+    win.loadURL('app://./dist/index.html');
   }
 
   // === IPC: Print to PDF ===
