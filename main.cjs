@@ -30,11 +30,10 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true,
+      webSecurity: true, // Secure APIs like WebAuthn REQUIRE webSecurity to be true
+      allowRunningInsecureContent: false,
       sandbox: false,
-      // Enable biometric support in some Electron versions
-      enableWebSQL: false,
+      enableWebSQL: true, 
       spellcheck: false
     },
   });
