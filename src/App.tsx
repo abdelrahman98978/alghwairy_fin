@@ -34,8 +34,7 @@ import {
   Trash2,
   Share2
 } from 'lucide-react';
-import { localDB, pullFromCloud, readFromDisk, writeToDisk } from './lib/localDB';
-import { checkCloudConnection } from './lib/supabase';
+import { localDB } from './lib/localDB';
 import { hasPermission, type AppModule } from './lib/permissions';
 
 // --- Views ---
@@ -59,6 +58,7 @@ import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
 import CommunicationsView from './components/CommunicationsView';
+import { cloudSyncEngine } from './lib/cloudSyncEngine';
 import ContractsView from './components/ContractsView';
 
 
@@ -725,6 +725,19 @@ const translations = {
       transactions_automated: 'العمليات المؤتمتة',
       configure: 'تكوين'
     },
+    cloud_sync: {
+      title: 'المزامنة السحابية',
+      subtitle: 'ربط القاعدة المحلية مع السحابة السيادية للمزامنة والوصول المتعدد.',
+      status_connected: 'متصل بالسحابة',
+      status_disconnected: 'غير متصل - وضع محلي فقط',
+      sync_now: 'مزامنة الآن',
+      last_sync: 'آخر مزامنة ناجحة',
+      settings: 'إعدادات الربط',
+      supabase_url: 'رابط Supabase URL',
+      supabase_key: 'مفتاح Anon Key',
+      auto_sync: 'مزامنة تلقائية',
+      conflict_resolution: 'حل التعارضات الآلي'
+    }
   },
   en: {
     title: 'Alghwairy Customs Clearance',
@@ -1415,6 +1428,19 @@ const translations = {
       google_ads_search: 'Google Ads Search',
       x_sovereign_presence: 'X Sovereign Presence',
       linkedin_institutional: 'LinkedIn Institutional'
+    },
+    cloud_sync: {
+      title: 'Cloud Synchronization',
+      subtitle: 'Connecting local database to sovereign cloud for multi-device access.',
+      status_connected: 'Connected to Cloud',
+      status_disconnected: 'Disconnected - Local Mode',
+      sync_now: 'Sync Now',
+      last_sync: 'Last successful sync',
+      settings: 'Connection Settings',
+      supabase_url: 'Supabase URL',
+      supabase_key: 'Anon Key',
+      auto_sync: 'Auto Sync',
+      conflict_resolution: 'Auto Conflict Resolution'
     }
   }
 };
@@ -1468,8 +1494,6 @@ export default function App() {
   const [userName, setUserName] = useState('عبدالله الغويري');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [isCloudSynced, setIsCloudSynced] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showAddTrxModal, setShowAddTrxModal] = useState(false);
   const [newTrx, setNewTrx] = useState({
     description: '',
@@ -1589,58 +1613,16 @@ export default function App() {
     };
   }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
 
-  const initializeCloudSync = useCallback(async () => {
-    const isOnline = await checkCloudConnection();
-    if (!isOnline) {
-      console.warn('[Cloud] Offline - Sync postponed');
-      return;
-    }
-
-    setIsSyncing(true);
-    try {
-      const cloudData = await pullFromCloud();
-      const localData = readFromDisk();
-
-      if (cloudData) {
-        // Migration logic: If local has more data, push to cloud. Else pull.
-        const localInvoices = localData.invoices?.length || 0;
-        const cloudInvoices = cloudData.invoices?.length || 0;
-
-        if (localInvoices > cloudInvoices) {
-           console.log('[Cloud] Migration: Pushing local data to cloud...');
-           await writeToDisk(localData); // Triggers upsert
-           showToast(lang === 'ar' ? 'تمت مزامنة البيانات المحلية مع السحابة' : 'Local data synced to cloud');
-        } else if (cloudInvoices > localInvoices) {
-           console.log('[Cloud] Sync: Pulling data from cloud...');
-           // Simple merge/overwrite for this sovereign version
-           await writeToDisk({ ...localData, ...cloudData });
-           showToast(lang === 'ar' ? 'تم تحديث البيانات من السحابة بنجاح' : 'Data updated from cloud successfully');
-        }
-      } else {
-         // First time cloud setup - Mirror local
-         console.log('[Cloud] Initial Setup: Mirroring local data...');
-         await writeToDisk(localData);
-      }
-      setIsCloudSynced(true);
-    } catch (e: any) {
-      showToast(lang === 'ar' ? 'خطأ في المزامنة السحابية: ' : 'Cloud sync error: ' + e.message, 'error');
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [lang, showToast]);
-
   const fetchData = useCallback(() => {
-    const data = localDB.get('journal_entries'); // Using a more core table
-    const trxData = localDB.getActive('transactions');
-    setTransactions(trxData as Transaction[]);
+    const data = localDB.getActive('transactions');
+    setTransactions(data as Transaction[]);
     setLastSyncTime(new Date().toLocaleTimeString());
     
     // Check for unread Sovereign Messages
     const settings = localDB.get('sync_settings');
     const myId = settings?.device_id;
     if (myId) {
-      const msgs = localDB.getAll('sovereign_messages');
-      const unread = Array.isArray(msgs) ? msgs.filter(m => m.recipient === myId && !m.read).length : 0;
+      const unread = localDB.getAll('sovereign_messages').filter(m => m.recipient === myId && !m.read).length;
       setUnreadMsgCount(unread);
     }
   }, []);
@@ -1648,7 +1630,6 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn && !publicInvoiceId) {
       fetchData();
-      initializeCloudSync();
       const timer = setInterval(() => {
         setLastSyncTime(new Date().toLocaleTimeString());
         
@@ -1705,6 +1686,16 @@ export default function App() {
         }
       }, 60000);
       
+      const cloudSyncTimer = setInterval(() => {
+        if (localStorage.getItem('sov_cloud_sync_enabled') === 'true') {
+          cloudSyncEngine.syncAll().then(stats => {
+            if (stats && (stats.uploaded > 0 || stats.downloaded > 0)) {
+               fetchData();
+            }
+          }).catch(console.error);
+        }
+      }, 180000); // 3 Minutes
+      
       // PRODUCTION STABILITY: Overlay-Killer Effect
       const killer = setInterval(() => {
         const suspicious = document.querySelectorAll('[id*="shadow-host"], [id^="preact-"], [class*="shadow-host"], #preact-border-shadow-host');
@@ -1714,6 +1705,7 @@ export default function App() {
       return () => {
         clearInterval(timer);
         clearInterval(killer);
+        clearInterval(cloudSyncTimer);
       };
     }
   }, [isLoggedIn, publicInvoiceId, fetchData]);

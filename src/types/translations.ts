@@ -431,8 +431,23 @@ export interface Translations {
       documents: string;
       security: string;
       backup: string;
+      cloud: string;
     };
     lang: string;
+    cloud_sync: {
+      title: string;
+      subtitle: string;
+      status: string;
+      enable_sync: string;
+      disable_sync: string;
+      sync_now: string;
+      connected: string;
+      disconnected: string;
+      last_sync: string;
+      supabase_url: string;
+      supabase_key: string;
+      auto_sync_label: string;
+    };
   };
   security: {
     lang: string;

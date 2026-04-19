@@ -79,7 +79,10 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     reportFooter: localStorage.getItem('sov_report_footer') || 'جميع الحقوق محفوظة © مؤسسة الغويري 2026',
     syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily',
     notifSounds: localStorage.getItem('sov_notif_sounds') === 'true',
-    notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true'
+    notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true',
+    supabaseUrl: localStorage.getItem('sov_supabase_url') || '',
+    supabaseKey: localStorage.getItem('sov_supabase_key') || '',
+    cloudSyncEnabled: localStorage.getItem('sov_cloud_sync_enabled') === 'true'
   });
 
   const handleSave = async () => {
@@ -287,7 +290,8 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     { id: 'appearance', label: t.tabs.appearance, icon: <Palette size={18} /> },
     { id: 'documents', label: t.tabs.documents, icon: <FileText size={18} /> },
     { id: 'biometrics', label: t.tabs.security, icon: <Fingerprint size={18} /> },
-    { id: 'backup', label: t.tabs.backup, icon: <Cloud size={18} /> },
+    { id: 'cloud_sync', label: t.lang === 'ar' ? 'المزامنة السحابية' : 'Cloud Sync', icon: <Cloud size={18} /> },
+    { id: 'backup', label: t.tabs.backup, icon: <Database size={18} /> },
     { id: 'cluster', label: t.lang === 'ar' ? 'عنقود التزامن' : 'Cluster Sync', icon: <Share2 size={18} /> },
   ];
 
@@ -620,6 +624,69 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                      </div>
                   </div>
                </div>
+           )}
+
+           {activeTab === 'cloud_sync' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                       <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>
+                         {t.lang === 'ar' ? 'المزامنة السحابية' : 'Cloud Synchronization'}
+                       </h3>
+                       <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>
+                         {t.lang === 'ar' ? 'ربط النظام بالسحابة السيادية للوصول المتعدد.' : 'Sync system with sovereign cloud for multi-access.'}
+                       </p>
+                    </div>
+                    <Cloud size={24} color="var(--primary)" />
+                 </div>
+
+                 <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-container-high)' }}>
+                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                         <div style={{ width: 12, height: 12, borderRadius: '50%', background: settings.cloudSyncEnabled ? '#4AA96C' : '#BA1A1A' }} />
+                         <span style={{ fontWeight: 900 }}>{settings.cloudSyncEnabled ? (t.lang === 'ar' ? 'متصل' : 'Connected') : (t.lang === 'ar' ? 'غير متصل' : 'Disconnected')}</span>
+                       </div>
+                       <button 
+                         onClick={() => setSettings({...settings, cloudSyncEnabled: !settings.cloudSyncEnabled})} 
+                         className="btn-executive" 
+                         style={{ width: 'auto', background: settings.cloudSyncEnabled ? '#BA1A1A10' : 'var(--primary)', color: settings.cloudSyncEnabled ? '#BA1A1A' : 'var(--secondary)', border: settings.cloudSyncEnabled ? '1px solid #BA1A1A' : 'none' }}
+                       >
+                         {settings.cloudSyncEnabled ? (t.lang === 'ar' ? 'تعطيل' : 'Disable Settings') : (t.lang === 'ar' ? 'تفعيل الاتصال' : 'Activate Connection')}
+                       </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.2rem' }}>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'رابط Supabase URL' : 'Supabase URL'}</label>
+                          <input 
+                            className="input-executive" 
+                            placeholder="https://xyz.supabase.co"
+                            value={settings.supabaseUrl} 
+                            onChange={e => setSettings({...settings, supabaseUrl: e.target.value})} 
+                          />
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'مفتاح Anon Key' : 'Anon Key'}</label>
+                          <input 
+                            type="password"
+                            className="input-executive" 
+                            placeholder="eyJhbG..."
+                            value={settings.supabaseKey} 
+                            onChange={e => setSettings({...settings, supabaseKey: e.target.value})} 
+                          />
+                       </div>
+                    </div>
+
+                    <div style={{ padding: '1rem', background: 'rgba(0, 26, 51, 0.05)', borderRadius: '12px', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                       <ShieldCheck size={20} color="var(--primary)" style={{ marginTop: '0.2rem' }} />
+                       <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8, lineHeight: 1.5 }}>
+                         {t.lang === 'ar' 
+                            ? 'يتم تشفير كافة البيانات محلياً قبل إرسالها إلى السحابة. المزامنة السحابية تدعم الوصول من المتصفح والتطبيق في آن واحد.' 
+                            : 'All data is encrypted locally before cloud transmission. Cloud sync supports simultaneous access from browser and app.'}
+                       </p>
+                    </div>
+                 </div>
+              </div>
            )}
 
            {activeTab === 'backup' && (

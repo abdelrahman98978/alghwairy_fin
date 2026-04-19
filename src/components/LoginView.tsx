@@ -12,10 +12,8 @@ import {
   Database,
   Smartphone
 } from 'lucide-react';
-import { localDB, writeToDisk, pullFromCloud } from '../lib/localDB';
+import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
-import { supabase } from '../lib/supabase';
-import { Cloud, Mail } from 'lucide-react';
 
 export default function LoginView({ onLogin }: { onLogin: (role: string, name: string) => void }) {
   const [username, setUsername] = useState('عبدالله الغويري');
@@ -35,14 +33,9 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
   
   // 2FA State
   const [show2FA, setShow2FA] = useState(false);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [pendingUser, setPendingUser] = useState<any>(null);
   const [verifying2FA, setVerifying2FA] = useState(false);
-  const [isCloudSynced, setIsCloudSynced] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  // Cloud Auth State
-  const [authMode, setAuthMode] = useState<'local' | 'cloud'>('local');
-  const [email, setEmail] = useState('');
-  const [cloudPassword, setCloudPassword] = useState('');
 
   // Recovery Key
   const MASTER_RECOVERY_KEY = 'ALGHWAIRY-RECOVERY-2026';
@@ -97,36 +90,6 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
            setLoading(false);
        }
     }, 1200);
-  };
-
-  const handleCloudLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password: cloudPassword
-      });
-
-      if (authError) throw authError;
-
-      // After cloud login, pull data
-      const cloudData = await pullFromCloud();
-      if (cloudData) {
-        await writeToDisk(cloudData);
-        // Find the user in local session now that we pulled it
-        const role = data.user?.email === 'abdullah@alghwairy.com' ? 'admin' : 'user';
-        onLogin(role, data.user?.email || 'Cloud User');
-      } else {
-        setError('تم تسجيل الدخول ولكن لا توجد بيانات سحابية مرتبطة.');
-      }
-    } catch (err: any) {
-      setError(err.message === 'Invalid login credentials' ? 'بيانات الدخول السحابية غير صحيحة' : err.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleRecovery = (e: React.FormEvent) => {
@@ -215,7 +178,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
       {/* Visual Identity Side - Institution Branding */}
       <div className="login-branding" style={{ 
         flex: 1.4, 
-        background: 'linear-gradient(135deg, #001a33 0%, #003366 100%)',
+        background: 'linear-gradient(135deg, #001a33 0%, #003366 100%)', // Alghwairy Navy
         padding: '2rem 3.5rem', 
         display: 'flex', 
         flexDirection: 'column', 
@@ -261,176 +224,111 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                </div>
                <div style={{ width: 1.5, height: 40, background: 'rgba(212,167,106,0.2)' }}></div>
                <div>
-                  <h4 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--secondary)', margin: 0 }}>FATOORA</h4>
-                  <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Phase II Ready</p>
+                  <h4 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'white', margin: 0 }}>OFFLINE</h4>
+                  <p style={{ fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.2rem' }}>Sovereign Data</p>
                </div>
             </div>
          </div>
       </div>
 
-      {/* Login Form Side */}
       <div className="login-form-side" style={{ 
         flex: 1, 
-        padding: '3rem', 
+        background: 'var(--background)', 
         display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        background: 'white' 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: '1rem'
       }}>
-        <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
-          <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem' }}>تسجيل الدخول</h2>
-            <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 700 }}>يرجى اختيار وسيلة الدخول المفضلة</p>
-          </div>
+         <div className="login-card" style={{ padding: '1.25rem 2.25rem', maxWidth: '440px', width: '100%' }}>
+            <header style={{ marginBottom: '1.25rem' }}>
+               <h2 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.2rem', fontFamily: 'Tajawal' }}>بوابة الولوج المؤسسي</h2>
+               <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>نظام التخليص الجمركي - الميزان المحاسبي</p>
+            </header>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', background: 'var(--surface-container-low)', padding: '4px', borderRadius: '12px' }}>
-            <button 
-              type="button" 
-              onClick={() => setAuthMode('local')} 
-              style={{ flex: 1, padding: '0.75rem', border: 'none', borderRadius: '8px', background: authMode === 'local' ? 'var(--primary)' : 'transparent', color: authMode === 'local' ? 'var(--secondary)' : 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <Lock size={16} /> دخول محلي
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setAuthMode('cloud')} 
-              style={{ flex: 1, padding: '0.75rem', border: 'none', borderRadius: '8px', background: authMode === 'cloud' ? 'var(--primary)' : 'transparent', color: authMode === 'cloud' ? 'var(--secondary)' : 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <Cloud size={16} /> مزامنة سحابية
-            </button>
-          </div>
+            {error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: '#fce8e6', color: '#b3261e', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.7rem', fontWeight: 800 }}>
+                 <AlertCircle size={14} /> {error}
+              </div>
+            )}
 
-          {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: '#fce8e6', color: '#b3261e', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.8rem', fontWeight: 800 }}>
-               <AlertCircle size={18} /> {error}
-            </div>
-          )}
-
-          {authMode === 'local' ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-               <div className="login-input-group">
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>اسم المستخدم</label>
+            <form onSubmit={handleLogin}>
+               <div className="login-input-group" style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.4rem', textAlign: 'inherit' }}>اسم المستخدم</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="text" 
                       className="login-input" 
-                      style={{ paddingInlineStart: '2.75rem', width: '100%' }}
+                      style={{ paddingInlineStart: '2.75rem', paddingInlineEnd: '1rem', fontSize: '0.95rem', textAlign: 'inherit' }}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
-                    <User size={18} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
+                    <User size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
                   </div>
                </div>
 
-               <div className="login-input-group">
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>كلمة المرور</label>
+               <div className="login-input-group" style={{ marginBottom: '0.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.4rem', textAlign: 'inherit' }}>كلمة المرور السريّة</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="password" 
                       className="login-input" 
-                      style={{ paddingInlineStart: '2.75rem', width: '100%' }}
+                      style={{ paddingInlineStart: '2.75rem', paddingInlineEnd: '1rem', fontSize: '0.95rem', textAlign: 'inherit' }}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                     />
-                    <Lock size={18} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
+                    <Lock size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
                   </div>
                </div>
 
-               <div style={{ textAlign: 'start' }}>
-                  <button type="button" onClick={() => setShowRecovery(true)} style={{ all: 'unset', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Key size={14} /> نسيت كلمة المرور؟ (استعادة مؤسسية)
+               <div style={{ textAlign: 'start', marginBottom: '1.25rem' }}>
+                  <button type="button" onClick={() => setShowRecovery(true)} style={{ all: 'unset', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Key size={12} /> نسيت كلمة المرور؟ (استعادة مؤسسية)
                   </button>
                </div>
 
-               <button disabled={loading || isLocked} type="submit" className="btn-executive" style={{ width: '100%', padding: '1rem', borderRadius: '12px', fontSize: '1rem', justifyContent: 'center', gap: '0.75rem', filter: isLocked ? 'grayscale(1)' : 'none', opacity: isLocked ? 0.5 : 1 }}>
+               <button disabled={loading || isLocked} type="submit" className="btn-executive" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontSize: '0.9rem', justifyContent: 'center', gap: '0.5rem', filter: isLocked ? 'grayscale(1)' : 'none', opacity: isLocked ? 0.5 : 1 }}>
                   {isLocked ? (
-                    <><ShieldAlert size={20} /> النظام مغلق أمنياً</>
+                    <><ShieldAlert size={16} /> النظام مغلق أمنياً</>
                   ) : loading ? (
-                    <><Loader2 size={20} className="spin" /> جاري التحقق...</>
+                    <><Loader2 size={16} className="spin" /> جاري المصادقة...</>
                   ) : (
-                    <>دخول النظام <ArrowRight size={20} /></>
+                    <>دخول آمن للمنصة <ArrowRight size={16} /></>
                   )}
                </button>
+            </form>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+               <button 
+                type="button" 
+                onClick={handleBiometricLogin}
+                disabled={isLocked}
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
+                >
+                  <Fingerprint size={14} /> تسجيل الدخول بالبصمة
+               </button>
+
+               {(localDB.get('user_roles').find((u: any) => u.name === username)?.totp_enabled) && (
                  <button 
-                   type="button" 
-                   onClick={handleBiometricLogin}
-                   disabled={isLocked || loading}
-                   style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--outline-variant)', background: 'transparent', color: 'var(--primary)', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
-                 >
-                   <Fingerprint size={18} /> دخول سريع بالبصمة
+                  type="button" 
+                  onClick={() => setShow2FA(true)}
+                  disabled={isLocked}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
+                  >
+                    <Smartphone size={14} /> استخدام رمز Google Auth
                  </button>
-                 
-                 {(localDB.get('user_roles').find((u: any) => u.name === username)?.totp_enabled) && (
-                   <button 
-                     type="button" 
-                     onClick={() => setShow2FA(true)}
-                     disabled={isLocked || loading}
-                     style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--outline-variant)', background: 'transparent', color: 'var(--primary)', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
-                   >
-                     <Smartphone size={18} /> رمز التحقق Google Auth
-                   </button>
-                 )}
-               </div>
-            </form>
-          ) : (
-            <form onSubmit={handleCloudLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-               <div className="login-input-group">
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>البريد الإلكتروني</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="email" 
-                      className="login-input" 
-                      style={{ paddingInlineStart: '2.75rem', width: '100%' }}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="user@alghwairy.com"
-                      required
-                    />
-                    <Mail size={18} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
-                  </div>
-               </div>
-
-               <div className="login-input-group">
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>كلمة المرور السحابية</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="password" 
-                      className="login-input" 
-                      style={{ paddingInlineStart: '2.75rem', width: '100%' }}
-                      value={cloudPassword}
-                      onChange={(e) => setCloudPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
-                    <Key size={18} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
-                  </div>
-               </div>
-
-               <button disabled={loading} type="submit" className="btn-executive" style={{ width: '100%', padding: '1rem', borderRadius: '12px', fontSize: '1rem', justifyContent: 'center', gap: '0.75rem' }}>
-                  {loading ? (
-                    <><Loader2 size={20} className="spin" /> جاري المزامنة...</>
-                  ) : (
-                    <>تحميل البيانات السحابية <Database size={20} /></>
-                  )}
-               </button>
-               <p style={{ fontSize: '0.7rem', textAlign: 'center', color: 'var(--on-surface-variant)', fontWeight: 600, lineHeight: 1.5 }}>
-                 سيتم سحب جميع بيانات المؤسسة المرتبطة بحسابك وتحديث السجل المحلي فوراً.
-               </p>
-            </form>
-          )}
-
-          <div style={{ textAlign: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--outline-variant)', opacity: 0.5 }}>
-             <span className="version-badge">
-                <ShieldCheck size={12} /> v2.0.0 Cloud Sync Edition
-             </span>
-          </div>
-        </div>
+               )}
+            </div>
+            
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--outline-variant)', opacity: 0.5 }}>
+               <span className="version-badge">
+                  <ShieldCheck size={12} /> v1.0.0 STABLE BUILD
+               </span>
+            </div>
+         </div>
       </div>
 
-      {/* Security Overlays */}
+
       {showBiometric && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.9)', backdropFilter: 'blur(15px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ textAlign: 'center', color: 'white' }}>
@@ -438,7 +336,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                   {scanStatus === 'scanning' && <div className="scanning-line"></div>}
                   <Fingerprint size={120} color={scanStatus === 'success' ? '#4AA96C' : scanStatus === 'failed' ? '#BA1A1A' : 'var(--secondary)'} style={{ opacity: scanStatus === 'scanning' ? 0.5 : 1, transition: 'all 0.3s ease' }} />
                </div>
-               <h3 style={{ fontSize: '1.5rem', fontWeight: 900 }}>
+               <h3 style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Tajawal' }}>
                   {scanStatus === 'scanning' ? 'جاري مسح البصمة...' : scanStatus === 'success' ? 'تم التحقق بنجاح' : 'فشل التحقق'}
                </h3>
                <p style={{ opacity: 0.7, fontWeight: 700 }}>{username}</p>
@@ -448,12 +346,12 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
 
       {showRecovery && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.85)', backdropFilter: 'blur(20px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-            <div className="card shadow-executive" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem', textAlign: 'center', border: '1px solid rgba(212,167,106,0.2)', background: 'white', borderRadius: '24px' }}>
+            <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem', textAlign: 'center', border: '1px solid rgba(212,167,106,0.2)', boxShadow: '0 30px 60px -12px rgba(0,0,0,0.5)' }}>
                <div style={{ width: 64, height: 64, borderRadius: '16px', background: 'var(--surface-container-high)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
                   {recoverySuccess ? <ShieldCheck size={32} color="var(--success)" /> : <Database size={32} />}
                </div>
                
-               <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem' }}>
+               <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>
                  {recoverySuccess ? 'تم التحقق من الهوية' : 'بروتوكول استعادة الوصول'}
                </h3>
                <p style={{ opacity: 0.7, fontWeight: 600, fontSize: '0.8rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
@@ -496,7 +394,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                   <Smartphone size={32} />
                </div>
                
-               <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem' }}>تحقق Google Authenticator</h3>
+               <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>تحقق Google Authenticator</h3>
                <p style={{ opacity: 0.7, fontWeight: 700, fontSize: '0.8rem', marginBottom: '2rem' }}>يرجى إدخال رمز التحقق المكون من 6 أرقام من تطبيقك الجوال.</p>
 
                <form onSubmit={verifyTOTPLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
