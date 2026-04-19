@@ -88,98 +88,103 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
 
   return (
     <div className="slide-in no-print">
-      {/* Institution Snapshot */}
-      <div style={{ display: 'flex', gap: '1.2rem', marginBottom: '2.5rem', background: 'var(--surface-container-low)', padding: '0.8rem 1.5rem', borderRadius: '18px', border: '1px solid var(--surface-container-high)', alignItems: 'center', overflowX: 'auto' }}>
-         <SnapshotItem label={isArabic ? 'حالة الامتثال' : 'Compliance'} value="100%" color="var(--success)" />
-         <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'إجمالي السيولة' : 'Total Liquidity'} value={`${(availableLiquidity/1000).toFixed(0)}K`} color="var(--primary)" />
-         <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'قيمة التخليص' : 'Customs Throughput'} value="1.2M" color="#3182ce" />
-         <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'العملاء النشطون' : 'Active Partners'} value={partnerCount.toString()} color="var(--secondary)" />
-         <div style={{ width: 1, height: 24, background: 'var(--surface-container-high)' }}></div>
-         <SnapshotItem label={isArabic ? 'الأداء العام' : 'Performance'} value={totalRevenue > 0 ? `+${((netProfit/totalRevenue)*100).toFixed(1)}%` : '0%'} color="var(--success)" />
+      {/* Institution Snapshot - Tonal Editorial Layer */}
+      <div className="card-layer-2" style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', padding: '1.25rem 2.5rem', borderRadius: '100px', alignItems: 'center', overflowX: 'auto', border: '1px solid var(--outline-variant)' }}>
+         <SnapshotItem label={isArabic ? 'قوة الامتثال' : 'Compliance'} value="100%" color="var(--success)" />
+         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <SnapshotItem label={isArabic ? 'السيولة النشطة' : 'Liquidity'} value={`${(availableLiquidity/1000).toFixed(0)}K`} color="var(--primary)" />
+         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <SnapshotItem label={isArabic ? 'حمولة التخليص' : 'Throughput'} value="1.2M" color="var(--secondary)" />
+         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <SnapshotItem label={isArabic ? 'الشركاء الاستراتيجيون' : 'Partners'} value={partnerCount.toString()} color="var(--primary)" />
          <div style={{ flex: 1 }}></div>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', opacity: 0.7 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 10px var(--success)' }}></div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--on-surface-variant)' }}>OFFLINE STORAGE SECURED</span>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div className="pulse-green" style={{ width: 8, height: 8, borderRadius: '50%' }}></div>
+            <span className="label-sovereign" style={{ fontSize: '0.65rem', opacity: 0.6, letterSpacing: '1px' }}>INSTITUTIONAL ENCRYPTION ACTIVE</span>
          </div>
       </div>
 
-      {/* Compliance Shield */}
+      {/* Compliance Shield - Direct ZATCA Integration Visual */}
       <div 
         onClick={() => showToast(isArabic ? 'تم التحقق من الامتثال لمتطلبات زاتكا' : 'ZATCA Compliance Verified.', 'success')}
-        className="compliance-shield" 
-        style={{ cursor: 'pointer', border: 'none', marginBottom: '2.5rem', background: 'var(--primary)' }}
+        className="compliance-shield hover-lift" 
+        style={{ cursor: 'pointer', border: 'none', marginBottom: '3rem', background: 'var(--primary)', boxShadow: 'var(--shadow-lg)' }}
       >
-        <div style={{ background: 'var(--secondary)', padding: '0.85rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', boxShadow: '0 6px 12px rgba(0,0,0,0.15)' }}>
-          <CheckCircle2 size={24} />
+        <div style={{ background: 'var(--secondary)', padding: '1rem', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', boxShadow: '0 8px 24px rgba(212, 167, 106, 0.3)' }}>
+          <CheckCircle2 size={28} />
         </div>
-        <div style={{ flex: 1, paddingInlineStart: '1.5rem' }}>
-          <h3 style={{ color: 'var(--secondary)', marginBottom: '0.2rem', fontFamily: 'Tajawal', fontWeight: 900, fontSize: '1.2rem' }}>{t.compliance_title}</h3>
-          <p style={{ opacity: 0.85, fontSize: '0.9rem', fontWeight: 500, color: 'white' }}>{t.compliance_desc}</p>
+        <div style={{ flex: 1, paddingInlineStart: '2rem' }}>
+          <h3 className="text-sovereign" style={{ color: 'var(--secondary)', marginBottom: '0.35rem', fontSize: '1.4rem' }}>{t.compliance_title}</h3>
+          <p style={{ opacity: 0.8, fontSize: '0.95rem', fontWeight: 600, color: 'white', maxWidth: '600px' }}>{t.compliance_desc}</p>
         </div>
-        <div style={{ textAlign: 'center', paddingInlineStart: '1.5rem', borderInlineStart: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="status-indicator" style={{ width: '10px', height: '10px', background: '#4caf50', margin: '0 auto 0.4rem' }}></div>
-            <span style={{ fontWeight: 800, fontSize: '0.65rem', opacity: 0.7, color: 'white' }}>LOCAL MODE</span>
+        <div style={{ textAlign: 'center', paddingInlineStart: '2rem', borderInlineStart: '1px solid rgba(255,255,255,0.15)' }}>
+            <div className="status-indicator" style={{ width: '12px', height: '12px', background: 'var(--success)', margin: '0 auto 0.6rem', boxShadow: '0 0 15px var(--success)' }}></div>
+            <span className="label-sovereign" style={{ fontSize: '0.65rem', opacity: 0.8, color: 'white' }}>LOCAL ARCHIVE MODE</span>
         </div>
       </div>
 
-      {/* Core Metrics */}
-      <div className="metric-grid" style={{ marginBottom: '2.5rem' }}>
-        <StatCard title={t.total_balance} value={netProfit.toLocaleString()} trend="+Real-time" trendType="up" icon={<TrendingUp size={22} />} />
-        <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<Building2 size={22} />} />
-        <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<Wallet size={22} />} />
+      {/* Core Metrics - Power of Scale */}
+      <div className="metric-grid" style={{ marginBottom: '3rem', gap: '2rem' }}>
+        <StatCard title={t.total_balance} value={netProfit.toLocaleString()} trend="+Real-time" trendType="up" icon={<TrendingUp size={24} />} />
+        <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<Building2 size={24} />} />
+        <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<Wallet size={24} />} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '2.5rem' }}>
-        <div className="card" style={{ border: '1px solid var(--surface-container-high)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', fontWeight: 800, margin: 0 }}>{t.log_title}</h3>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button onClick={exportToExcel} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.55rem 1.2rem', fontSize: '0.8rem', borderRadius: '10px', border: 'none' }}>
+        <div className="card" style={{ border: 'none', background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', padding: '0 0.5rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>{t.log_title}</h3>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button onClick={exportToExcel} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.65rem 1.5rem', fontSize: '0.85rem', borderRadius: '100px' }}>
                 <Download size={16} /> {t.export_report}
               </button>
               <button 
                 onClick={() => { fetchData(); showToast(t.syncing, 'success'); }} 
-                style={{ background: 'var(--surface-container-high)', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center' }}
+                className="btn-executive hover-lift"
+                style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.65rem', borderRadius: '50%', minWidth: '42px', height: '42px', justifyContent: 'center' }}
               >
                  <RefreshCw size={20} />
               </button>
             </div>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', borderRadius: '16px', background: 'var(--surface-container-lowest)' }}>
             <table className="sovereign-table">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'center' }}>{t.table.id}</th>
-                  <th>{t.table.description}</th>
-                  <th style={{ textAlign: 'center' }}>{t.table.type}</th>
-                  <th style={{ textAlign: 'right' }}>{t.table.value}</th>
-                  <th style={{ textAlign: 'center' }}>{t.table.status}</th>
+                  <th style={{ textAlign: 'center', padding: '1.25rem' }}>{t.table.id}</th>
+                  <th style={{ padding: '1.25rem' }}>{t.table.description}</th>
+                  <th style={{ textAlign: 'center', padding: '1.25rem' }}>{t.table.type}</th>
+                  <th style={{ textAlign: 'right', padding: '1.25rem' }}>{t.table.value}</th>
+                  <th style={{ textAlign: 'center', padding: '1.25rem' }}>{t.table.status}</th>
                 </tr>
               </thead>
               <tbody>
                 {(transactions || []).slice(0, 8).map(t_trx => (
-                  <tr key={t_trx.id}>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, textAlign: 'center' }}>{t_trx.trx_number || `#${t_trx.id.toString().slice(-6).toUpperCase()}`}</td>
-                    <td style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--on-surface)' }}>{t_trx.description}</td>
-                    <td style={{ textAlign: 'center' }}><span style={{ padding: '0.35rem 0.8rem', background: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'rgba(27, 94, 32, 0.1)' : 'rgba(211, 47, 47, 0.1)', color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'var(--success)' : 'var(--error)', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? t.income : t.expense}</span></td>
-                    <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 950, fontSize: '1rem', color: 'var(--primary)' }}>
+                  <tr key={t_trx.id} className="hover-lift">
+                    <td style={{ textAlign: 'center' }}>
+                       <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 900, background: 'var(--surface-container-high)', padding: '0.35rem 0.75rem', borderRadius: '6px' }}>
+                        {t_trx.trx_number || `#${t_trx.id.toString().slice(-6).toUpperCase()}`}
+                       </span>
+                    </td>
+                    <td style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--on-surface)' }}>{t_trx.description}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge-sovereign ${(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'status-active' : 'status-pending'}`} style={{ fontSize: '0.7rem' }}>
+                        {(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? t.income : t.expense}
+                      </span>
+                    </td>
+                    <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 950, fontSize: '1.05rem' }}>
                       <span style={{ color: (t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? 'var(--success)' : 'var(--error)' }}>
                         {(t_trx.type === 'income' || t_trx.type === 'إيراد / فاتورة صاردة' || t_trx.type === 'كاش' || t_trx.type === 'income') ? '+' : '-'}{t_trx.amount.toLocaleString()}
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--success)' }}>{t.trx_completed}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', justifyContent: 'center' }}>
+                        <div className="pulse-green" style={{ width: 8, height: 8, borderRadius: '50%' }}></div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--success)', letterSpacing: '0.5px' }}>{t.trx_completed}</span>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
           </div>
         </div>
 
@@ -238,23 +243,23 @@ function StatCard({ title, value, unit = "SAR", trend, trendType, icon, sub }: {
   sub?: string 
 }) {
   return (
-    <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container)', borderBottom: `4px solid ${trendType === 'up' ? 'var(--success)' : 'var(--outline)'}` }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-        <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'var(--primary)', color: 'var(--secondary)', display: 'flex' }}>{icon}</div>
+    <div className="card hover-lift" style={{ padding: '2rem', border: 'none', background: 'var(--surface)', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'flex-start' }}>
+        <div style={{ padding: '0.85rem', borderRadius: '16px', background: 'rgba(26, 58, 95, 0.08)', color: 'var(--primary)', display: 'flex' }}>{icon}</div>
         {trend && (
-          <div style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', background: trendType === 'up' ? 'rgba(27, 94, 32, 0.1)' : 'var(--surface-container-high)', color: trendType === 'up' ? 'var(--success)' : 'var(--on-surface)', fontSize: '0.75rem', fontWeight: 800 }}>
+          <div style={{ padding: '0.4rem 0.8rem', borderRadius: '100px', background: trendType === 'up' ? 'rgba(76, 175, 80, 0.15)' : 'rgba(212, 167, 106, 0.15)', color: trendType === 'up' ? 'var(--success)' : 'var(--secondary)', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.5px' }}>
             {trend}
           </div>
         )}
       </div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 700, marginBottom: '0.4rem' }}>{title}</p>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-        <h2 style={{ fontSize: '1.8rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)' }}>{value}</h2>
-        <span style={{ fontSize: '0.8rem', opacity: 0.7, fontWeight: 700 }}>{unit}</span>
+      <p className="label-sovereign" style={{ color: 'var(--on-surface-variant)', marginBottom: '0.6rem', fontSize: '0.8rem' }}>{title}</p>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginTop: 'auto' }}>
+        <h2 style={{ fontSize: '2.4rem', margin: 0, fontWeight: 950, color: 'var(--primary)', letterSpacing: '-1px' }}>{value}</h2>
+        <span style={{ fontSize: '0.9rem', opacity: 0.5, fontWeight: 800 }}>{unit}</span>
       </div>
-      {sub && <p style={{ fontSize: '0.75rem', marginTop: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-        <CheckCircle2 size={12} color="var(--success)" /> {sub}
-      </p>}
+      {sub && <div style={{ fontSize: '0.78rem', marginTop: '1rem', color: 'var(--on-surface-variant)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8 }}>
+        <CheckCircle2 size={13} style={{ color: 'var(--success)' }} /> {sub}
+      </div>}
     </div>
   );
 }
@@ -262,11 +267,11 @@ function StatCard({ title, value, unit = "SAR", trend, trendType, icon, sub }: {
 function AuditAlert({ type, title, desc }: { type: 'error' | 'warning' | 'success', title: string, desc: string }) {
   const accent = type === 'error' ? 'var(--error)' : type === 'warning' ? 'var(--secondary)' : 'var(--success)';
   return (
-    <div style={{ padding: '0.9rem', background: 'var(--surface)', borderRadius: '10px', display: 'flex', gap: '0.9rem', borderInlineStart: `4px solid ${accent}` }}>
-       <div style={{ marginTop: '0.1rem', color: accent }}><AlertCircle size={18} /></div>
+    <div className="card-layer-2 hover-lift" style={{ padding: '1.25rem', borderRadius: '16px', display: 'flex', gap: '1.1rem', borderInlineStart: `5px solid ${accent}`, border: '1px solid var(--outline-variant)' }}>
+       <div style={{ marginTop: '0.2rem', color: accent }}><AlertCircle size={20} /></div>
        <div style={{ flex: 1 }}>
-         <h4 style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '0.15rem', fontFamily: 'Tajawal', color: 'var(--on-surface)' }}>{title}</h4>
-         <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', lineHeight: '1.4' }}>{desc}</p>
+         <h4 className="text-sovereign" style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.35rem', color: 'var(--on-surface)' }}>{title}</h4>
+         <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', lineHeight: '1.5', fontWeight: 600 }}>{desc}</p>
        </div>
     </div>
   );

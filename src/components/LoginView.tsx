@@ -174,7 +174,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
   };
 
   return (
-    <div className="login-container slide-in">
+    <div className="login-container premium-bg slide-in">
       {/* Visual Identity Side - Institution Branding */}
       <div className="login-branding" style={{ 
         flex: 1.4, 
@@ -210,7 +210,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
             </div>
             
             <h1 style={{ fontSize: '2.4rem', fontWeight: 950, marginBottom: '1.25rem', color: 'white', lineHeight: 1.1, fontFamily: 'Cairo' }}>
-               منظومة <span style={{ color: 'var(--secondary)' }}>الميزان</span> <br/> المؤسسي 2026
+               منظومة <span className="text-sovereign">الميزان</span> <br/> المؤسسي 2026
             </h1>
             
             <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, maxWidth: '440px', fontWeight: 600, marginBottom: '2.5rem' }}>
@@ -318,6 +318,12 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                     <Smartphone size={14} /> استخدام رمز Google Auth
                  </button>
                )}
+            </div>
+            
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--outline-variant)', opacity: 0.5 }}>
+               <span className="version-badge">
+                  <ShieldCheck size={12} /> v1.0.0 STABLE BUILD
+               </span>
             </div>
          </div>
       </div>

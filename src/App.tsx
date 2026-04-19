@@ -1786,7 +1786,7 @@ export default function App() {
     <div className={`app-layout ${isDark ? 'dark-theme' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {isLoggedIn && !publicInvoiceId && isMobileSize && !isCollapsed && <div className="sidebar-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 90 }} onClick={() => setIsCollapsed(true)} />}
       {/* Sidebar - Traditional Sovereign Fixed Width */}
-      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : '72px') : (isMobileSize ? '280px' : '235px'), transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', zIndex: 100 }}>
+      <aside className={`sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : 'var(--sidebar-collapsed-width)') : (isMobileSize ? '280px' : 'var(--sidebar-width)'), zIndex: 100 }}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           style={{ 
@@ -1804,25 +1804,25 @@ export default function App() {
             alignItems: 'center', 
             justifyContent: 'center', 
             zIndex: 101, 
-            boxShadow: '0 4px 10px rgba(0,0,0,0.1)' 
+            boxShadow: '0 4px 10px rgba(0,0,0,0.2)' 
           }}
         >
           {isCollapsed ? (lang === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />) : (lang === 'ar' ? <ChevronRight size={16} /> : <ChevronLeft size={16} />)}
         </button>
 
-        <div style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1rem 1.2rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+        <div className="sidebar-header-text" style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1rem 1.2rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
           {!isCollapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--secondary)' }}>
-                  <img src="./logo.png" alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
-                  <h2 style={{ fontSize: '1rem', fontWeight: 900, fontFamily: 'Tajawal', margin: 0, letterSpacing: '0.5px', color: 'white' }}>{t.title}</h2>
+                  <img src="./logo.png" alt="Logo" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                  <h2 className="text-sovereign" style={{ fontSize: '1.05rem', margin: 0 }}>{t.title}</h2>
                </div>
-               <p style={{ fontSize: '0.55rem', opacity: 0.4, marginTop: '0.4rem', color: '#abc8f5', textAlign: 'center', fontWeight: 700, letterSpacing: '0.5px' }}>{t.subtitle}</p>
+               <p style={{ fontSize: '0.58rem', opacity: 0.5, marginTop: '0.5rem', color: '#abc8f5', textAlign: 'center', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase' }}>{t.subtitle}</p>
             </div>
           )}
           {isCollapsed && (
-            <div className="sidebar-logo-mini" style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.08)', borderRadius: '12px', margin: '1.2rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid rgba(255,255,255,0.1)' }}>
-               <img src="./logo.png" alt="Logo" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.08)', borderRadius: '10px', margin: '0.5rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid rgba(255,255,255,0.1)' }}>
+               <img src="./logo.png" alt="Logo" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
             </div>
           )}
         </div>
@@ -1927,50 +1927,50 @@ export default function App() {
 
       {/* Main Workspace */}
       <main className="main-stage">
-        <header className="view-header">
+        <header className="view-header glass-panel" style={{ borderBottom: 'none', background: 'var(--header-bg)' }}>
           <div className="animate-fade">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <span className="badge-sovereign" style={{ background: 'var(--secondary)', color: 'var(--primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+              <span className="badge-sovereign" style={{ background: 'rgba(212, 167, 106, 0.15)', color: 'var(--secondary)', border: '1px solid rgba(212, 167, 106, 0.2)' }}>
                 {t.roles[userRole as keyof typeof t.roles]}
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 700 }}>
-                 <Clock size={14} /> {t.last_sync}: {lastSyncTime}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.75rem', fontWeight: 800, opacity: 0.7 }}>
+                 <Clock size={12} /> {t.last_sync}: {lastSyncTime}
               </div>
             </div>
-            <h1 className="view-title">
-              <span style={{ fontWeight: 400, opacity: 0.6 }}>{t.welcome}</span>
-              <span style={{ color: 'var(--secondary)', fontWeight: 900, marginInlineStart: '0.5rem' }}>{userName}</span>
+            <h1 className="view-title" style={{ fontSize: '1.5rem' }}>
+              <span style={{ fontWeight: 400, opacity: 0.4 }}>{t.welcome}</span>
+              <span className="text-sovereign" style={{ marginInlineStart: '0.5rem', -webkit-text-fill-color: 'initial', background: 'none', color: 'var(--secondary)' }}>{userName}</span>
             </h1>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div className="card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '280px', borderRadius: '12px', boxShadow: 'none', background: 'var(--surface-container-low)' }}>
-              <Search size={18} color="var(--primary)" style={{ opacity: 0.5 }} />
-              <input type="text" placeholder={t.search} style={{ border: 'none', outline: 'none', background: 'none', width: '100%', fontSize: '0.9rem', color: 'var(--on-surface)', fontWeight: 600 }} />
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <div className="card-layer-2" style={{ padding: '0.65rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '320px', borderRadius: '100px', border: '1px solid var(--outline-variant)' }}>
+              <Search size={16} color="var(--primary)" style={{ opacity: 0.4 }} />
+              <input type="text" placeholder={t.search} style={{ border: 'none', outline: 'none', background: 'none', width: '100%', fontSize: '0.82rem', color: 'var(--on-surface)', fontWeight: 700 }} />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
               <button 
                 onClick={() => showToast('Sovereign Ledger Integrity: 100% Verified. AES-256 Active.', 'success')}
-                className="card" 
                 style={{ 
                   margin: 0,
-                  padding: '0.4rem 1rem', 
+                  padding: '0.55rem 1.15rem', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '0.75rem', 
-                  borderRadius: '10px', 
+                  gap: '0.8rem', 
+                  borderRadius: '100px', 
                   cursor: 'pointer',
-                  border: '1px solid var(--surface-container-high)',
-                  background: 'var(--surface-container-low)',
-                  transition: 'transform 0.2s',
-                  boxShadow: 'none'
+                  border: '1px solid var(--outline-variant)',
+                  background: 'var(--surface)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
+                className="hover-lift"
               >
-                 <div className="pulse-green" style={{ width: 8, height: 8, borderRadius: '50%' }} />
+                 <div className="pulse-green" style={{ width: 7, height: 7, borderRadius: '50%' }} />
                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary)', opacity: 0.6, textTransform: 'uppercase', lineHeight: 1 }}>Health</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', lineHeight: 1.2 }}>VERIFIED</span>
+                    <span className="label-sovereign" style={{ fontSize: '0.55rem', opacity: 0.6 }}>Network Status</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--primary)', lineHeight: 1 }}>VERIFIED</span>
                  </div>
               </button>
 
@@ -1987,14 +1987,14 @@ export default function App() {
               </div>
             </div>
 
-            <button onClick={() => setShowAddTrxModal(true)} className="btn-executive">
-              <Plus size={20} /> {lang === 'ar' ? 'إضافة عملية سيادية' : 'Add Sovereign TRX'}
+            <button onClick={() => setShowAddTrxModal(true)} className="btn-executive" style={{ padding: '0.65rem 1.25rem', borderRadius: '100px' }}>
+              <Plus size={18} /> <span style={{ fontWeight: 900 }}>{lang === 'ar' ? 'إضافة عملية' : 'Add TRX'}</span>
             </button>
             
-            <div style={{ position: 'relative', cursor: 'pointer', padding: '0.4rem' }} onClick={() => setShowNotifDrawer(true)}>
-              <Bell size={24} color="var(--primary)" />
+            <div style={{ position: 'relative', cursor: 'pointer', padding: '0.4rem', borderRadius: '50%', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowNotifDrawer(true)}>
+              <Bell size={20} color="var(--primary)" />
               {notifHistory.length > 0 && (
-                <span className="status-indicator" style={{ position: 'absolute', top: 4, right: 4, background: 'var(--error)', border: '2px solid var(--surface)' }}></span>
+                <span className="status-indicator" style={{ position: 'absolute', top: -2, right: -2, background: 'var(--error)', border: '2.5px solid var(--surface)', width: '12px', height: '12px' }}></span>
               )}
             </div>
           </div>
@@ -2163,7 +2163,7 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
   const [key, setKey] = useState('');
 
   return (
-    <div className={`login-container ${isDark ? 'dark-theme' : ''}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--surface-container-low)' }}>
+    <div className={`login-container premium-bg slide-in ${isDark ? 'dark-theme' : ''}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div className="login-card slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem' }}>
         <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
            <div style={{ display: 'inline-flex', padding: '1.2rem', borderRadius: '24px', background: 'var(--primary)', color: 'var(--secondary)', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
@@ -2209,6 +2209,12 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
              <Languages size={18} /> {lang === 'ar' ? 'English Version' : 'اللغة العربية'}
           </button>
         </footer>
+        
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', opacity: 0.4 }}>
+           <span className="version-badge">
+              <ShieldCheck size={12} /> v1.0.0 STABLE BUILD
+           </span>
+        </div>
       </div>
     </div>
   );
