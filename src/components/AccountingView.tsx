@@ -876,18 +876,18 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
         </div>
 
-        <div style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'rgba(212, 167, 106, 0.05)', borderRadius: '20px', border: '1px solid rgba(212, 167, 106, 0.1)' }}>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <input type="text" value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} placeholder={t.description_placeholder} className="input-premium" style={{ flex: 3 }} />
-              <input type="number" value={newItemAmount} onChange={e => setNewItemAmount(e.target.value)} placeholder={t.amount_placeholder} className="input-premium" style={{ flex: 1, textAlign: 'center' }} />
+        <div className="items-container-premium">
+          <div className="item-add-row">
+              <input type="text" value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} placeholder={t.description_placeholder} className="input-premium flex-3" />
+              <input type="number" value={newItemAmount} onChange={e => setNewItemAmount(e.target.value)} placeholder={t.amount_placeholder} className="input-premium flex-1 text-center" />
               <button onClick={addItem} className="btn-premium-icon"><Plus size={20} /></button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+          <div className="items-list-premium">
               {items.map((item, index) => (
                   <div key={index} className="item-row-premium">
                     <span className="item-desc">{item.desc}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div className="item-actions-premium">
                        <span className="item-amount">{item.amount.toLocaleString()} <small>{currency}</small></span>
                        <button onClick={() => removeItem(index)} className="btn-delete-small"><Trash2 size={16} /></button>
                     </div>
@@ -896,7 +896,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '2rem' }}>
+        <div className="fees-grid-premium">
             <div className="fee-input-premium">
                 <label>{isAr ? 'جمارك' : 'Customs'}</label>
                 <input type="number" value={customsFees} onChange={e => setCustomsFees(e.target.value)} placeholder="0" />
@@ -911,27 +911,27 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
             </div>
         </div>
 
-        <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem' }}>
-          <button disabled={loading} onClick={handleIssueInvoice} className="btn-sovereign-primary" style={{ flex: 2 }}>
+        <div className="invoice-actions-premium">
+          <button disabled={loading} onClick={handleIssueInvoice} className="btn-sovereign-primary flex-2">
              {loading ? '...' : <><CheckCircle2 size={20} /> {isAr ? 'اعتماد وإرسال الفاتورة' : 'Approve & Issue Invoice'}</>}
           </button>
-          <button onClick={() => { if (items.length > 0) setShowPreview(true); else showToast(isAr ? 'أضف بنوداً للمعاينة' : 'Add items to preview', 'error'); }} className="btn-sovereign-outline" style={{ flex: 1 }}>
+          <button onClick={() => { if (items.length > 0) setShowPreview(true); else showToast(isAr ? 'أضف بنوداً للمعاينة' : 'Add items to preview', 'error'); }} className="btn-sovereign-outline flex-1">
             <Printer size={20} /> {t.print_pdf}
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        <div className="card glass-premium" style={{ background: 'var(--primary)', color: 'white', overflow: 'hidden' }}>
-          <div style={{ position: 'relative', zIndex: 2, padding: '2rem' }}>
-             <h3 style={{ color: 'var(--secondary)', marginBottom: '2.5rem', fontFamily: 'Tajawal', fontWeight: 900, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+      <div className="sidebar-premium">
+        <div className="card glass-premium">
+          <div className="summary-content">
+             <h3 className="summary-title">
                <ShieldCheck size={20} /> {t.summation}
              </h3>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+             <div className="summary-rows">
                <SummaryRow label={t.subtotal} value={calculateSubtotal().toLocaleString()} currency={currency} />
                <SummaryRow label={isAr ? 'الرسوم التشغيلية' : 'Operational Fees'} value={calculateLogistics().toLocaleString()} currency={currency} />
                {invoiceMode !== 'invoice' && <SummaryRow label={t.vat} value={calculateVAT().toLocaleString()} currency={currency} />}
-               <div style={{ borderTop: '2px solid rgba(212, 167, 106, 0.2)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+               <div className="summary-total-row">
                  <SummaryRow label={t.total} value={calculateTotal().toLocaleString()} currency={currency} isBold />
                </div>
              </div>
@@ -939,9 +939,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           <div className="glass-ornament"></div>
         </div>
 
-        <div className="card shadow-elite" style={{ padding: '2rem', borderRadius: '24px' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}><Activity size={18} /> {t.recent_title}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+        <div className="card shadow-elite padding-2">
+          <h3 className="recent-title"><Activity size={18} /> {t.recent_title}</h3>
+          <div className="recent-list">
              {recentInvoices.map((inv) => (
                 <RecentTrx 
                   key={inv.id} 
@@ -962,17 +962,17 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
   const renderJournal = () => (
     <div className="slide-in">
-      <div className="card shadow-elite" style={{ padding: 0, overflow: 'hidden', borderRadius: '28px' }}>
+      <div className="card shadow-elite overflow-hidden">
         <div className="table-header-premium">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="header-info-premium">
             <div className="icon-container-gold"><BookOpen size={24} /></div>
             <div>
               <h3 className="section-title-premium">{t.journal}</h3>
               <p className="section-subtitle-premium">{isAr ? 'السجل التاريخي لجميع القيود المالية' : 'Chronological log of all financial entries'}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '1rem' }} className="no-print">
-            <button onClick={() => setShowJournalModal(true)} className="btn-sovereign-primary" style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}>
+          <div className="header-actions-premium">
+            <button onClick={() => setShowJournalModal(true)} className="btn-sovereign-primary">
               <Plus size={16} /> {isAr ? 'قيد يدوي' : 'Manual Entry'}
             </button>
             <div className="date-range-container">
@@ -998,11 +998,11 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           <table className="sovereign-table-premium">
             <thead>
               <tr>
-                <th style={{ paddingInlineStart: '2.5rem' }}>{isAr ? 'التاريخ' : 'Date'}</th>
+                <th className="padding-start-2-5">{isAr ? 'التاريخ' : 'Date'}</th>
                 <th>{isAr ? 'وصف العملية' : 'Description'}</th>
                 <th>{isAr ? 'الحساب المدين' : 'Debit'}</th>
                 <th>{isAr ? 'الحساب الدائن' : 'Credit'}</th>
-                <th style={{ textAlign: 'center', paddingInlineEnd: '2.5rem' }}>{isAr ? 'المبلغ الصافي' : 'Net Amount'}</th>
+                <th className="text-center padding-end-2-5">{isAr ? 'المبلغ الصافي' : 'Net Amount'}</th>
               </tr>
             </thead>
             <tbody>
@@ -1014,12 +1014,12 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                 )
                 .map((entry) => (
                 <tr key={entry.id}>
-                  <td style={{ paddingInlineStart: '2.5rem', fontWeight: 700 }}>{fmtDate(entry.date, t.lang)}</td>
-                  <td style={{ fontWeight: 600 }}>{entry.description}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 800 }}>{entry.debit_account}</td>
-                  <td style={{ color: 'var(--error)', fontWeight: 800 }}>{entry.credit_account}</td>
-                  <td style={{ textAlign: 'center', paddingInlineEnd: '2.5rem', fontWeight: 900, direction: 'ltr' }}>
-                    {entry.amount.toLocaleString()}.00 <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>SAR</span>
+                  <td className="padding-start-2-5 font-bold">{fmtDate(entry.date, t.lang)}</td>
+                  <td className="font-semibold">{entry.description}</td>
+                  <td className="text-success font-bold">{entry.debit_account}</td>
+                  <td className="text-error font-bold">{entry.credit_account}</td>
+                  <td className="text-center padding-end-2-5 font-black direction-ltr">
+                    {entry.amount.toLocaleString()}.00 <span className="currency-small">SAR</span>
                   </td>
                 </tr>
               ))}
@@ -1032,23 +1032,22 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
   const renderLedger = () => (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h3 style={{ fontWeight: 900, fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+      <div className="ledger-header-container">
+        <h3 className="ledger-title">
           <LucidePieChart size={24} /> {t.general_ledger}
         </h3>
-        <div className="search-box-executive" style={{ width: '300px' }}>
+        <div className="search-box-executive width-300">
           <Search size={18} />
           <input 
             type="text" 
             placeholder={isAr ? 'ابحث عن حساب...' : 'Search account...'} 
             value={ledgerSearch}
             onChange={e => setLedgerSearch(e.target.value)}
-            className="input-clean"
-            style={{ width: '100%' }}
+            className="input-clean width-100"
           />
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      <div className="ledger-grid-premium">
         {ledgerAccounts
           .filter(a => 
              (a.name_ar.toLowerCase().includes(ledgerSearch.toLowerCase()) || 
@@ -1059,10 +1058,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
               a.code?.includes(searchTerm))
           )
           .map((account) => (
-          <div key={account.code} className="card-ledger-premium" onClick={() => setSelectedLedgerAccount(account)} style={{ cursor: 'pointer' }}>
+          <div key={account.code} className="card-ledger-premium" onClick={() => setSelectedLedgerAccount(account)}>
             <div className="ledger-header">
                <span className="ledger-code">{account.code}</span>
-               <div className="ledger-icon" style={{ color: account.type === 'asset' ? 'var(--success)' : 'var(--error)' }}>
+               <div className={`ledger-icon ${account.type === 'asset' ? 'text-success' : 'text-error'}`}>
                  {account.type === 'asset' ? <TrendingUp size={20} /> : <TrendingDown size={20} /> }
                </div>
             </div>
@@ -1081,35 +1080,50 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
     <div className="accounting-view-container slide-in">
       <style>{`
         .accounting-view-container { animation: slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .shadow-elite { box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid var(--surface-container-high); }
-        .form-group-premium { display: flex; flexDirection: column; gap: 0.6rem; }
-        .form-group-premium label { fontSize: 0.85rem; fontWeight: 800; color: var(--on-surface-variant); }
-        .input-premium { padding: 0.8rem 1.2rem; borderRadius: 12px; border: 1px solid var(--surface-container-high); background: var(--surface); fontSize: 1rem; fontWeight: 800; transition: 0.3s; }
+        .shadow-elite { box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid var(--surface-container-high); border-radius: 28px; }
+        .padding-2-5 { padding: 2.5rem; }
+        .padding-2 { padding: 2rem; }
+        .flex-3 { flex: 3; }
+        .flex-1 { flex: 1; }
+        .text-center { text-align: center; }
+        .text-success { color: var(--success); }
+        .text-error { color: var(--error); }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-black { font-weight: 900; }
+        .direction-ltr { direction: ltr; }
+        .currency-small { opacity: 0.5; font-size: 0.7rem; }
+        .width-300 { width: 300px; }
+        .width-100 { width: 100%; }
+        .padding-start-2-5 { padding-inline-start: 2.5rem; }
+        .padding-end-2-5 { padding-inline-end: 2.5rem; }
+        .form-group-premium { display: flex; flex-direction: column; gap: 0.6rem; }
+        .label-premium { font-size: 0.85rem; font-weight: 800; color: var(--on-surface-variant); }
+        .input-premium { padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--surface-container-high); background: var(--surface); font-size: 1rem; font-weight: 800; transition: 0.3s; }
         .input-premium:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(0,26,51,0.05); }
-        .item-row-premium { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--surface); borderRadius: 12px; border: 1px solid var(--surface-container-high); }
-        .item-desc { fontSize: 1rem; fontWeight: 750; color: var(--on-surface); }
-        .item-amount { fontWeight: 900; color: var(--primary); fontSize: 1.1rem; }
-        .btn-premium-icon { width: 50px; height: 50px; borderRadius: 14px; background: var(--primary); color: var(--secondary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .item-row-premium { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--surface-container-high); }
+        .item-desc { font-size: 1rem; font-weight: 750; color: var(--on-surface); }
+        .item-amount { font-weight: 900; color: var(--primary); font-size: 1.1rem; }
+        .btn-premium-icon { width: 50px; height: 50px; border-radius: 14px; background: var(--primary); color: var(--secondary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .btn-premium-icon:hover { transform: translateY(-2px); filter: brightness(1.2); }
-        .btn-delete-small { background: rgba(186, 26, 26, 0.1); border: none; color: var(--error); padding: 0.6rem; borderRadius: 8px; cursor: pointer; }
-        .fee-input-premium { display: flex; flex-direction: column; gap: 0.4rem; background: var(--surface-container-low); padding: 0.8rem; borderRadius: 12px; }
+        .btn-delete-small { background: rgba(186, 26, 26, 0.1); border: none; color: var(--error); padding: 0.6rem; border-radius: 8px; cursor: pointer; }
+        .fee-input-premium { display: flex; flex-direction: column; gap: 0.4rem; background: var(--surface-container-low); padding: 0.8rem; border-radius: 12px; }
         .fee-input-premium label { font-size: 0.75rem; font-weight: 900; opacity: 0.7; }
         .fee-input-premium input { border: none; background: transparent; font-weight: 1000; font-size: 1.1rem; text-align: center; color: var(--primary); width: 100%; }
-        .btn-sovereign-primary { display: flex; align-items: center; justify-content: center; gap: 0.8rem; background: var(--primary); color: var(--secondary); border: none; padding: 1.2rem; borderRadius: 16px; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .btn-sovereign-outline { background: var(--surface-container-high); color: var(--primary); border: none; padding: 1.2rem; borderRadius: 16px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .btn-sovereign-primary { display: flex; align-items: center; justify-content: center; gap: 0.8rem; background: var(--primary); color: var(--secondary); border: none; padding: 1.2rem; border-radius: 16px; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .btn-sovereign-outline { background: var(--surface-container-high); color: var(--primary); border: none; padding: 1.2rem; border-radius: 16px; font-weight: 800; cursor: pointer; transition: 0.3s; }
         .glass-premium { position: relative; border: none; border-radius: 28px; background: linear-gradient(135deg, var(--primary) 0%, #002b4d 100%); }
         .glass-ornament { position: absolute; bottom: -20px; right: -20px; width: 100px; height: 100px; background: rgba(212, 167, 106, 0.1); border-radius: 50%; blur: 20px; }
         .table-header-premium { padding: 2rem 2.5rem; background: var(--surface-container-low); border-bottom: 1px solid var(--surface-container-high); display: flex; justify-content: space-between; align-items: center; }
-        .icon-container-gold { background: var(--primary); color: var(--secondary); padding: 0.8rem; borderRadius: 14px; }
-        .section-title-premium { margin: 0; fontSize: 1.35rem; fontWeight: 1000; fontFamily: 'Tajawal'; color: var(--primary); }
-        .section-subtitle-premium { margin: 0; fontSize: 0.85rem; opacity: 0.6; fontWeight: 700; }
-        .date-range-container { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.4rem 1rem; borderRadius: 12px; border: 1px solid var(--surface-container-high); }
+        .icon-container-gold { background: var(--primary); color: var(--secondary); padding: 0.8rem; border-radius: 14px; }
+        .section-title-premium { margin: 0; font-size: 1.35rem; font-weight: 1000; font-family: 'Tajawal'; color: var(--primary); }
+        .section-subtitle-premium { margin: 0; font-size: 0.85rem; opacity: 0.6; font-weight: 700; }
+        .date-range-container { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.4rem 1rem; border-radius: 12px; border: 1px solid var(--surface-container-high); }
         .input-clean { border: none; background: transparent; font-weight: 800; font-size: 0.85rem; padding: 0.4rem; cursor: pointer; }
-        .btn-export-excel { background: var(--surface-container-high); color: var(--primary); border: none; padding: 0.7rem 1.4rem; borderRadius: 10px; font-weight: 900; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .btn-export-excel { background: var(--surface-container-high); color: var(--primary); border: none; padding: 0.7rem 1.4rem; border-radius: 10px; font-weight: 900; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
         .search-bar-premium { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.6rem 1.4rem; border-radius: 50px; border: 1px solid var(--surface-container-high); width: 350px; transition: 0.3s; }
         .search-bar-premium:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         .search-bar-premium input { border: none; background: transparent; font-weight: 800; font-size: 0.9rem; width: 100%; color: var(--on-surface); outline: none; }
-        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
         .sovereign-table-premium { width: 100%; border-collapse: collapse; }
         .sovereign-table-premium th { text-align: right; padding: 1.2rem 1rem; color: var(--primary); font-weight: 900; font-size: 0.9rem; border-bottom: 2px solid var(--surface-container-high); background: var(--surface-container-lowest); }
         .sovereign-table-premium td { padding: 1.4rem 1rem; border-bottom: 1px solid var(--surface-container-low); font-size: 0.95rem; }
@@ -1125,15 +1139,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      <header className="view-header" style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="view-header">
         <div>
-          <h2 className="view-title" style={{ margin: 0, fontWeight: 1000, color: 'var(--primary)' }}>{t.nav_title || (isAr ? 'النظام المالي السيادي' : 'Sovereign Fiscal System')}</h2>
-          <p className="view-subtitle" style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>{t.invoice_desc}</p>
+          <h2 className="view-title">{t.nav_title || (isAr ? 'النظام المالي السيادي' : 'Sovereign Fiscal System')}</h2>
+          <p className="view-subtitle">{t.invoice_desc}</p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-           <div className="search-bar-premium glass-premium" style={{ background: 'var(--surface)' }}>
-              <Search size={18} style={{ color: 'var(--primary)' }} />
+        <div className="header-actions">
+           <div className="search-bar-premium glass-premium">
+              <Search size={18} />
               <input 
                 type="text" 
                 placeholder={isAr ? 'بحث مالي...' : 'Fiscal search...'} 
@@ -1142,7 +1156,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
               />
            </div>
            
-           <div style={{ display: 'flex', gap: '0.8rem', background: 'var(--surface-container-low)', padding: '0.5rem', borderRadius: '18px' }}>
+           <div className="tab-container">
               <TabButton active={activeTab === 'invoice'} onClick={() => setActiveTab('invoice')} label={t.invoice_editor} icon={<Plus size={18} />} />
               <TabButton active={activeTab === 'journal'} onClick={() => setActiveTab('journal')} label={t.journal} icon={<BookOpen size={18} />} />
               <TabButton active={activeTab === 'ledger'} onClick={() => setActiveTab('ledger')} label={t.ledger_summary} icon={<LucideBarChart size={18} />} />
@@ -1167,7 +1181,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
               } catch (e) {
                 showToast(isAr ? 'فشل تصدير النسخة الاحتياطية' : 'Failed to export backup', 'error');
               }
-           }} className="btn-sovereign-outline" style={{ padding: '0.6rem 1.4rem', fontSize: '0.9rem' }}>
+           }} className="btn-sovereign-outline">
               <Download size={18} /> {isAr ? 'نسخة احتياطية' : 'Backup'}
            </button>
         </div>
@@ -1287,7 +1301,6 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
     const cost = invoices.reduce((s: number, i: Invoice) => s + (i.transport_expenses || 0), 0);
     const prof = invoices.reduce((s: number, i: Invoice) => s + (i.profit || 0), 0);
     
-    // Calculate total general expenses (manual entries to Expense accounts)
     const genExps = journalEntries.filter((e: JournalEntry) => 
       !e.is_automated && (e.debit_account.includes('مصروف') || e.debit_account.includes('Expense'))
     ).reduce((s: number, e: JournalEntry) => s + e.amount, 0);
@@ -1297,33 +1310,36 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
 
   return (
     <div className="fade-in">
-       <div className="card shadow-elite" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h3 style={{ fontWeight: 1000, margin: 0, color: 'var(--primary)' }}><LucideBarChart size={24} /> {isAr ? 'التحليل المالي السيادي' : 'Sovereign Financial Analysis'}</h3>
-            <div style={{ display: 'flex', gap: '0.8rem', background: 'var(--surface-container-low)', padding: '0.4rem', borderRadius: '14px' }}>
+       <div className="card shadow-elite padding-2">
+          <div className="report-header-premium">
+            <h3 className="report-title"><LucideBarChart size={24} /> {isAr ? 'التحليل المالي السيادي' : 'Sovereign Financial Analysis'}</h3>
+            <div className="report-tabs-premium">
                <button onClick={() => setActiveReportTab('profit')} className={`tab-btn-small ${activeReportTab === 'profit' ? 'active' : ''}`}>{isAr ? 'قائمة الدخل' : 'Income Statement'}</button>
                <button onClick={() => setActiveReportTab('trial')} className={`tab-btn-small ${activeReportTab === 'trial' ? 'active' : ''}`}>{isAr ? 'ميزان المراجعة' : 'Trial Balance'}</button>
                <button onClick={() => setActiveReportTab('balance_sheet')} className={`tab-btn-small ${activeReportTab === 'balance_sheet' ? 'active' : ''}`}>{isAr ? 'الميزانية العمومية' : 'Balance Sheet'}</button>
                <button onClick={() => setActiveReportTab('vat')} className={`tab-btn-small ${activeReportTab === 'vat' ? 'active' : ''}`}>{isAr ? 'تحليل الضريبة' : 'VAT Analysis'}</button>
             </div>
-            <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1rem' }}><Download size={16} /> Export CSV</button>
+            <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline"><Download size={16} /> Export CSV</button>
           </div>
 
           <style>{`
+            .report-header-premium { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+            .report-title { font-weight: 1000; margin: 0; color: var(--primary); }
+            .report-tabs-premium { display: flex; gap: 0.8rem; background: var(--surface-container-low); padding: 0.4rem; border-radius: 14px; }
             .tab-btn-small { padding: 0.5rem 1rem; border: none; background: transparent; border-radius: 10px; font-weight: 800; cursor: pointer; color: var(--on-surface-variant); transition: 0.3s; font-size: 0.85rem; }
             .tab-btn-small.active { background: var(--primary); color: white; }
           `}</style>
 
           {activeReportTab === 'profit' && (
             <div className="slide-in">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+              <div className="metrics-grid-premium">
                  <SummaryMetric label={isAr ? 'الهامش الربحي الصافي' : 'Net Profit Margin'} value={`${metrics.margin}%`} icon={<Activity size={18} />} primary />
                  <SummaryMetric label={isAr ? 'إجمالي الإيرادات' : 'Total Revenue'} value={metrics.rev.toLocaleString()} icon={<DollarSign size={18} />} />
                  <SummaryMetric label={isAr ? 'صافي الدخل' : 'Net Income'} value={metrics.net.toLocaleString()} icon={<TrendingUp size={18} />} />
               </div>
 
-              <section style={{ height: '400px', background: 'var(--surface-container-lowest)', padding: '2rem', borderRadius: '32px', marginBottom: '3rem', border: '1px solid var(--surface-container-high)', boxShadow: 'var(--shadow-premium)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', fontWeight: 1000, color: 'var(--primary)' }}>
+              <section className="chart-section-premium">
+                <h4 className="chart-title-premium">
                   <Activity size={20} />
                   {isAr ? 'منحنى الإيرادات (آخر 10 عمليات)' : 'Revenue Trend (Latest 10)'}
                 </h4>
@@ -1338,7 +1354,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                 </ResponsiveContainer>
               </section>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+              <div className="quick-actions-container">
                  <QuickActionCard 
                    title={isAr ? 'تقرير الربحية' : 'Profit Report'} 
                    desc={isAr ? 'مراجعة الأداء المالي للفترة' : 'Review financial performance'} 
@@ -1359,7 +1375,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                  />
               </div>
 
-              <div style={{ height: '300px', marginBottom: '3rem', background: 'var(--surface)', padding: '1.5rem', borderRadius: '24px', border: '1px solid var(--surface-container-high)' }}>
+              <div className="bar-chart-container-premium">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[
                     { name: isAr ? 'الإيرادات' : 'Revenue', value: metrics.rev },
@@ -1379,16 +1395,16 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                 </ResponsiveContainer>
               </div>
 
-              <div style={{ background: 'var(--surface-container-lowest)', borderRadius: '24px', padding: '2rem', border: '1px solid var(--surface-container-high)' }}>
-                 <h4 style={{ fontWeight: 1000, color: 'var(--primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--surface-container-low)', paddingBottom: '1rem' }}>{isAr ? 'قائمة الدخل - الفترة الحالية' : 'Income Statement - Current Period'}</h4>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="statement-container-premium">
+                 <h4 className="statement-title-premium">{isAr ? 'قائمة الدخل - الفترة الحالية' : 'Income Statement - Current Period'}</h4>
+                 <div className="statement-rows-premium">
                     <StatementRow label={isAr ? 'إجمالي إيرادات المبيعات' : 'Total Sales Revenue'} value={metrics.rev} />
                     <StatementRow label={isAr ? 'تكاليف النقل المباشرة' : 'Direct Transport Costs'} value={-metrics.cost} />
-                     <div style={{ borderTop: '1px solid var(--surface-container-low)', paddingTop: '0.5rem' }}>
+                     <div className="statement-divider">
                         <StatementRow label={isAr ? 'إجمالي الربح التشغيلي' : 'Gross Operating Profit'} value={metrics.prof} isTotal />
                      </div>
                      <StatementRow label={isAr ? 'المصاريف العمومية والإدارية' : 'General & Admin Expenses'} value={-metrics.genExps} />
-                     <div style={{ borderTop: '2px solid var(--primary)', paddingTop: '1rem', marginTop: '1rem' }}>
+                     <div className="statement-total-divider">
                         <StatementRow label={isAr ? 'صافي دخل الميزان' : 'Net Sovereign Income'} value={metrics.net} isHighlight />
                      </div>
                   </div>
@@ -1415,25 +1431,25 @@ function VATAnalysisView({ invoices, isAr }: any) {
 
     return (
         <div className="fade-in">
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 300px', gap: '2rem', marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className="card glass-premium" style={{ background: 'var(--primary)', color: 'white', padding: '2rem' }}>
-                        <h4 style={{ margin: 0, opacity: 0.7, fontWeight: 800 }}>{isAr ? 'إجمالي الضريبة المستحقة للهيئة' : 'Total VAT Payable to ZATCA'}</h4>
-                        <h1 style={{ fontSize: '3rem', fontWeight: 1000, margin: '1rem 0', color: 'var(--secondary)' }}>{vatCollected.toLocaleString()} <small style={{ fontSize: '1.2rem' }}>SAR</small></h1>
-                        <p style={{ margin: 0, fontWeight: 700, opacity: 0.6 }}>{isAr ? 'بناءً على الفواتير الضريبية الصادرة' : 'Based on issued tax invoices'}</p>
+            <div className="vat-grid-premium">
+                <div className="vat-info-premium">
+                    <div className="card glass-premium vat-card-primary">
+                        <h4 className="vat-card-title">{isAr ? 'إجمالي الضريبة المستحقة للهيئة' : 'Total VAT Payable to ZATCA'}</h4>
+                        <h1 className="vat-card-value">{vatCollected.toLocaleString()} <small>SAR</small></h1>
+                        <p className="vat-card-desc">{isAr ? 'بناءً على الفواتير الضريبية الصادرة' : 'Based on issued tax invoices'}</p>
                     </div>
-                    <div className="card" style={{ border: '2px dashed var(--surface-container-high)', padding: '2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                            <span style={{ fontWeight: 800, opacity: 0.6 }}>{isAr ? 'إجمالي الوعاء الضريبي' : 'Total Taxable Base'}</span>
-                            <span style={{ fontWeight: 1000, color: 'var(--primary)' }}>{taxableAmount.toLocaleString()} SAR</span>
+                    <div className="card vat-card-secondary">
+                        <div className="vat-row-premium">
+                            <span className="vat-label-premium">{isAr ? 'إجمالي الوعاء الضريبي' : 'Total Taxable Base'}</span>
+                            <span className="vat-value-premium">{taxableAmount.toLocaleString()} SAR</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 800, opacity: 0.6 }}>{isAr ? 'معدل الضريبة المطبق' : 'Applied VAT Rate'}</span>
-                            <span style={{ fontWeight: 1000, color: 'var(--primary)' }}>15%</span>
+                        <div className="vat-row-premium">
+                            <span className="vat-label-premium">{isAr ? 'معدل الضريبة المطبق' : 'Applied VAT Rate'}</span>
+                            <span className="vat-value-premium">15%</span>
                         </div>
                     </div>
                 </div>
-                <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="card vat-chart-premium">
                     <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                             <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
@@ -1446,8 +1462,8 @@ function VATAnalysisView({ invoices, isAr }: any) {
                 </div>
             </div>
             
-            <div className="card shadow-elite" style={{ padding: '2rem' }}>
-                <h4 style={{ fontWeight: 1000, color: 'var(--primary)', marginBottom: '1.5rem' }}>{isAr ? 'سجل الفواتير الضريبية' : 'Tax Invoice Ledger'}</h4>
+            <div className="card shadow-elite padding-2">
+                <h4 className="section-title-premium">{isAr ? 'سجل الفواتير الضريبية' : 'Tax Invoice Ledger'}</h4>
                 <table className="sovereign-table-premium">
                     <thead>
                         <tr>
@@ -1460,10 +1476,10 @@ function VATAnalysisView({ invoices, isAr }: any) {
                     <tbody>
                         {invoices.filter((i: any) => (i.vat || 0) > 0).map((i: any) => (
                             <tr key={i.id}>
-                                <td style={{ fontWeight: 800 }}>{i.reference_number}</td>
-                                <td style={{ fontWeight: 700 }}>{i.customer_id}</td>
-                                <td style={{ fontWeight: 900 }}>{i.amount.toLocaleString()}</td>
-                                <td style={{ fontWeight: 1000, color: 'var(--primary)' }}>{i.vat.toLocaleString()}</td>
+                                <td className="font-bold">{i.reference_number}</td>
+                                <td className="font-semibold">{i.customer_id}</td>
+                                <td className="font-bold">{i.amount.toLocaleString()}</td>
+                                <td className="font-black text-primary">{i.vat.toLocaleString()}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -1485,11 +1501,11 @@ function TrialBalanceView({ ledgerAccounts, isAr }: any) {
     <div className="slide-in">
        <table className="sovereign-table-premium">
           <thead>
-            <tr style={{ background: 'var(--surface-container-low)' }}>
-              <th style={{ paddingInlineStart: '2rem' }}>{isAr ? 'الحساب' : 'Account'}</th>
+            <tr className="table-header-row-premium">
+              <th className="padding-start-2">{isAr ? 'الحساب' : 'Account'}</th>
               <th>{isAr ? 'النوع' : 'Type'}</th>
-              <th style={{ textAlign: 'center' }}>{isAr ? 'مدين' : 'Debit'}</th>
-              <th style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>{isAr ? 'دائن' : 'Credit'}</th>
+              <th className="text-center">{isAr ? 'مدين' : 'Debit'}</th>
+              <th className="text-center padding-end-2">{isAr ? 'دائن' : 'Credit'}</th>
             </tr>
           </thead>
           <tbody>
@@ -1497,17 +1513,17 @@ function TrialBalanceView({ ledgerAccounts, isAr }: any) {
               const isDr = acc.type === 'asset' || acc.type === 'expense';
               return (
                 <tr key={acc.id}>
-                  <td style={{ paddingInlineStart: '2rem', fontWeight: 800 }}>{isAr ? acc.name_ar : acc.name}</td>
-                  <td style={{ opacity: 0.6, fontSize: '0.85rem' }}>{acc.type.toUpperCase()}</td>
-                  <td style={{ textAlign: 'center', fontWeight: 900, color: isDr ? 'var(--primary)' : 'transparent' }}>{isDr ? acc.balance.toLocaleString() : '-'}</td>
-                  <td style={{ textAlign: 'center', paddingInlineEnd: '2rem', fontWeight: 900, color: !isDr ? 'var(--primary)' : 'transparent' }}>{!isDr ? acc.balance.toLocaleString() : '-'}</td>
+                  <td className="padding-start-2 font-bold">{isAr ? acc.name_ar : acc.name}</td>
+                  <td className="type-cell-premium">{acc.type.toUpperCase()}</td>
+                  <td className={`text-center font-bold ${isDr ? 'text-primary' : 'transparent'}`}>{isDr ? acc.balance.toLocaleString() : '-'}</td>
+                  <td className={`text-center padding-end-2 font-bold ${!isDr ? 'text-primary' : 'transparent'}`}>{!isDr ? acc.balance.toLocaleString() : '-'}</td>
                 </tr>
               );
             })}
-            <tr style={{ background: 'var(--surface-container-low)', borderTop: '2px solid var(--primary)' }}>
-               <td colSpan={2} style={{ paddingInlineStart: '2rem', fontWeight: 1000, color: 'var(--primary)' }}>{isAr ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
-               <td style={{ textAlign: 'center', fontWeight: 1000, color: 'var(--primary)', fontSize: '1.2rem' }}>{totals.debit.toLocaleString()}</td>
-               <td style={{ textAlign: 'center', paddingInlineEnd: '2rem', fontWeight: 1000, color: 'var(--primary)', fontSize: '1.2rem' }}>{totals.credit.toLocaleString()}</td>
+            <tr className="table-footer-row-premium">
+               <td colSpan={2} className="padding-start-2 font-black text-primary">{isAr ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
+               <td className="text-center font-black text-primary font-size-1-2">{totals.debit.toLocaleString()}</td>
+               <td className="text-center padding-end-2 font-black text-primary font-size-1-2">{totals.credit.toLocaleString()}</td>
             </tr>
           </tbody>
        </table>
@@ -1525,37 +1541,37 @@ function BalanceSheetView({ ledgerAccounts, isAr }: any) {
   const totalEquity = equity.reduce((s: number, a: any) => s + a.balance, 0);
 
   return (
-    <div className="slide-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+    <div className="slide-in balance-sheet-grid">
        <div>
-          <h4 style={{ borderBottom: '2px solid var(--success)', paddingBottom: '0.8rem', marginBottom: '1.2rem', fontWeight: 1000 }}>{isAr ? 'الأصول' : 'ASSETS'}</h4>
+          <h4 className="bs-section-title border-success">{isAr ? 'الأصول' : 'ASSETS'}</h4>
           {assets.map((a: any) => (
-            <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--surface-container-low)' }}>
-               <span style={{ fontWeight: 700 }}>{isAr ? a.name_ar : a.name}</span>
-               <span style={{ fontWeight: 900 }}>{a.balance.toLocaleString()}</span>
+            <div key={a.id} className="bs-row-premium">
+               <span className="font-semibold">{isAr ? a.name_ar : a.name}</span>
+               <span className="font-black">{a.balance.toLocaleString()}</span>
             </div>
           ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem', fontWeight: 1000, fontSize: '1.2rem', color: 'var(--success)' }}>
+          <div className="bs-total-row text-success">
              <span>{isAr ? 'إجمالي الأصول' : 'TOTAL ASSETS'}</span>
              <span>{totalAssets.toLocaleString()} SAR</span>
           </div>
        </div>
        <div>
-          <h4 style={{ borderBottom: '2px solid var(--error)', paddingBottom: '0.8rem', marginBottom: '1.2rem', fontWeight: 1000 }}>{isAr ? 'الالتزامات وحقوق الملكية' : 'LIABILITIES & EQUITY'}</h4>
-          <p style={{ fontSize: '0.75rem', fontWeight: 900, opacity: 0.5, margin: '1rem 0 0.5rem' }}>{isAr ? 'الالتزامات' : 'LIABILITIES'}</p>
+          <h4 className="bs-section-title border-error">{isAr ? 'الالتزامات وحقوق الملكية' : 'LIABILITIES & EQUITY'}</h4>
+          <p className="bs-sub-title">{isAr ? 'الالتزامات' : 'LIABILITIES'}</p>
           {liabilities.map((a: any) => (
-            <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--surface-container-low)' }}>
-               <span style={{ fontWeight: 700 }}>{isAr ? a.name_ar : a.name}</span>
-               <span style={{ fontWeight: 900 }}>{a.balance.toLocaleString()}</span>
+            <div key={a.id} className="bs-row-premium">
+               <span className="font-semibold">{isAr ? a.name_ar : a.name}</span>
+               <span className="font-black">{a.balance.toLocaleString()}</span>
             </div>
           ))}
-          <p style={{ fontSize: '0.75rem', fontWeight: 900, opacity: 0.5, margin: '1.5rem 0 0.5rem' }}>{isAr ? 'حقوق الملكية' : 'EQUITY'}</p>
+          <p className="bs-sub-title">{isAr ? 'حقوق الملكية' : 'EQUITY'}</p>
           {equity.map((a: any) => (
-            <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--surface-container-low)' }}>
-               <span style={{ fontWeight: 700 }}>{isAr ? a.name_ar : a.name}</span>
-               <span style={{ fontWeight: 900 }}>{a.balance.toLocaleString()}</span>
+            <div key={a.id} className="bs-row-premium">
+               <span className="font-semibold">{isAr ? a.name_ar : a.name}</span>
+               <span className="font-black">{a.balance.toLocaleString()}</span>
             </div>
           ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem', fontWeight: 1000, fontSize: '1.2rem', color: 'var(--error)' }}>
+          <div className="bs-total-row text-error">
              <span>{isAr ? 'الإجمالي' : 'TOTAL L&E'}</span>
              <span>{(totalLiabilities + totalEquity).toLocaleString()} SAR</span>
           </div>
@@ -1567,14 +1583,14 @@ function BalanceSheetView({ ledgerAccounts, isAr }: any) {
 function ManualJournalModal({ newEntry, setNewEntry, ledgerAccounts, onClose, onSave, isAr }: ManualJournalModalProps) {
   return (
     <div className="modal-overlay-premium fade-in">
-      <div className="modal-card shadow-elite slide-up" style={{ maxWidth: '600px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
-          <h3 style={{ margin: 0, fontWeight: 1000 }}>{isAr ? 'إضافة قيد محاسبي يدوي' : 'Add Manual Journal Entry'}</h3>
-          <button onClick={onClose} className="btn-close-elite"><X size={24} /></button>
+      <div className="modal-card shadow-elite slide-up">
+        <div className="modal-header-premium">
+          <h3 className="section-title-premium">{isAr ? 'إضافة قيد محاسبي يدوي' : 'Add Manual Journal Entry'}</h3>
+          <button onClick={onClose} className="btn-icon-clean"><X size={24} /></button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
-           <div className="form-group-premium" style={{ gridColumn: 'span 2' }}>
-              <label>{isAr ? 'وصف القيد' : 'Description'}</label>
+        <div className="form-grid-premium-2">
+           <div className="form-group-premium span-2">
+              <label className="label-premium">{isAr ? 'وصف القيد' : 'Description'}</label>
               <input type="text" value={newEntry.description} onChange={e => setNewEntry({...newEntry, description: e.target.value})} className="input-premium" placeholder={isAr ? 'مثال: سداد إيجار المكتب' : 'e.g. Office Rent Payment'} />
            </div>
            <div className="form-group-premium">

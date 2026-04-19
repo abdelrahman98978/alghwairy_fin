@@ -34,7 +34,8 @@ import {
   Trash2,
   Share2
 } from 'lucide-react';
-import { localDB } from './lib/localDB';
+import { localDB, pullFromCloud, readFromDisk, writeToDisk } from './lib/localDB';
+import { checkCloudConnection } from './lib/supabase';
 import { hasPermission, type AppModule } from './lib/permissions';
 
 // --- Views ---
@@ -1467,6 +1468,8 @@ export default function App() {
   const [userName, setUserName] = useState('عبدالله الغويري');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [showAddTrxModal, setShowAddTrxModal] = useState(false);
   const [newTrx, setNewTrx] = useState({
     description: '',
@@ -1586,16 +1589,58 @@ export default function App() {
     };
   }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
 
+  const initializeCloudSync = useCallback(async () => {
+    const isOnline = await checkCloudConnection();
+    if (!isOnline) {
+      console.warn('[Cloud] Offline - Sync postponed');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const cloudData = await pullFromCloud();
+      const localData = readFromDisk();
+
+      if (cloudData) {
+        // Migration logic: If local has more data, push to cloud. Else pull.
+        const localInvoices = localData.invoices?.length || 0;
+        const cloudInvoices = cloudData.invoices?.length || 0;
+
+        if (localInvoices > cloudInvoices) {
+           console.log('[Cloud] Migration: Pushing local data to cloud...');
+           await writeToDisk(localData); // Triggers upsert
+           showToast(lang === 'ar' ? 'تمت مزامنة البيانات المحلية مع السحابة' : 'Local data synced to cloud');
+        } else if (cloudInvoices > localInvoices) {
+           console.log('[Cloud] Sync: Pulling data from cloud...');
+           // Simple merge/overwrite for this sovereign version
+           await writeToDisk({ ...localData, ...cloudData });
+           showToast(lang === 'ar' ? 'تم تحديث البيانات من السحابة بنجاح' : 'Data updated from cloud successfully');
+        }
+      } else {
+         // First time cloud setup - Mirror local
+         console.log('[Cloud] Initial Setup: Mirroring local data...');
+         await writeToDisk(localData);
+      }
+      setIsCloudSynced(true);
+    } catch (e: any) {
+      showToast(lang === 'ar' ? 'خطأ في المزامنة السحابية: ' : 'Cloud sync error: ' + e.message, 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [lang, showToast]);
+
   const fetchData = useCallback(() => {
-    const data = localDB.getActive('transactions');
-    setTransactions(data as Transaction[]);
+    const data = localDB.get('journal_entries'); // Using a more core table
+    const trxData = localDB.getActive('transactions');
+    setTransactions(trxData as Transaction[]);
     setLastSyncTime(new Date().toLocaleTimeString());
     
     // Check for unread Sovereign Messages
     const settings = localDB.get('sync_settings');
     const myId = settings?.device_id;
     if (myId) {
-      const unread = localDB.getAll('sovereign_messages').filter(m => m.recipient === myId && !m.read).length;
+      const msgs = localDB.getAll('sovereign_messages');
+      const unread = Array.isArray(msgs) ? msgs.filter(m => m.recipient === myId && !m.read).length : 0;
       setUnreadMsgCount(unread);
     }
   }, []);
@@ -1603,6 +1648,7 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn && !publicInvoiceId) {
       fetchData();
+      initializeCloudSync();
       const timer = setInterval(() => {
         setLastSyncTime(new Date().toLocaleTimeString());
         
@@ -1939,7 +1985,7 @@ export default function App() {
             </div>
             <h1 className="view-title" style={{ fontSize: '1.5rem' }}>
               <span style={{ fontWeight: 400, opacity: 0.4 }}>{t.welcome}</span>
-              <span className="text-sovereign" style={{ marginInlineStart: '0.5rem', -webkit-text-fill-color: 'initial', background: 'none', color: 'var(--secondary)' }}>{userName}</span>
+              <span className="text-sovereign" style={{ marginInlineStart: '0.5rem', background: 'none', color: 'var(--secondary)' }}>{userName}</span>
             </h1>
           </div>
 
@@ -2096,14 +2142,14 @@ export default function App() {
       )}
 
       {/* Sovereign Toast */}
-      {notification && (
+      {notification ? (
         <div className="toast-container" style={{ zIndex: 2000 }}>
           <div className={`toast-notification ${notification.type === 'error' ? 'toast-error' : ''}`}>
             {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} color="#88d982" />}
             <span>{notification.message}</span>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

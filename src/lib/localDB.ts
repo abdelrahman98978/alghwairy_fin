@@ -1,8 +1,4 @@
-/**
- * localDB.ts
- * قاعدة بيانات محلية تعمل على ملف JSON محفوظ على جهازك
- * تعمل بدون إنترنت - بيانات دائمة على القرص الصلب
- */
+import { supabase } from './supabase';
 
 const DB_VERSION = 1;
 
@@ -205,7 +201,8 @@ const DEFAULT_DB: DBSchema = {
 // Paths for Electron fs access
 function getDbPath(): string | null {
   try {
-    if ((window as any).require) {
+    const isElectron = !!(window as any).require;
+    if (isElectron) {
       const path = (window as any).require('path');
       const os = (window as any).require('os');
       const fs = (window as any).require('fs');
@@ -214,12 +211,12 @@ function getDbPath(): string | null {
       return path.join(dir, 'alghwairy_database.json');
     }
   } catch (e) {
-    console.warn('[localDB] Not in Electron context');
+    console.debug('[localDB] Native FS not available - using LocalStorage');
   }
   return null;
 }
 
-function readFromDisk(): DBSchema {
+export function readFromDisk(): DBSchema {
   const dbPath = getDbPath();
   if (dbPath) {
     try {
@@ -234,10 +231,15 @@ function readFromDisk(): DBSchema {
   }
   
   const saved = localStorage.getItem('alghwairy_db');
-  return saved ? { ...DEFAULT_DB, ...JSON.parse(saved) } : DEFAULT_DB;
+  try {
+    return saved ? { ...DEFAULT_DB, ...JSON.parse(saved) } : DEFAULT_DB;
+  } catch (e) {
+    console.error('[localDB] Corrupt localStorage, resetting to default.');
+    return DEFAULT_DB;
+  }
 }
 
-function writeToDisk(data: DBSchema) {
+export async function writeToDisk(data: DBSchema) {
   const dbPath = getDbPath();
   const serialized = JSON.stringify(data, null, 2);
   
@@ -251,6 +253,82 @@ function writeToDisk(data: DBSchema) {
   }
   
   localStorage.setItem('alghwairy_db', serialized);
+
+  // Trigger Cloud Sync if online
+  syncToCloud(data).catch(err => {
+    console.debug('[localDB] Cloud sync postponed:', err.message);
+  });
+}
+
+// Logic to mirror important tables to Supabase
+async function syncToCloud(data: DBSchema) {
+  // Only sync core tables for now
+  const tables = [
+    { name: 'customers', items: data.customers },
+    { name: 'ledger_accounts', items: data.ledger_accounts },
+    { name: 'invoices', items: data.invoices },
+    { name: 'journal_entries', items: data.journal_entries },
+    { name: 'products', items: data.products },
+    { name: 'inventory_movements', items: data.inventory_movements },
+    { name: 'prepayments', items: data.prepayments }
+  ];
+
+  for (const table of tables) {
+    if (table.items && table.items.length > 0) {
+      const { error } = await supabase
+        .from(table.name)
+        .upsert(table.items.map(item => {
+          // Flatten items specifically for invoices if they are complex
+          if (table.name === 'invoices') {
+             const { customers, carrier, ...rest } = item;
+             return rest;
+          }
+          return item;
+        }));
+      
+      if (error) {
+        throw new Error(`Failed to sync ${table.name}: ${error.message}`);
+      }
+    }
+  }
+}
+
+export async function pullFromCloud(): Promise<DBSchema | null> {
+  try {
+    const [
+      { data: customers },
+      { data: invoices },
+      { data: journal_entries },
+      { data: ledger_accounts },
+      { data: products },
+      { data: inventory_movements },
+      { data: prepayments }
+    ] = await Promise.all([
+      supabase.from('customers').select('*'),
+      supabase.from('invoices').select('*'),
+      supabase.from('journal_entries').select('*'),
+      supabase.from('ledger_accounts').select('*'),
+      supabase.from('products').select('*'),
+      supabase.from('inventory_movements').select('*'),
+      supabase.from('prepayments').select('*')
+    ]);
+
+    if (!customers || !invoices) return null;
+
+    return {
+      ...DEFAULT_DB,
+      customers: customers || [],
+      invoices: invoices || [],
+      journal_entries: journal_entries || [],
+      ledger_accounts: ledger_accounts || [],
+      products: products || [],
+      inventory_movements: inventory_movements || [],
+      prepayments: prepayments || []
+    };
+  } catch (e) {
+    console.error('[localDB] Pull failed:', e);
+    return null;
+  }
 }
 
 export const localDB = {

@@ -15,6 +15,7 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
     "html2pdf.js": "^0.14.0",
     "lucide-react": "^1.7.0",
     "qrcode.react": "^4.2.0",
