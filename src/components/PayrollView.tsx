@@ -86,8 +86,8 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
   }, [showToast, currentPeriod]);
 
   useEffect(() => {
-    fetchSalaries();
-  }, [fetchSalaries]);
+    // Initial data loaded via functional initializer
+  }, []);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();

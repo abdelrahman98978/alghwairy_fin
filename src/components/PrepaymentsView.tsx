@@ -25,8 +25,14 @@ interface PrepaymentsProps {
 }
 
 export default function PrepaymentsView({ showToast, logActivity, t }: PrepaymentsProps) {
-  const [prepayments, setPrepayments] = useState<Prepayment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [prepayments, setPrepayments] = useState<Prepayment[]>(() => {
+    try {
+      return localDB.getActive('prepayments').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) as Prepayment[];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -50,8 +56,8 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
   }, [showToast]);
 
   useEffect(() => {
-    fetchPrepayments();
-  }, [fetchPrepayments]);
+    // Initial data loaded via functional initializer
+  }, []);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -29,8 +29,15 @@ interface Expense {
 }
 
 export default function ExpensesView({ showToast, logActivity, t, lang }: ExpensesProps) {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const data = localDB.getActive('expenses').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return (data as Expense[]) || [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -53,8 +60,8 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
   }, [showToast]);
 
   useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+    // Initial data loaded via functional initializer
+  }, []);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
