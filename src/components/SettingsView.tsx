@@ -228,6 +228,32 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     showToast(t.lang === 'en' ? 'Local backup exported' : 'تم تصدير النسخة الاحتياطية بنجاح', 'success');
   };
 
+  const importBackup = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const json = event.target?.result as string;
+        try {
+          if (localDB.importJSON(json)) {
+            showToast(t.lang === 'ar' ? 'تم استيراد البيانات بنجاح' : 'Data imported successfully', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            showToast(t.lang === 'ar' ? 'فشل استيراد البيانات - ملف غير صالح' : 'Failed to import data - Invalid file', 'error');
+          }
+        } catch (e) {
+          showToast(t.lang === 'ar' ? 'خطأ في معالجة الملف' : 'Error processing file', 'error');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   const generateTOTP = () => {
     const secret = biometricService.generateTOTPSecret();
     const issuer = "AlghwairySovereign";
@@ -620,8 +646,13 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
                        <Database size={24} color="var(--primary)" style={{ marginBottom: '1.5rem' }} />
-                       <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Export Local Instance' : 'تصدير السجل المحلي'}</h4>
-                       <button onClick={exportBackup} className="btn-executive" style={{ width: '100%', border: 'none' }}>Export JSON</button>
+                       <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Export/Import Local Instance' : 'تصدير واستيراد السجل المحلي'}</h4>
+                       <div style={{ display: 'flex', gap: '1rem' }}>
+                          <button onClick={exportBackup} className="btn-executive" style={{ flex: 1, border: 'none' }}>Export JSON</button>
+                          <button onClick={importBackup} className="btn-executive btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                             <Upload size={16} /> {t.lang === 'en' ? 'Import' : 'استيراد'}
+                          </button>
+                       </div>
                     </div>
                     <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--error)' }}>
                        <Trash2 size={24} color="var(--error)" style={{ marginBottom: '1.5rem' }} />
