@@ -389,7 +389,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
 
       {show2FA && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.9)', backdropFilter: 'blur(25px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-            <div className="card shadow-executive" style={{ width: '100%', maxWidth: '380px', padding: '2.5rem', textAlign: 'center', background: 'white', borderRadius: '24px' }}>
+            <div className="card shadow-executive" style={{ width: '100%', maxWidth: '380px', padding: '2.5rem', textAlign: 'center', background: 'var(--surface)', borderRadius: '24px', border: 'none' }}>
                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0, 26, 51, 0.05)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
                   <Smartphone size={32} />
                </div>
@@ -403,7 +403,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                     placeholder="000 000" 
                     className="login-input"
                     maxLength={6}
-                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.8rem', fontWeight: 900, background: '#f8f9fa' }}
+                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.8rem', fontWeight: 900, background: 'var(--surface-container-highest)' }}
                     value={twoFACode}
                     onChange={(e) => setTwoFACode(e.target.value)}
                     autoFocus

@@ -91,16 +91,16 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
       {/* Institution Snapshot - Tonal Editorial Layer */}
       <div className="card-layer-2" style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', padding: '1.25rem 2.5rem', borderRadius: '100px', alignItems: 'center', overflowX: 'auto', border: '1px solid var(--outline-variant)' }}>
          <SnapshotItem label={isArabic ? 'قوة الامتثال' : 'Compliance'} value="100%" color="var(--success)" />
-         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <div style={{ width: 1, height: 28, background: 'var(--outline)', opacity: 0.8 }}></div>
          <SnapshotItem label={isArabic ? 'السيولة النشطة' : 'Liquidity'} value={`${(availableLiquidity/1000).toFixed(0)}K`} color="var(--primary)" />
-         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <div style={{ width: 1, height: 28, background: 'var(--outline)', opacity: 0.8 }}></div>
          <SnapshotItem label={isArabic ? 'حمولة التخليص' : 'Throughput'} value="1.2M" color="var(--secondary)" />
-         <div style={{ width: 1, height: 28, background: 'var(--outline-variant)', opacity: 0.5 }}></div>
+         <div style={{ width: 1, height: 28, background: 'var(--outline)', opacity: 0.8 }}></div>
          <SnapshotItem label={isArabic ? 'الشركاء الاستراتيجيون' : 'Partners'} value={partnerCount.toString()} color="var(--primary)" />
          <div style={{ flex: 1 }}></div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div className="pulse-green" style={{ width: 8, height: 8, borderRadius: '50%' }}></div>
-            <span className="label-sovereign" style={{ fontSize: '0.65rem', opacity: 0.6, letterSpacing: '1px' }}>INSTITUTIONAL ENCRYPTION ACTIVE</span>
+            <span className="label-sovereign" style={{ fontSize: '0.65rem', color: 'var(--on-surface)', opacity: 0.7, letterSpacing: '1px' }}>INSTITUTIONAL ENCRYPTION ACTIVE</span>
          </div>
       </div>
 
@@ -115,11 +115,11 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
         </div>
         <div style={{ flex: 1, paddingInlineStart: '2rem' }}>
           <h3 className="text-sovereign" style={{ color: 'var(--secondary)', marginBottom: '0.35rem', fontSize: '1.4rem' }}>{t.compliance_title}</h3>
-          <p style={{ opacity: 0.8, fontSize: '0.95rem', fontWeight: 600, color: 'white', maxWidth: '600px' }}>{t.compliance_desc}</p>
+          <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-primary)', maxWidth: '600px' }}>{t.compliance_desc}</p>
         </div>
         <div style={{ textAlign: 'center', paddingInlineStart: '2rem', borderInlineStart: '1px solid rgba(255,255,255,0.15)' }}>
             <div className="status-indicator" style={{ width: '12px', height: '12px', background: 'var(--success)', margin: '0 auto 0.6rem', boxShadow: '0 0 15px var(--success)' }}></div>
-            <span className="label-sovereign" style={{ fontSize: '0.65rem', opacity: 0.8, color: 'white' }}>LOCAL ARCHIVE MODE</span>
+            <span className="label-sovereign" style={{ fontSize: '0.65rem', opacity: 1, color: 'var(--on-primary)' }}>LOCAL ARCHIVE MODE</span>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
         <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<Building2 size={24} />} />
         <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<Wallet size={24} />} />
       </div>
-
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '2rem' }}>
         <div className="card" style={{ border: 'none', background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', padding: '0 0.5rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>{t.log_title}</h3>
@@ -185,6 +185,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
                   </tr>
                 ))}
               </tbody>
+            </table>
           </div>
         </div>
 
@@ -201,7 +202,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
               title={isArabic ? 'تنبيه العهد النقدية' : 'Sovereign Petty Cash'} 
               desc={isArabic ? 'يتم مراقبة كافة العهود البنكية المصروفة لحظياً.' : 'Monitoring real-time bank petty cash draws.'} 
             />
-            <div style={{ padding: '1.5rem', background: 'var(--primary)', color: 'white', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ padding: '1.5rem', background: 'var(--primary)', color: 'var(--on-primary)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
                <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary)', fontWeight: 950 }}>LOCAL-FIRST STORAGE</h4>
                <p style={{ margin: '0.5rem 0', fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>بياناتك محفوظة محلياً على جهازك في مجلد المستندات. خصوصية كاملة وتحكم تام.</p>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.8rem' }}>

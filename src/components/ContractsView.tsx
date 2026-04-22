@@ -111,24 +111,24 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
           body { 
             font-family: 'Tajawal', sans-serif; 
             padding: 40px; 
-            color: #111; 
+            color: var(--on-surface); 
             line-height: 1.8;
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #001a33;
+            border-bottom: 3px solid var(--primary);
             padding-bottom: 20px;
             margin-bottom: 40px;
           }
-          .header h1 { margin: 0; color: #001a33; font-weight: 900; }
-          .header p { margin: 5px 0 0; color: #555; font-weight: 600; }
+          .header h1 { margin: 0; color: var(--primary); font-weight: 900; }
+          .header p { margin: 5px 0 0; color: var(--on-surface-variant); font-weight: 600; }
           .section { margin-bottom: 30px; }
           .section-title {
-            background: #f1f5f9;
+            background: var(--surface-container-low);
             padding: 10px 15px;
             font-weight: 800;
-            color: #001a33;
-            border-right: 4px solid #001a33;
+            color: var(--primary);
+            border-right: 4px solid var(--primary);
             border-radius: 4px;
           }
           .grid {
@@ -138,12 +138,12 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
             margin-top: 15px;
           }
           .field { margin-bottom: 15px; }
-          .label { font-size: 0.9em; color: #666; font-weight: 700; display: block; }
-          .value { font-size: 1.1em; font-weight: 800; color: #111; }
+          .label { font-size: 0.9em; color: var(--on-surface-variant); font-weight: 700; display: block; }
+          .value { font-size: 1.1em; font-weight: 800; color: var(--on-surface); }
           .terms {
-            background: #fafafa;
+            background: var(--surface-container-lowest);
             padding: 20px;
-            border: 1px solid #eee;
+            border: 1px solid var(--outline);
             border-radius: 8px;
             white-space: pre-wrap;
             margin-top: 10px;
@@ -157,18 +157,18 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
             text-align: center;
           }
           .sig-box {
-            border-top: 2px dashed #999;
+            border-top: 2px dashed var(--outline);
             padding-top: 15px;
           }
           .e-sign {
-            color: #10b981;
+            color: var(--success);
             font-weight: 900;
-            border: 2px solid #10b981;
+            border: 2px solid var(--success);
             padding: 10px;
             border-radius: 8px;
             display: inline-block;
             margin-top: -40px;
-            background: white;
+            background: var(--surface);
             font-size: 0.9rem;
           }
           @media print {
@@ -181,7 +181,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
           <img src="${window.location.origin}/logo.png" alt="Logo" style="height: 80px; object-fit: contain; margin-bottom: 15px;" onerror="this.style.display='none'" />
           <h1>مؤسسة الغويري للتخليص الجمركي</h1>
           <p>Alghwairy Customs Clearance Institution</p>
-          <h2 style="margin-top: 30px; color: #111;">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
+          <h2 style="margin-top: 30px; color: var(--on-surface);">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
         </div>
 
         <div class="section">
@@ -254,7 +254,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
           </div>
         </div>
 
-        <div style="text-align: center; margin-top: 70px; font-size: 0.8em; color: #888; border-top: 1px solid #eee; padding-top: 15px;">
+          <div style={{ textAlign: 'center', margin: '70px auto 0', fontSize: '0.8em', color: 'var(--on-surface-variant)', borderTop: '1px solid var(--outline-variant)', paddingTop: '15px', maxWidth: '600px' }}>
           هذه الوثيقة مستخرجة من المنظومة السيادية للغويري للعمليات المالية واللوجستية - ${new Date().toLocaleString('ar-SA')}
         </div>
         
@@ -435,7 +435,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <span className="badge-sovereign" style={{ 
-                        background: contract.status === 'active' ? 'rgba(27, 94, 32, 0.1)' : 'rgba(186, 26, 26, 0.1)',
+                        background: contract.status === 'active' ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--error-rgb), 0.1)',
                         color: contract.status === 'active' ? 'var(--success)' : 'var(--error)'
                       }}>
                         {contract.status === 'active' ? 'نشط' : 'ملغى'}

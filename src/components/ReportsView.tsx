@@ -283,7 +283,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
             )}
           </div>
           
-          <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33', border: 'none' }}>
+          <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none' }}>
              <Printer size={18} /> {t.lang === 'ar' ? 'القائمة الرسمية' : 'Official Print'}
           </button>
           <button onClick={exportReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
@@ -344,7 +344,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: 'var(--on-surface-variant)'}} />
                     <YAxis hide />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: '0 15px 40px rgba(0,0,0,0.1)', fontFamily: 'Cairo', backgroundColor: 'var(--surface)', color: 'var(--on-surface)' }}
+                      contentStyle={{ borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: 'var(--shadow-md)', fontFamily: 'Cairo', backgroundColor: 'var(--surface)', color: 'var(--on-surface)' }}
                       itemStyle={{ fontSize: '0.9rem', fontWeight: 900 }}
                     />
                     <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
@@ -354,7 +354,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
             </div>
 
             <div className="card" style={{ background: 'var(--surface-container-low)', border: 'none', padding: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-               <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
+             <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)', boxShadow: 'var(--shadow-sm)' }}>
                   <CheckCircle2 size={32} />
                </div>
                <div>
@@ -370,8 +370,8 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       </div>
 
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+        <div className="modal-overlay" style={{ background: 'var(--header-bg)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-lg)' }}>
             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'تسجيل قيد مالي'}</h3>
             
@@ -379,12 +379,12 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                  <label style={{ fontSize: '0.9rem', fontWeight: 800 }}>نوع العملية</label>
                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'income' ? 'var(--success)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'income' ? 'rgba(27, 94, 32, 0.1)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
+                    <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'income' ? 'var(--success)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'income' ? 'var(--success-container)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
                        <input type="radio" value="income" checked={manualForm.type === 'income'} onChange={() => setManualForm({...manualForm, type: 'income'})} style={{ display: 'none' }} /> 
                        <TrendingUp size={20} color={manualForm.type === 'income' ? 'var(--success)' : 'var(--outline)'} />
                        <span style={{ fontWeight: 900, fontSize: '0.85rem', color: manualForm.type === 'income' ? 'var(--success)' : 'var(--on-surface-variant)' }}>{t.income}</span>
                     </label>
-                    <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'expense' ? 'var(--error)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'expense' ? 'rgba(211, 47, 47, 0.1)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
+                    <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'expense' ? 'var(--error)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'expense' ? 'var(--error-container)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
                        <input type="radio" value="expense" checked={manualForm.type === 'expense'} onChange={() => setManualForm({...manualForm, type: 'expense'})} style={{ display: 'none' }} /> 
                        <TrendingDown size={20} color={manualForm.type === 'expense' ? 'var(--error)' : 'var(--outline)'} />
                        <span style={{ fontWeight: 900, fontSize: '0.85rem', color: manualForm.type === 'expense' ? 'var(--error)' : 'var(--on-surface-variant)' }}>{t.expense}</span>
@@ -621,15 +621,15 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
 
 function MetricBox({ title, value, sub, positive, icon, highlight }: any) {
   return (
-    <div className="card" style={highlight ? { background: 'var(--primary)', color: 'white', padding: '2.5rem', border: 'none' } : { padding: '2.5rem', borderInlineStart: `6px solid ${positive ? 'var(--success)' : 'var(--error)'}` }}>
+    <div className="card" style={highlight ? { background: 'var(--primary)', color: 'var(--on-primary)', padding: '2.5rem', border: 'none' } : { padding: '2.5rem', borderInlineStart: `6px solid ${positive ? 'var(--success)' : 'var(--error)'}` }}>
        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div style={{ padding: '1rem', borderRadius: '16px', background: highlight ? 'rgba(255,255,255,0.1)' : 'var(--surface-container-high)', color: highlight ? 'var(--secondary)' : 'var(--primary)' }}>{icon}</div>
           <span style={{ fontSize: '0.75rem', fontWeight: 950, padding: '0.4rem 1rem', borderRadius: '10px', background: highlight ? 'rgba(136, 217, 130, 0.2)' : (positive ? 'rgba(27, 94, 32, 0.1)' : 'rgba(211, 47, 47, 0.1)'), color: highlight ? '#88d982' : (positive ? 'var(--success)' : 'var(--error)'), textTransform: 'uppercase', letterSpacing: '0.5px' }}>
              {positive ? 'Positive' : 'Stability'}
           </span>
        </div>
-       <p style={{ fontSize: '1rem', fontWeight: 700, opacity: highlight ? 0.8 : 1, color: highlight ? 'white' : 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>{title}</p>
-       <h3 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: highlight ? 'var(--secondary)' : 'var(--primary)' }}>{value} <span style={{ fontSize: '0.9rem', opacity: 0.6, color: highlight ? 'white' : 'inherit' }}>SAR</span></h3>
+       <p style={{ fontSize: '1rem', fontWeight: 700, opacity: highlight ? 0.8 : 1, color: highlight ? 'var(--on-primary)' : 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>{title}</p>
+       <h3 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: highlight ? 'var(--secondary)' : 'var(--primary)' }}>{value} <span style={{ fontSize: '0.9rem', opacity: 0.6, color: highlight ? 'var(--on-primary)' : 'inherit' }}>SAR</span></h3>
        <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.8rem', fontWeight: 600 }}>{sub}</p>
     </div>
   );

@@ -195,7 +195,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
   const isAr = t.lang === 'ar';
   const [activeTab, setActiveTab] = useState<TabType>('invoice');
   const [loading, setLoading] = useState(false);
-  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
+  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>(() => {
+    const transactions = localDB.getActive('invoices');
+    if (Array.isArray(transactions)) {
+      return [...transactions].sort((a, b) => 
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      ).slice(0, 5) as Invoice[];
+    }
+    return [];
+  });
   const [showPreview, setShowPreview] = useState(false);
   
   // Invoice Form State
@@ -215,10 +223,24 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
   const [newItemAmount, setNewItemAmount] = useState('');
   
   // Journal & Ledger State
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [ledgerAccounts, setLedgerAccounts] = useState<LedgerAccount[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
+    const journal = localDB.getAll('journal_entries');
+    if (Array.isArray(journal)) {
+      return [...journal].sort((a, b) => 
+        new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+      );
+    }
+    return [];
+  });
+  const [ledgerAccounts, setLedgerAccounts] = useState<LedgerAccount[]>(() => {
+    const ledger = localDB.getAll('ledger_accounts');
+    return Array.isArray(ledger) ? ledger as LedgerAccount[] : [];
+  });
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>(() => {
+    const invs = localDB.getAll('invoices');
+    return Array.isArray(invs) ? invs as Invoice[] : [];
+  });
   const [activeReportTab, setActiveReportTab] = useState<'profit' | 'trial' | 'balance_sheet' | 'vat'>('profit');
   const [showJournalModal, setShowJournalModal] = useState(false);
   const [selectedLedgerAccount, setSelectedLedgerAccount] = useState<LedgerAccount | null>(null);
@@ -232,8 +254,14 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
   });
   const [journalSearch, setJournalSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
-  const [contracts, setContracts] = useState<any[]>([]);
-  const [fixedAssets, setFixedAssets] = useState<FixedAsset[]>([]);
+  const [contracts, setContracts] = useState<any[]>(() => {
+    const contrs = localDB.getAll('contracts');
+    return Array.isArray(contrs) ? contrs : [];
+  });
+  const [fixedAssets, setFixedAssets] = useState<FixedAsset[]>(() => {
+    const assets = localDB.getAll('fixed_assets');
+    return Array.isArray(assets) ? assets : [];
+  });
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [newAsset, setNewAsset] = useState<Partial<FixedAsset>>({
@@ -247,7 +275,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
   });
   
   // Inventory State
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const prods = localDB.getAll('products');
+    return Array.isArray(prods) ? prods : [];
+  });
   const [showProductModal, setShowProductModal] = useState(false);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     sku: '',
@@ -1080,7 +1111,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
     <div className="accounting-view-container slide-in">
       <style>{`
         .accounting-view-container { animation: slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .shadow-elite { box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid var(--surface-container-high); border-radius: 28px; }
+        .shadow-elite { box-shadow: var(--shadow-md); border: 1px solid var(--surface-container-high); border-radius: 28px; }
         .padding-2-5 { padding: 2.5rem; }
         .padding-2 { padding: 2rem; }
         .flex-3 { flex: 3; }
@@ -1100,35 +1131,36 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
         .form-group-premium { display: flex; flex-direction: column; gap: 0.6rem; }
         .label-premium { font-size: 0.85rem; font-weight: 800; color: var(--on-surface-variant); }
         .input-premium { padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--surface-container-high); background: var(--surface); font-size: 1rem; font-weight: 800; transition: 0.3s; }
-        .input-premium:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(0,26,51,0.05); }
+        .input-premium:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.05); }
         .item-row-premium { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--surface-container-high); }
         .item-desc { font-size: 1rem; font-weight: 750; color: var(--on-surface); }
         .item-amount { font-weight: 900; color: var(--primary); font-size: 1.1rem; }
         .btn-premium-icon { width: 50px; height: 50px; border-radius: 14px; background: var(--primary); color: var(--secondary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .btn-premium-icon:hover { transform: translateY(-2px); filter: brightness(1.2); }
-        .btn-delete-small { background: rgba(186, 26, 26, 0.1); border: none; color: var(--error); padding: 0.6rem; border-radius: 8px; cursor: pointer; }
+        .btn-delete-small { background: rgba(var(--error-rgb), 0.1); border: none; color: var(--error); padding: 0.6rem; border-radius: 8px; cursor: pointer; }
         .fee-input-premium { display: flex; flex-direction: column; gap: 0.4rem; background: var(--surface-container-low); padding: 0.8rem; border-radius: 12px; }
         .fee-input-premium label { font-size: 0.75rem; font-weight: 900; opacity: 0.7; }
         .fee-input-premium input { border: none; background: transparent; font-weight: 1000; font-size: 1.1rem; text-align: center; color: var(--primary); width: 100%; }
         .btn-sovereign-primary { display: flex; align-items: center; justify-content: center; gap: 0.8rem; background: var(--primary); color: var(--secondary); border: none; padding: 1.2rem; border-radius: 16px; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
         .btn-sovereign-outline { background: var(--surface-container-high); color: var(--primary); border: none; padding: 1.2rem; border-radius: 16px; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .glass-premium { position: relative; border: none; border-radius: 28px; background: linear-gradient(135deg, var(--primary) 0%, #002b4d 100%); }
-        .glass-ornament { position: absolute; bottom: -20px; right: -20px; width: 100px; height: 100px; background: rgba(212, 167, 106, 0.1); border-radius: 50%; blur: 20px; }
+        .glass-premium { position: relative; border: none; border-radius: 28px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%); }
+        .glass-ornament { position: absolute; bottom: -20px; right: -20px; width: 100px; height: 100px; background: rgba(var(--secondary-rgb), 0.1); border-radius: 50%; blur: 20px; }
         .table-header-premium { padding: 2rem 2.5rem; background: var(--surface-container-low); border-bottom: 1px solid var(--surface-container-high); display: flex; justify-content: space-between; align-items: center; }
         .icon-container-gold { background: var(--primary); color: var(--secondary); padding: 0.8rem; border-radius: 14px; }
         .section-title-premium { margin: 0; font-size: 1.35rem; font-weight: 1000; font-family: 'Tajawal'; color: var(--primary); }
+        .section-title-premium:hover { filter: brightness(1.2); }
         .section-subtitle-premium { margin: 0; font-size: 0.85rem; opacity: 0.6; font-weight: 700; }
         .date-range-container { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.4rem 1rem; border-radius: 12px; border: 1px solid var(--surface-container-high); }
         .input-clean { border: none; background: transparent; font-weight: 800; font-size: 0.85rem; padding: 0.4rem; cursor: pointer; }
         .btn-export-excel { background: var(--surface-container-high); color: var(--primary); border: none; padding: 0.7rem 1.4rem; border-radius: 10px; font-weight: 900; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
         .search-bar-premium { display: flex; align-items: center; gap: 0.8rem; background: var(--surface); padding: 0.6rem 1.4rem; border-radius: 50px; border: 1px solid var(--surface-container-high); width: 350px; transition: 0.3s; }
-        .search-bar-premium:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .search-bar-premium:focus-within { border-color: var(--primary); box-shadow: var(--shadow-sm); }
         .search-bar-premium input { border: none; background: transparent; font-weight: 800; font-size: 0.9rem; width: 100%; color: var(--on-surface); outline: none; }
         .sovereign-table-premium { width: 100%; border-collapse: collapse; }
         .sovereign-table-premium th { text-align: right; padding: 1.2rem 1rem; color: var(--primary); font-weight: 900; font-size: 0.9rem; border-bottom: 2px solid var(--surface-container-high); background: var(--surface-container-lowest); }
         .sovereign-table-premium td { padding: 1.4rem 1rem; border-bottom: 1px solid var(--surface-container-low); font-size: 0.95rem; }
-        .card-ledger-premium { background: var(--surface); padding: 2rem; border-radius: 24px; border: 1px solid var(--surface-container-high); transition: 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
-        .card-ledger-premium:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        .card-ledger-premium { background: var(--surface); padding: 2rem; border-radius: 24px; border: 1px solid var(--surface-container-high); transition: 0.3s; box-shadow: var(--shadow-sm); }
+        .card-ledger-premium:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
         .ledger-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; }
         .ledger-code { background: var(--surface-container-high); color: var(--primary); font-size: 0.75rem; font-weight: 950; padding: 0.3rem 0.8rem; border-radius: 6px; }
         .ledger-name { font-size: 1.2rem; font-weight: 1000; color: var(--primary); margin: 0; }
@@ -1327,7 +1359,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
             .report-title { font-weight: 1000; margin: 0; color: var(--primary); }
             .report-tabs-premium { display: flex; gap: 0.8rem; background: var(--surface-container-low); padding: 0.4rem; border-radius: 14px; }
             .tab-btn-small { padding: 0.5rem 1rem; border: none; background: transparent; border-radius: 10px; font-weight: 800; cursor: pointer; color: var(--on-surface-variant); transition: 0.3s; font-size: 0.85rem; }
-            .tab-btn-small.active { background: var(--primary); color: white; }
+            .tab-btn-small.active { background: var(--primary); color: var(--on-primary); }
           `}</style>
 
           {activeReportTab === 'profit' && (
@@ -1349,7 +1381,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                     <XAxis dataKey="date" hide />
                     <YAxis tick={{fill: 'var(--on-surface)', fontWeight: 800, fontSize: 12}} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: 'var(--shadow-premium)', background: 'var(--surface)' }} />
-                    <Line type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={4} dot={{ r: 6, fill: 'var(--primary)', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={4} dot={{ r: 6, fill: 'var(--primary)', strokeWidth: 2, stroke: 'var(--surface)' }} activeDot={{ r: 8, strokeWidth: 0 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </section>
@@ -1385,7 +1417,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="name" tick={{fill: 'var(--on-surface)', fontWeight: 800, fontSize: 12}} axisLine={false} tickLine={false} />
                     <YAxis tick={{fill: 'var(--on-surface)', fontWeight: 800, fontSize: 12}} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{fill: 'var(--surface-container-high)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}} />
+                    <Tooltip cursor={{fill: 'var(--surface-container-high)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-md)'}} />
                     <Bar dataKey="value" radius={[10, 10, 0, 0]}>
                       {[0, 1, 2].map((_, index) => (
                         <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--primary)' : index === 1 ? 'var(--error)' : 'var(--success)'} />
@@ -1803,7 +1835,7 @@ function SummaryRow({ label, value, isBold, currency }: SummaryRowProps) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: '0.95rem', opacity: 0.9, fontWeight: 750 }}>{label}</span>
-      <span style={{ fontWeight: isBold ? 950 : 800, fontSize: isBold ? '1.8rem' : '1.1rem', color: isBold ? 'var(--secondary)' : 'white' }}>{value} <small style={{ opacity: 0.6 }}>{currency || 'SAR'}</small></span>
+      <span style={{ fontWeight: isBold ? 950 : 800, fontSize: isBold ? '1.8rem' : '1.1rem', color: isBold ? 'var(--secondary)' : 'var(--on-surface)' }}>{value} <small style={{ opacity: 0.6 }}>{currency || 'SAR'}</small></span>
     </div>
   );
 }
@@ -2009,32 +2041,33 @@ function InvoicePreviewModal({
 }: InvoicePreviewModalProps) {
     const isAr = t.lang === 'ar';
     const invoiceId = useMemo(() => Math.random().toString(36).substr(2, 6).toUpperCase(), []);
+    const now = useMemo(() => new Date(), []);
     
     return (
         <div className="modal-overlay-premium" style={{ overflowY: 'auto', display: 'block', padding: '2rem 0' }}>
-            <div className="no-print" style={{ position: 'sticky', top: '2rem', zIndex: 100, display: 'flex', justifyContent: 'center', gap: '1rem', width: 'fit-content', margin: '0 auto 2rem', background: 'var(--primary)', padding: '0.8rem 2rem', borderRadius: '50px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+            <div className="no-print" style={{ position: 'sticky', top: '2rem', zIndex: 100, display: 'flex', justifyContent: 'center', gap: '1rem', width: 'fit-content', margin: '0 auto 2rem', background: 'var(--primary)', padding: '0.8rem 2rem', borderRadius: '50px', boxShadow: 'var(--shadow-lg)' }}>
                 <button onClick={onPrint} className="btn-print-premium"><Printer size={18} /> {isAr ? 'طباعة PDF' : 'Print PDF'}</button>
-                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: '#25D366' }}><ShieldCheck size={18} /> WhatsApp</button>
-                <button onClick={onDismiss} className="btn-print-premium" style={{ background: '#ba1a1a' }}><X size={18} /> {isAr ? 'إغلاق' : 'Close'}</button>
+                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: 'var(--success)' }}><ShieldCheck size={18} /> WhatsApp</button>
+                <button onClick={onDismiss} className="btn-print-premium" style={{ background: 'var(--error)' }}><X size={18} /> {isAr ? 'إغلاق' : 'Close'}</button>
             </div>
             
             <div className="print-canvas" style={{ background: 'white', width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '2cm', color: 'black', direction: 'rtl', fontFamily: 'Tajawal', boxShadow: '0 0 50px rgba(0,0,0,0.2)', borderRadius: '4px' }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '4px solid #001a33', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '4px solid var(--primary)', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ width: 80, height: 80, background: '#001a33', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4a76a', fontSize: '2rem', fontWeight: 1000 }}>{settings.companyName.charAt(0)}</div>
+                        <div style={{ width: 80, height: 80, background: 'var(--primary)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)', fontSize: '2rem', fontWeight: 1000 }}>{settings.companyName.charAt(0)}</div>
                         <div>
-                            <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 1000, color: '#001a33' }}>{settings.companyName}</h2>
+                            <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 1000, color: 'var(--primary)' }}>{settings.companyName}</h2>
                             <p style={{ margin: '0.2rem 0', fontSize: '0.9rem', opacity: 0.7, fontWeight: 800 }}>Sovereign Customs Clearance & Logistics</p>
                             <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.5, fontWeight: 700 }}>TAX ID: {settings.taxNumber}</p>
                         </div>
                     </div>
                     <div style={{ textAlign: 'left' }}>
-                        <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#001a33', fontWeight: 1000 }}>{isSettlement ? (isAr ? 'قيد تسوية' : 'Settlement') : (isAr ? 'فاتورة ضريبية' : 'Tax Invoice')}</h1>
+                        <h1 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--primary)', fontWeight: 1000 }}>{isSettlement ? (isAr ? 'قيد تسوية' : 'Settlement') : (isAr ? 'فاتورة ضريبية' : 'Tax Invoice')}</h1>
                         <p style={{ margin: '0.4rem 0', fontWeight: 900, fontSize: '1.2rem' }}>#{operationNumber || invoiceId}</p>
                     </div>
                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', background: '#f8f9fa', padding: '1.5rem', borderRadius: '16px', marginBottom: '3rem', border: '1px solid #eee' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', background: 'var(--surface-variant)', padding: '1.5rem', borderRadius: '16px', marginBottom: '3rem', border: '1px solid var(--outline-variant)' }}>
                     <MetadataBox label={isAr ? 'رقم البيان' : 'DEC NO'} value={declarationNumber} />
                     <MetadataBox label={isAr ? 'رقم البوليصة' : 'BOL NO'} value={bolNumber} />
                     <MetadataBox label={isAr ? 'رقم العملية' : 'OP NO'} value={operationNumber} />
@@ -2043,20 +2076,20 @@ function InvoicePreviewModal({
 
                  <div style={{ marginBottom: '3rem' }}>
                     <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, opacity: 0.5 }}>{isAr ? 'العميل المستهدف:' : 'Billed To:'}</p>
-                    <h3 style={{ margin: '0.5rem 0', fontSize: '1.8rem', fontWeight: 1000, color: '#001a33' }}>{clientName}</h3>
+                    <h3 style={{ margin: '0.5rem 0', fontSize: '1.8rem', fontWeight: 1000, color: 'var(--primary)' }}>{clientName}</h3>
                     {taxId && <p style={{ fontWeight: 800, opacity: 0.7 }}>رقم العميل الضريبي: {taxId}</p>}
                  </div>
 
                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '3rem' }}>
                     <thead>
-                        <tr style={{ background: '#001a33', color: 'white' }}>
+                        <tr style={{ background: 'var(--primary)', color: 'var(--on-primary)' }}>
                             <th style={{ padding: '1.2rem', textAlign: 'right', fontWeight: 900 }}>تفاصيل المعاملة</th>
                             <th style={{ padding: '1.2rem', textAlign: 'left', fontWeight: 900, width: '150px' }}>المبلغ</th>
                         </tr>
                     </thead>
                     <tbody>
                         {items.map((it: any, idx: number) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <tr key={idx} style={{ borderBottom: '1px solid var(--outline-variant)' }}>
                                 <td style={{ padding: '1.5rem 1rem', fontWeight: 800 }}>{it.desc}</td>
                                 <td style={{ padding: '1.5rem 1rem', textAlign: 'left', fontWeight: 1000 }}>{it.amount.toLocaleString()}</td>
                             </tr>
@@ -2067,13 +2100,13 @@ function InvoicePreviewModal({
                     </tbody>
                  </table>
 
-                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: '2rem', borderTop: '2px solid #001a33' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: '2rem', borderTop: '2px solid var(--primary)' }}>
                     <div style={{ width: '150px' }}>
                         <QRCodeSVG 
                           value={generateZatcaQR(
                             settings.companyName,
                             settings.taxNumber,
-                            new Date().toISOString(),
+                            now.toISOString(),
                             total.toString(),
                             vat.toString()
                           )} 
@@ -2085,20 +2118,20 @@ function InvoicePreviewModal({
                     <div style={{ width: '350px' }}>
                         <SumRow label="المجموع الفرعي" value={subtotal.toLocaleString()} />
                         {!isSettlement && <SumRow label={`الضريبة (${vatRate}%)`} value={vat.toLocaleString()} />}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5rem 0', fontWeight: 1000, fontSize: '2.5rem', color: '#001a33', borderTop: '4px solid #001a33', marginTop: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5rem 0', fontWeight: 1000, fontSize: '2.5rem', color: 'var(--primary)', borderTop: '4px solid var(--primary)', marginTop: '1rem' }}>
                             <span>الإجمالي</span>
                             <span>{total.toLocaleString()}</span>
                         </div>
                     </div>
                  </div>
 
-                 <div style={{ marginTop: '5rem', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '2rem' }}>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 1000, color: '#001a33', margin: 0 }}>شكراً لتعاملكم مع مؤسسة الغويري للتخليص الجمركي</p>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 800, marginTop: '0.5rem' }}>نظام المحاسبة الموحد السيادي | {new Date().toLocaleDateString('ar-SA')}</p>
+                 <div style={{ marginTop: '5rem', textAlign: 'center', borderTop: '1px solid var(--surface-container-high)', paddingTop: '2rem' }}>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 1000, color: 'var(--primary)', margin: 0 }}>شكراً لتعاملكم مع مؤسسة الغويري للتخليص الجمركي</p>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 800, marginTop: '0.5rem' }}>نظام المحاسبة الموحد السيادي | {now.toLocaleDateString('ar-SA')}</p>
                  </div>
             </div>
             <style>{`
-                .btn-print-premium { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1.5rem; border-radius: 30px; border: none; font-weight: 1000; color: white; cursor: pointer; transition: 0.3s; }
+                .btn-print-premium { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1.5rem; border-radius: 30px; border: none; font-weight: 1000; color: var(--on-primary); cursor: pointer; transition: 0.3s; }
                 .btn-print-premium:hover { transform: translateY(-3px); }
                 @media print { .no-print { display: none !important; } .print-canvas { box-shadow: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; } }
             `}</style>
@@ -2110,7 +2143,7 @@ function MetadataBox({ label, value }: any) {
   return (
     <div>
        <span style={{ fontSize: '0.7rem', fontWeight: 1000, opacity: 0.4 }}>{label}</span>
-       <span style={{ display: 'block', fontSize: '1rem', fontWeight: 1000, color: '#001a33', marginTop: '0.2rem' }}>{value || '-'}</span>
+       <span style={{ display: 'block', fontSize: '1rem', fontWeight: 1000, color: 'var(--primary)', marginTop: '0.2rem' }}>{value || '-'}</span>
     </div>
   );
 }
@@ -2218,7 +2251,7 @@ function InventoryManagement({ products, isAr, setShowProductModal, onRestock }:
             return (
               <div key={p.id} className="card-contract-elite" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ padding: '1rem', background: lowStock ? 'rgba(239, 68, 68, 0.1)' : 'rgba(212, 167, 106, 0.1)', borderRadius: '15px' }}>
+                    <div style={{ padding: '1rem', background: lowStock ? 'rgba(var(--error-rgb), 0.1)' : 'rgba(var(--secondary-rgb), 0.1)', borderRadius: '15px' }}>
                       <Package size={24} style={{ color: lowStock ? 'var(--error)' : 'var(--primary)' }} />
                     </div>
                     <div>
@@ -2240,7 +2273,7 @@ function InventoryManagement({ products, isAr, setShowProductModal, onRestock }:
                     </div>
                     <div>
                       {lowStock && (
-                        <button onClick={() => onRestock(p.id)} className="btn-action-small" style={{ color: 'var(--error)', borderColor: 'var(--error)', background: 'rgba(239,68,68,0.05)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => onRestock(p.id)} className="btn-action-small" style={{ color: 'var(--error)', borderColor: 'var(--error)', background: 'rgba(var(--error-rgb), 0.05)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <AlertTriangle size={16} /> <span style={{ fontWeight: 900 }}>{isAr ? 'إعادة طلب' : 'Restock'}</span>
                         </button>
                       )}
@@ -2308,7 +2341,7 @@ function ProductModal({ newProduct, setNewProduct, onClose, onSave, isAr }: Prod
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(212, 167, 106, 0.05)', padding: '1.2rem', borderRadius: '14px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(var(--secondary-rgb), 0.05)', padding: '1.2rem', borderRadius: '14px' }}>
                         <div className="form-group-premium">
                             <label>{isAr ? 'الكمية الافتتاحية' : 'Opening Stock'}</label>
                             <input type="number" value={newProduct.quantity_on_hand || 0} onChange={e => setNewProduct({...newProduct, quantity_on_hand: parseFloat(e.target.value)})} className="input-premium" />

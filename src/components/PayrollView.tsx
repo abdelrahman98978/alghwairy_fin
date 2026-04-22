@@ -38,8 +38,19 @@ interface Salary {
 }
 
 export default function PayrollView({ showToast, logActivity, t }: Props) {
-  const [salaries, setSalaries] = useState<Salary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [salaries, setSalaries] = useState<Salary[]>(() => {
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    try {
+      const data = localDB.getActive('payroll')
+        .filter((s: any) => s.period === currentPeriod || !s.period)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return (data as Salary[]) || [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [currentPeriod, setCurrentPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -218,14 +229,14 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
 
       {/* Overview Cards */}
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-        <div className="card" style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div className="card" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Building2 size={28} /></div>
                <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', borderRadius: '10px', textTransform: 'uppercase' }}>{currentPeriod} BUDGET</span>
            </div>
            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.total_salaries}</p>
            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>
-              {totalNet.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'white' }}>SAR</span>
+              {totalNet.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span>
            </h2>
         </div>
 

@@ -106,14 +106,14 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
 
       {/* Cash Flow Summary */}
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-         <div className="card" style={{ background: 'var(--primary)', color: 'white', padding: '2.5rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
+         <div className="card" style={{ background: 'var(--primary)', color: 'var(--on-primary)', padding: '2.5rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Wallet size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', padding: '0.4rem 1rem', borderRadius: '10px' }}>OFFLINE SECURED</span>
+               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(var(--secondary-rgb), 0.1)', color: 'var(--secondary)' }}><Wallet size={28} /></div>
+               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(var(--success-rgb), 0.2)', color: 'var(--success)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OFFLINE SECURED</span>
             </div>
             <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.current_cash_balance}</p>
-            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>{cashBalance.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'white' }}>SAR</span></h2>
-            <div style={{ position: 'absolute', bottom: '-15%', right: '-5%', width: '120px', height: '120px', background: 'rgba(212, 167, 106, 0.05)', borderRadius: '30px', transform: 'rotate(15deg)' }}></div>
+            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>{cashBalance.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span></h2>
+            <div style={{ position: 'absolute', bottom: '-15%', right: '-5%', width: '120px', height: '120px', background: 'rgba(var(--secondary-rgb), 0.05)', borderRadius: '30px', transform: 'rotate(15deg)' }}></div>
          </div>
 
          <div className="card" style={{ padding: '2.5rem' }}>
@@ -127,8 +127,8 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
 
          <div className="card" style={{ padding: '2.5rem', borderInlineStart: '6px solid var(--error)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)' }}><TrendingDown size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OUTFLOW</span>
+               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(var(--error-rgb), 0.1)', color: 'var(--error)' }}><TrendingDown size={28} /></div>
+               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(var(--error-rgb), 0.1)', color: 'var(--error)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OUTFLOW</span>
             </div>
             <p style={{ fontSize: '0.95rem', color: 'var(--on-surface-variant)', fontWeight: 700, marginBottom: '0.5rem' }}>{t.total_expenses}</p>
             <h2 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--error)' }}>{totalOperating.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.5 }}>SAR</span></h2>
@@ -140,7 +140,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
          <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
             <div style={{ padding: '1.5rem 2.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{t.recent_expenses_ledger}</h3>
-               <button className="btn-executive" style={{ background: 'white', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit Ledger</button>
+               <button className="btn-executive" style={{ background: 'var(--surface)', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit Ledger</button>
             </div>
             {loading ? (
                <div style={{ textAlign: 'center', padding: '6rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>Loading Expenditures...</div>

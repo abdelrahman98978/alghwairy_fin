@@ -73,7 +73,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     zatcaSync: localStorage.getItem('sov_zatca_sync') || 'Active',
     zatcaEnv: localStorage.getItem('sov_zatca_env') || 'Sandbox',
     notifications: JSON.parse(localStorage.getItem('sov_notifications') || '[true, true, true, false]'),
-    primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
+    primaryColor: localStorage.getItem('sov_primary_color') || '#d4af37',
     fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
     reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
     reportFooter: localStorage.getItem('sov_report_footer') || 'جميع الحقوق محفوظة © مؤسسة الغويري 2026',

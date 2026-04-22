@@ -343,8 +343,8 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                     <td style={{ textAlign: 'center' }}>
                       <span style={{
                         fontSize: '0.7rem', padding: '0.4rem 1rem', borderRadius: '20px', fontWeight: 900,
-                        background: inv.status === 'paid' ? 'rgba(46, 125, 50, 0.1)' : 'rgba(212, 167, 106, 0.1)',
-                        color: inv.status === 'paid' ? '#2e7d32' : '#d4a76a'
+                        background: inv.status === 'paid' ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--secondary-rgb), 0.1)',
+                        color: inv.status === 'paid' ? 'var(--success)' : 'var(--secondary)'
                       }}>
                         {inv.status === 'paid' ? t.invoices.status_paid : t.invoices.status_pending}
                       </span>
@@ -418,7 +418,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                 </FormField>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem', padding: '1.2rem', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #eee' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
                 <FormField label={t.invoices.operation_number}><input type="text" className="input-executive" value={formData.operationNumber} onChange={e => setFormData({...formData, operationNumber: e.target.value})} placeholder="OP-0000" /></FormField>
                 <FormField label={t.invoices.statement_number}><input type="text" className="input-executive" value={formData.statementNumber} onChange={e => setFormData({...formData, statementNumber: e.target.value})} placeholder="STAT-00" /></FormField>
                 <FormField label={t.invoices.bol_number}><input type="text" className="input-executive" value={formData.bolNumber} onChange={e => setFormData({...formData, bolNumber: e.target.value})} placeholder="BOL-00" /></FormField>
@@ -473,7 +473,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                         </select>
                         <span style={{ fontWeight: 900 }}>{(items.reduce((s, i) => s + i.amount, 0) * (formData.vatRate/100)).toLocaleString()}</span>
                       </div>
-                      <div style={{ height: '1px', background: '#ddd', margin: '8px 0' }}></div>
+                      <div style={{ height: '1px', background: 'var(--outline-variant)', margin: '8px 0' }}></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--primary)' }}>
                         <span style={{ fontWeight: 950 }}>{t.lang === 'ar' ? 'الإجمالي النهائي' : 'Grand Total'}:</span>
                         <span style={{ fontWeight: 950, fontSize: '1.2rem' }}>{(items.reduce((s, i) => s + i.amount, 0) * (1 + formData.vatRate/100) + (parseFloat(formData.customsFees)||0) + (parseFloat(formData.portFees)||0) + (parseFloat(formData.transportFees)||0) + (parseFloat(formData.transportExpenses)||0)).toLocaleString()}</span>
@@ -498,10 +498,10 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       )}
 
       {showSummaryModal && (
-        <div className="modal-overlay" style={{ zIndex: 6000, background: 'rgba(0,0,0,0.95)', padding: '40px' }}>
-          <div className="card" style={{ maxWidth: '1000px', margin: '0 auto', background: '#fff', maxHeight: '90vh', overflowY: 'auto' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid #eee', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
-                <h3 style={{ margin: 0, fontWeight: 950, color: '#001a33' }}>{t.invoices.summary_title}</h3>
+        <div className="modal-overlay" style={{ zIndex: 6000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '40px' }}>
+          <div className="card" style={{ maxWidth: '1000px', margin: '0 auto', background: 'var(--surface)', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--outline-variant)' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid var(--outline-variant)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10 }}>
+                <h3 style={{ margin: 0, fontWeight: 950, color: 'var(--primary)' }}>{t.invoices.summary_title}</h3>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => {
                     const csvRows = [
@@ -529,23 +529,23 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                  }} className="btn-executive" style={{ background: 'var(--success)', color: '#fff', border: 'none' }}>
+                  }} className="btn-executive" style={{ background: 'var(--success)', color: 'var(--on-primary)', border: 'none' }}>
                     <Download size={16} /> CSV
                   </button>
-                  <button onClick={() => setShowSummaryModal(false)} className="btn-executive" style={{ background: '#eee', color: '#333' }}><X size={16} /></button>
+                  <button onClick={() => setShowSummaryModal(false)} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}><X size={16} /></button>
                 </div>
              </div>
              <div className="print-content" style={{ padding: '40px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                  <h1 style={{ color: '#001a33', margin: 0 }}>{settings.companyName}</h1>
-                  <p style={{ color: '#d4a76a', fontWeight: 700 }}>{t.invoices.summary_subtitle}</p>
+                  <h1 style={{ color: 'var(--primary)', margin: 0 }}>{settings.companyName}</h1>
+                  <p style={{ color: 'var(--secondary)', fontWeight: 700 }}>{t.invoices.summary_subtitle}</p>
                   <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>
                     {dateFilter.start && `From: ${dateFilter.start}`} {dateFilter.end && `To: ${dateFilter.end}`}
                   </p>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ background: '#001a33', color: '#fff' }}>
+                    <tr style={{ background: 'var(--primary)', color: 'var(--on-primary)' }}>
                       <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.table.number}</th>
                       <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.table.client}</th>
                       <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.carrier_label}</th>
@@ -556,7 +556,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                   </thead>
                   <tbody>
                     {filteredInvoices.map(inv => (
-                      <tr key={inv.id} style={{ borderBottom: '1px solid #eee' }}>
+                      <tr key={inv.id} style={{ borderBottom: '1px solid var(--outline-variant)' }}>
                         <td style={{ padding: '12px 10px', fontWeight: 800 }}>{inv.operation_number || inv.reference_number}</td>
                         <td style={{ padding: '12px 10px' }}>{inv.customers?.name}</td>
                         <td style={{ padding: '12px 10px' }}>{inv.carrier?.name || '-'}</td>
@@ -567,7 +567,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr style={{ background: '#f8f9fa', fontWeight: 950 }}>
+                    <tr style={{ background: 'var(--surface-container-low)', fontWeight: 950 }}>
                       <td colSpan={4} style={{ padding: '15px 10px', textAlign: 'right' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
                       <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--success)' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</td>
                       <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--primary)' }}>{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()} <span style={{fontSize: '0.8rem', opacity: 0.6}}>{t.lang === 'ar' ? 'ر.س' : 'SAR'}</span></td>
@@ -767,31 +767,31 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
                 <td style={{ padding: '12px 15px', textAlign: 'center', fontWeight: 900 }}>{it.amount.toLocaleString()}</td>
               </tr>
             ))}
-            {invoice.customs_fees ? <tr style={{ background: '#f9f9f9' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم جمركية', 'Customs Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.customs_fees.toLocaleString()}</td></tr> : null}
-            {invoice.port_fees ? <tr style={{ background: '#f9f9f9' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم الميناء', 'Port Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.port_fees.toLocaleString()}</td></tr> : null}
-            {invoice.transport_fees ? <tr style={{ background: '#f9f9f9' }}><td style={{ padding: '8px 15px' }}>{getLabel('أجور النقل', 'Transport')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.transport_fees.toLocaleString()}</td></tr> : null}
+            {invoice.customs_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم جمركية', 'Customs Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.customs_fees.toLocaleString()}</td></tr> : null}
+            {invoice.port_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم الميناء', 'Port Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.port_fees.toLocaleString()}</td></tr> : null}
+            {invoice.transport_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('أجور النقل', 'Transport')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.transport_fees.toLocaleString()}</td></tr> : null}
           </tbody>
         </table>
 
         {/* Summary Sections */}
-        <div className="print-summary-box" style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', borderTop: '2px solid #001a33', paddingTop: '20px' }}>
+        <div className="print-summary-box" style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', borderTop: '2px solid var(--primary)', paddingTop: '20px' }}>
           <div>
-             <div style={{ padding: '15px', background: '#fff9f2', borderRadius: '10px', border: '1px dashed #d4a76a', marginBottom: '15px' }}>
-                <h4 style={{ margin: '0 0 5px', fontSize: '0.85rem', color: '#001a33' }}>{getLabel('بيانات السداد', 'Payment Details')}</h4>
+             <div style={{ padding: '15px', background: 'var(--surface-container-low)', borderRadius: '10px', border: '1px dashed var(--secondary)', marginBottom: '15px' }}>
+                <h4 style={{ margin: '0 0 5px', fontSize: '0.85rem', color: 'var(--primary)' }}>{getLabel('بيانات السداد', 'Payment Details')}</h4>
                 <p style={{ margin: 0, fontSize: '0.8rem' }}>{settings.bankName}</p>
                 <p style={{ margin: 0, fontSize: '0.8rem', fontFamily: 'monospace' }}>{settings.iban}</p>
              </div>
              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px' }}>
-                <div style={{ textAlign: 'center' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('التدقيق', 'Audit')}</p><div style={{ width: '80px', borderBottom: '1px solid #ccc', marginTop: '30px' }}></div></div>
-                <div style={{ textAlign: 'center', position: 'relative' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('الختم', 'Stamp')}</p><div style={{ width: '60px', height: '60px', border: '2px double #eee', borderRadius: '50%', marginTop: '5px' }}></div></div>
+                <div style={{ textAlign: 'center' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('التدقيق', 'Audit')}</p><div style={{ width: '80px', borderBottom: '1px solid var(--outline)', marginTop: '30px' }}></div></div>
+                <div style={{ textAlign: 'center', position: 'relative' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('الختم', 'Stamp')}</p><div style={{ width: '60px', height: '60px', border: '2px double var(--outline-variant)', borderRadius: '50%', marginTop: '5px' }}></div></div>
              </div>
           </div>
-          <div style={{ background: '#001a33', color: '#fff', padding: '20px', borderRadius: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ background: 'var(--primary)', color: 'var(--on-primary)', padding: '20px', borderRadius: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{getLabel('الإجمالي الفرعي', 'Subtotal')}</span><span style={{ fontWeight: 900 }}>{invoice.amount.toLocaleString()}</span></div>
              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{getLabel('الضريبة', 'VAT')}</span><span style={{ fontWeight: 900 }}>{invoice.vat.toLocaleString()}</span></div>
              <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.3rem' }}><strong>{getLabel('الإجمالي', 'Grand Total')}</strong><strong>{invoice.total.toLocaleString()}</strong></div>
-             <div style={{ marginTop: '15px', alignSelf: 'center', background: '#fff', padding: '10px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+             <div style={{ marginTop: '15px', alignSelf: 'center', background: 'white', padding: '10px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
                 <QRCodeSVG value={generateZatcaQR(invoice)} size={110} />
              </div>
           </div>
@@ -799,14 +799,14 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
 
         {/* Notes (Conditional) */}
         {invoice.notes && (
-          <div style={{ marginTop: '20px', padding: '10px', borderTop: '1px solid #eee' }}>
-            <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}><strong>{getLabel('ملاحظات:', 'Notes:')}</strong> {invoice.notes}</p>
+          <div style={{ marginTop: '20px', padding: '10px', borderTop: '1px solid var(--outline-variant)' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: 0 }}><strong>{getLabel('ملاحظات:', 'Notes:')}</strong> {invoice.notes}</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="invoice-footer" style={{ marginTop: 'auto', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-          <p style={{ fontSize: '0.7rem', color: '#999', margin: 0 }}>{getLabel('صدرت هذه الفاتورة إلكترونياً وهي خاضعة لأنظمة هيئة الزكاة والضريبة والجمارك', 'This invoice is electronically generated and subject to ZATCA regulations')}</p>
+        <div className="invoice-footer" style={{ marginTop: 'auto', textAlign: 'center', borderTop: '1px solid var(--outline-variant)', paddingTop: '20px' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', opacity: 0.7, margin: 0 }}>{getLabel('صدرت هذه الفاتورة إلكترونياً وهي خاضعة لأنظمة هيئة الزكاة والضريبة والجمارك', 'This invoice is electronically generated and subject to ZATCA regulations')}</p>
         </div>
       </div>
     </div>

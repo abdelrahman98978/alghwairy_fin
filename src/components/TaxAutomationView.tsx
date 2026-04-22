@@ -202,8 +202,8 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
       </header>
 
       {/* Compliance Master Card - Enhanced for Customs */}
-      <div className="compliance-shield" style={{ background: 'var(--primary)', padding: '3rem', color: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '3rem', position: 'relative', overflow: 'hidden', border: 'none' }}>
-         <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="compliance-shield" style={{ background: 'var(--primary)', padding: '3rem', color: 'var(--on-primary)', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '3rem', position: 'relative', overflow: 'hidden', border: 'none' }}>
+         <div style={{ padding: '1.5rem', background: 'rgba(var(--on-primary-rgb), 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Globe size={50} color="var(--secondary)" />
          </div>
          <div style={{ flex: 1, zIndex: 2 }}>
@@ -216,11 +216,11 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                  : 'Full automation linking customs financial operations with ZATCA Phase 2 requirements. UBL 2.1 files are generated locally and cryptographically signed.'}
             </p>
          </div>
-         <div style={{ textAlign: 'center', paddingInlineStart: '3rem', borderInlineStart: '2px solid rgba(212, 167, 106, 0.2)', zIndex: 2 }}>
+         <div style={{ textAlign: 'center', paddingInlineStart: '3rem', borderInlineStart: '2px solid rgba(var(--secondary-rgb), 0.2)', zIndex: 2 }}>
             <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '0.5rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'دقة التخليص' : 'CLEARANCE ACCURACY'}</p>
             <h2 style={{ fontSize: '4rem', fontWeight: 950, margin: 0, color: 'var(--secondary)' }}>100%</h2>
          </div>
-         <div style={{ position: 'absolute', bottom: '-20%', right: '-5%', width: '150px', height: '150px', background: 'rgba(212, 167, 106, 0.05)', borderRadius: '40px', transform: 'rotate(25deg)' }}></div>
+         <div style={{ position: 'absolute', bottom: '-20%', right: '-5%', width: '150px', height: '150px', background: 'rgba(var(--secondary-rgb), 0.05)', borderRadius: '40px', transform: 'rotate(25deg)' }}></div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '2.5rem', marginTop: '2.5rem' }}>
@@ -238,10 +238,10 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                     {vatSummary.netVat.toLocaleString(undefined, {minimumFractionDigits: 2})} <span style={{ fontSize: '0.9rem', opacity: 0.5 }}>SAR</span>
                   </h4>
                </div>
-               <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)', borderBottom: '4px solid #3182ce' }}>
+               <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)', borderBottom: '4px solid var(--secondary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <Globe size={24} color="#3182ce" />
-                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#3182ce' }}>{t.lang === 'ar' ? 'الرسوم الجمركية' : 'CUSTOMS DUTY'}</span>
+                    <Globe size={24} color="var(--secondary)" />
+                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--secondary)' }}>{t.lang === 'ar' ? 'الرسوم الجمركية' : 'CUSTOMS DUTY'}</span>
                   </div>
                   <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.5rem 0' }}>{t.customs_fees}</p>
                   <h4 style={{ fontSize: '2.2rem', margin: 0, fontFamily: 'Tajawal', color: 'var(--primary)', fontWeight: 950 }}>
@@ -314,10 +314,10 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                </ul>
             </div>
 
-            <div className="card" style={{ padding: '2rem', background: 'var(--primary)', border: 'none', color: 'white' }}>
+            <div className="card" style={{ padding: '2rem', background: 'var(--primary)', border: 'none', color: 'var(--on-primary)' }}>
                <h4 style={{ fontSize: '0.9rem', marginBottom: '1.2rem', fontFamily: 'Tajawal', color: 'var(--secondary)', fontWeight: 900 }}>EXPORT SECURITY</h4>
                <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
-                  <div style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}>
+                  <div style={{ padding: '0.8rem', background: 'rgba(var(--on-primary-rgb), 0.1)', borderRadius: '12px' }}>
                      <ShieldCheck size={24} color="var(--secondary)" />
                   </div>
                   <div>
@@ -402,7 +402,7 @@ function TaxRecordItem({ tax, showToast, t }: any) {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.8rem', background: 'white', borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.8rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: 'var(--shadow-sm)' }}>
        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
           <div style={{ padding: '0.8rem', background: 'var(--surface-container-low)', borderRadius: '12px', color: 'var(--secondary)' }}>
              <FileCheck size={20} />
@@ -419,7 +419,7 @@ function TaxRecordItem({ tax, showToast, t }: any) {
        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary)', margin: '0 0 0.3rem 0' }}>{Number(tax.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></p>
-            <span style={{ fontSize: '0.7rem', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)', padding: '0.3rem 1rem', borderRadius: '20px', fontWeight: 900 }}>{tax.status}</span>
+            <span style={{ fontSize: '0.7rem', background: 'rgba(var(--secondary-rgb), 0.1)', color: 'var(--secondary)', padding: '0.3rem 1rem', borderRadius: '20px', fontWeight: 900 }}>{tax.status}</span>
           </div>
           <div style={{ display: 'flex', gap: '0.4rem' }}>
             <button 

@@ -51,8 +51,21 @@ interface Props {
 }
 
 export default function CustomersView({ showToast, logActivity, t }: Props) {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    try {
+      const data = localDB.getActive('customers');
+      const enhancedData = data.map((c: any) => ({
+        ...c,
+        usage: Math.floor(Math.random() * 85) + 5,
+        lastOperation: new Date(c.created_at || new Date()).toISOString().split('T')[0]
+      }));
+      enhancedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return enhancedData || [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -85,7 +98,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
   const handleViewProfile = (cust: Customer) => {
      setSelectedCustomer(cust);
      const invs = localDB.getActive('invoices').filter((i: any) => i.customer_id === cust.id);
-     setCustomerInvoices(invs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+     setCustomerInvoices(invs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
   };
 
   const filteredCustomers = customers.filter(c => {
@@ -97,7 +110,6 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
   });
 
   const fetchCustomers = useCallback(async () => {
-    setLoading(true);
     try {
       const data = localDB.getActive('customers');
       const enhancedData = data.map((c: any) => ({
@@ -111,8 +123,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
     } catch (err) {
       showToast(t.notifications?.error_loading || 'Error loading customers', 'error');
     }
-    setLoading(false);
-  }, [showToast]);
+  }, [showToast, t.notifications?.error_loading]);
 
   useEffect(() => {
     fetchCustomers();
