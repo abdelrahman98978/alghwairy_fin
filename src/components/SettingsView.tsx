@@ -61,7 +61,10 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     reportFooter: localStorage.getItem('sov_report_footer') || 'جميع الحقوق محفوظة © مؤسسة الغويري 2026',
     syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily',
     notifSounds: localStorage.getItem('sov_notif_sounds') === 'true',
-    notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true'
+    notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true',
+    supabaseUrl: localStorage.getItem('sov_supabase_url') || '',
+    supabaseKey: localStorage.getItem('sov_supabase_key') || '',
+    cloudSync: localStorage.getItem('sov_cloud_sync') === 'true'
   });
 
   const handleSave = async () => {
@@ -220,6 +223,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     { id: 'documents', label: t.tabs.documents, icon: <FileText size={18} /> },
     { id: 'biometrics', label: t.tabs.security, icon: <Fingerprint size={18} /> },
     { id: 'backup', label: t.tabs.backup, icon: <Cloud size={18} /> },
+    { id: 'cloud', label: t.lang === 'ar' ? 'التزامن السحابي' : 'Cloud Sync', icon: <Globe size={18} /> },
     { id: 'cluster', label: t.lang === 'ar' ? 'عنقود التزامن' : 'Cluster Sync', icon: <Share2 size={18} /> },
   ];
 
@@ -518,7 +522,65 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                  )}
               </div>
            )}
-        </main>
+
+           {activeTab === 'cloud' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                       <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>
+                          {t.lang === 'ar' ? 'الجسر السحابي (Supabase)' : 'Cloud Bridge (Supabase)'}
+                       </h3>
+                       <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>
+                          {t.lang === 'ar' ? 'ربط السجل السيادي للوصول عبر المتصفح.' : 'Link sovereign ledger for web access.'}
+                       </p>
+                    </div>
+                    <Cloud size={24} color="var(--primary)" />
+                 </div>
+                 
+                 <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>Supabase URL</label>
+                          <input 
+                            className="input-executive" style={{ fontFamily: 'monospace' }}
+                            value={settings.supabaseUrl}
+                            onChange={(e) => setSettings({ ...settings, supabaseUrl: e.target.value })}
+                            placeholder="https://your-project.supabase.co"
+                          />
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>Anon Key / API Key</label>
+                          <input 
+                            type="password"
+                            className="input-executive" style={{ fontFamily: 'monospace' }}
+                            value={settings.supabaseKey}
+                            onChange={(e) => setSettings({ ...settings, supabaseKey: e.target.value })}
+                          />
+                       </div>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'white', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
+                          <div>
+                             <p style={{ margin: 0, fontWeight: 900 }}>{t.lang === 'ar' ? 'تفعيل المزامنة السحابية' : 'Enable Cloud Sync'}</p>
+                             <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>{t.lang === 'ar' ? 'يسمح بفتح التطبيق من أي متصفح حول العالم.' : 'Allows opening the app from any browser worldwide.'}</p>
+                          </div>
+                          <input 
+                            type="checkbox" 
+                            checked={settings.cloudSync}
+                            onChange={(e) => setSettings({ ...settings, cloudSync: e.target.checked })}
+                          />
+                       </div>
+                    </div>
+                 </div>
+
+                 <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(0, 102, 204, 0.05)', border: '1px dashed var(--primary)', fontSize: '0.85rem' }}>
+                    <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 800 }}>
+                       💡 {t.lang === 'ar' 
+                         ? 'تأكد من إنشاء جدول باسم sovereign_sync في قاعدة بيانات Supabase الخاصة بك.' 
+                         : 'Make sure to create a table named sovereign_sync in your Supabase database.'}
+                    </p>
+                 </div>
+              </div>
+           )}
+         </main>
       </div>
 
       <div style={{ marginTop: '3rem', padding: '2rem', borderRadius: '20px', background: 'var(--primary)', color: 'white', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>

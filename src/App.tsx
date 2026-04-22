@@ -35,6 +35,7 @@ import {
   Share2
 } from 'lucide-react';
 import { localDB } from './lib/localDB';
+import { syncEngine } from './lib/syncEngine';
 import { hasPermission, type AppModule } from './lib/permissions';
 
 // --- Views ---
@@ -1212,44 +1213,6 @@ export default function App() {
     setTimeout(() => setNotification(null), 4000);
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const invId = params.get('invoice_id');
-    if (invId) {
-      setPublicInvoiceId(invId);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('sovereign_theme', isDark ? 'dark' : 'light');
-    
-    // Apply Brand Identity to Root
-    const root = document.documentElement;
-    root.style.setProperty('--primary', systemSettings.primaryColor);
-    root.style.setProperty('--sidebar-bg', isDark ? '#000000' : systemSettings.primaryColor);
-    root.style.setProperty('--font-main', systemSettings.fontFamily);
-    document.body.style.fontFamily = `'${systemSettings.fontFamily}', 'Cairo', sans-serif`;
-    
-    // Auto-sync settings from localStorage periodically (or on focus)
-    const sync = () => {
-      setSystemSettings({
-        companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
-        taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
-        primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
-        fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
-        reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
-        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential'
-      });
-    };
-    
-    window.addEventListener('storage', sync);
-    window.addEventListener('focus', sync);
-    return () => {
-      window.removeEventListener('storage', sync);
-      window.removeEventListener('focus', sync);
-    };
-  }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
-
   const fetchData = useCallback(() => {
     const data = localDB.getActive('transactions');
     setTransactions(data as Transaction[]);
@@ -1263,6 +1226,61 @@ export default function App() {
       setUnreadMsgCount(unread);
     }
   }, []);
+
+  const logActivity = async (action: string, entity: string, entity_id?: string, overrideUser?: string) => {
+     localDB.insert('activity_logs', {
+       user_email: overrideUser || userName,
+       action,
+       entity,
+       entity_id
+     });
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const invId = params.get('invoice_id');
+    if (invId) {
+      setPublicInvoiceId(invId);
+    }
+    
+    // Start Sovereign Sync Engine (Cloud/LAN)
+    syncEngine.start();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('sovereign_theme', isDark ? 'dark' : 'light');
+    
+    // Apply Brand Identity to Root
+    const root = document.documentElement;
+    root.style.setProperty('--primary', systemSettings.primaryColor);
+    root.style.setProperty('--sidebar-bg', isDark ? '#000000' : systemSettings.primaryColor);
+    root.style.setProperty('--font-main', systemSettings.fontFamily);
+    document.body.style.fontFamily = `'${systemSettings.fontFamily}', 'Cairo', sans-serif`;
+    
+    // Auto-sync settings from localStorage periodically (or on focus)
+    const sync = (e: any) => {
+      // If the actual database changed (from Cloud Sync), refresh everything
+      if (e && e.key === 'alghwairy_db') {
+        fetchData();
+      }
+
+      setSystemSettings({
+        companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
+        taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
+        primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
+        fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
+        reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential'
+      });
+    };
+    
+    window.addEventListener('storage', sync);
+    window.addEventListener('focus', sync as any);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('focus', sync as any);
+    };
+  }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName, fetchData]);
 
   useEffect(() => {
     if (isLoggedIn && !publicInvoiceId) {
@@ -1335,15 +1353,6 @@ export default function App() {
       };
     }
   }, [isLoggedIn, publicInvoiceId, fetchData]);
-
-  const logActivity = async (action: string, entity: string, entity_id?: string, overrideUser?: string) => {
-     localDB.insert('activity_logs', {
-       user_email: overrideUser || userName,
-       action,
-       entity,
-       entity_id
-     });
-  };
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
