@@ -38,8 +38,19 @@ interface Salary {
 }
 
 export default function PayrollView({ showToast, logActivity, t }: Props) {
-  const [salaries, setSalaries] = useState<Salary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [salaries, setSalaries] = useState<Salary[]>(() => {
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    try {
+      const data = localDB.getActive('payroll')
+        .filter((s: any) => s.period === currentPeriod || !s.period)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return (data as Salary[]) || [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [currentPeriod, setCurrentPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -75,8 +86,8 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
   }, [showToast, currentPeriod]);
 
   useEffect(() => {
-    fetchSalaries();
-  }, [fetchSalaries]);
+    // Initial data loaded via functional initializer
+  }, []);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +120,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
     try {
         const record = localDB.insert('payroll', newSalary);
         await logActivity('Enrolled Staff for ' + currentPeriod + ': ' + formData.name, 'payroll', record.id);
-        showToast(t.lang === 'ar' ? 'تم تسجيل الموظف سيادياً' : 'Staff record secured under sovereign ledger.', 'success');
+        showToast(t.enroll_success, 'success');
         setShowAddModal(false);
         setFormData({ name: '', role: 'Accountant', base: '', allowances: '', deductions: '', iban: '', bank_name: 'Saudi National Bank (SNB)', applyGosi: true });
         fetchSalaries();
@@ -121,11 +132,11 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
   const approveAllPending = async () => {
     const pendingSalaries = salaries.filter(s => s.status === 'pending');
     if (pendingSalaries.length === 0) {
-       showToast(t.lang === 'ar' ? 'لا توجد مسيرات معلقة لهذه الفترة' : 'No pending payrolls for this period', 'error');
+       showToast(t.no_pending, 'error');
        return;
     }
 
-    showToast(t.lang === 'ar' ? 'جاري توثيق مسيرات الرواتب السيادية...' : 'Certifying Sovereign Payroll Records...', 'success');
+    showToast(t.certify_confirm, 'success');
 
     setTimeout(async () => {
        try {
@@ -133,7 +144,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                localDB.update('payroll', s.id, { status: 'paid' });
            });
            await logActivity('Sovereign Payroll Certification for ' + currentPeriod, 'payroll');
-           showToast(t.lang === 'ar' ? 'تم اعتماد رواتب المؤسسة بنجاح' : 'Sovereign Payroll Certification Successful', 'success');
+           showToast(t.certify_success, 'success');
            fetchSalaries();
        } catch (err: any) {
            showToast('Error: ' + err.message, 'error');
@@ -165,7 +176,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
     link.setAttribute("download", `Alghwairy_WPS_SIF_${currentPeriod}.csv`);
     document.body.appendChild(link);
     link.click();
-    showToast(t.lang === 'ar' ? 'تم توليد ملف SIF الخاص بحماية الأجور' : 'WPS SIF File Generated Successfully', 'success');
+    showToast(t.sif_success, 'success');
   };
 
   const totalNet = salaries.reduce((acc, current) => acc + Number(current.net || 0), 0);
@@ -211,21 +222,21 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
              className="btn-executive" 
              style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', opacity: isPending ? 1 : 0.6, border: 'none' }}
           >
-             <Lock size={18} /> {isPending ? (t.lang === 'ar' ? 'اعتماد المسيرات' : 'Certify Payroll') : (t.lang === 'ar' ? 'تم الاعتماد السيادي' : 'Sovereign Certified')}
+             <Lock size={18} /> {isPending ? t.certify_payroll : t.certified_badge}
           </button>
         </div>
       </header>
 
       {/* Overview Cards */}
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-        <div className="card" style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div className="card" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Building2 size={28} /></div>
                <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', borderRadius: '10px', textTransform: 'uppercase' }}>{currentPeriod} BUDGET</span>
            </div>
            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.total_salaries}</p>
            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>
-              {totalNet.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'white' }}>SAR</span>
+              {totalNet.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span>
            </h2>
         </div>
 
@@ -316,7 +327,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                 ))}
                 {salaries.length === 0 && (
                    <tr>
-                      <td colSpan={7} style={{ textAlign: 'center', padding: '5rem', opacity: 0.6, fontWeight: 800, color: 'var(--primary)' }}>NO RECORDS FOR {currentPeriod}</td>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '5rem', opacity: 0.6, fontWeight: 800, color: 'var(--primary)' }}>{t.no_records} - {currentPeriod}</td>
                    </tr>
                 )}
               </tbody>
@@ -406,9 +417,9 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.9)', zIndex: 4000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '800px', background: 'white', padding: 0, overflow: 'hidden', border: 'none' }}>
              <div className="no-print" style={{ padding: '1rem 2rem', background: 'var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--secondary)', fontWeight: 900 }}>SALARY SLIP PREVIEW</span>
+                <span style={{ color: 'var(--secondary)', fontWeight: 900 }}>{t.slip.preview_title}</span>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                   <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none', padding: '0.4rem 1rem' }}><Printer size={16} /> PRINT</button>
+                   <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none', padding: '0.4rem 1rem' }}><Printer size={16} /> {t.lang === 'ar' ? 'طباعة' : 'PRINT'}</button>
                    <button onClick={() => setShowSlipModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>
                 </div>
              </div>
@@ -427,8 +438,8 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                 </div>
 
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                   <h2 style={{ textDecoration: 'underline', marginBottom: '0.5rem' }}>SALARY SLIP / مسير راتب</h2>
-                   <p style={{ fontWeight: 800 }}>Period / الفترة: {selectedSalary.period}</p>
+                   <h2 style={{ textDecoration: 'underline', marginBottom: '0.5rem' }}>{t.slip.preview_title}</h2>
+                   <p style={{ fontWeight: 800 }}>{t.period_label}: {selectedSalary.period}</p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', marginBottom: '3rem', padding: '2rem', background: '#f8f8f8', borderRadius: '12px' }}>
@@ -446,8 +457,8 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4rem' }}>
                    <thead>
                       <tr style={{ borderBottom: '2px solid #000' }}>
-                         <th style={{ textAlign: 'left', padding: '1rem' }}>Description / البيان</th>
-                         <th style={{ textAlign: 'right', padding: '1rem' }}>Earnings (+ / -)</th>
+                         <th style={{ textAlign: 'left', padding: '1rem' }}>{t.slip.description}</th>
+                         <th style={{ textAlign: 'right', padding: '1rem' }}>{t.slip.earnings} / {t.slip.deductions}</th>
                       </tr>
                    </thead>
                    <tbody>

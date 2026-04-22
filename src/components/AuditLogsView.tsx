@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { localDB } from '../lib/localDB';
+import { fmtDate, fmtTime } from '../lib/dateUtils';
 import type { Translations } from '../types/translations';
 import { 
   User as UserIcon, 
@@ -52,12 +53,12 @@ export default function AuditLogsView({ showToast, t }: Props) {
 
   const getActionIcon = (action: string) => {
     const act = action.toLowerCase();
-    if (act.includes('add') || act.includes('insert') || act.includes('issue')) return <Plus size={14} className="text-success" />;
-    if (act.includes('delete') || act.includes('revoke') || act.includes('trash')) return <Trash2 size={14} className="text-error" />;
-    if (act.includes('login') || act.includes('auth') || act.includes('shield')) return <ShieldCheck size={14} className="text-primary" />;
-    if (act.includes('biometric') || act.includes('fingerprint')) return <Fingerprint size={14} className="text-secondary" />;
-    if (act.includes('payment') || act.includes('trx') || act.includes('financial')) return <CreditCard size={14} className="text-secondary" />;
-    if (act.includes('settings') || act.includes('update')) return <Settings size={14} className="text-on-surface-variant" />;
+    if (act.includes('add') || act.includes('insert') || act.includes('issue')) return <Plus size={14} style={{ color: 'var(--success)' }} />;
+    if (act.includes('delete') || act.includes('revoke') || act.includes('trash')) return <Trash2 size={14} style={{ color: 'var(--error)' }} />;
+    if (act.includes('login') || act.includes('auth') || act.includes('shield')) return <ShieldCheck size={14} style={{ color: 'var(--primary)' }} />;
+    if (act.includes('biometric') || act.includes('fingerprint')) return <Fingerprint size={14} style={{ color: 'var(--secondary)' }} />;
+    if (act.includes('payment') || act.includes('trx') || act.includes('financial')) return <CreditCard size={14} style={{ color: 'var(--secondary)' }} />;
+    if (act.includes('settings') || act.includes('update')) return <Settings size={14} style={{ color: 'var(--on-surface-variant)' }} />;
     return <Activity size={14} />;
   };
 
@@ -123,10 +124,10 @@ export default function AuditLogsView({ showToast, t }: Props) {
                 logs.map((log) => (
                   <tr key={log.id}>
                     <td style={{ paddingInlineStart: '2rem', color: 'var(--on-surface-variant)', fontWeight: 800, fontSize: '0.85rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span>{new Date(log.created_at).toLocaleDateString()}</span>
-                        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{new Date(log.created_at).toLocaleTimeString()}</span>
-                      </div>
+                       <div style={{ display: 'flex', flexDirection: 'column' }}>
+                         <span>{fmtDate(log.created_at, t.lang)}</span>
+                         <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{fmtTime(log.created_at, t.lang)}</span>
+                       </div>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
@@ -162,7 +163,7 @@ export default function AuditLogsView({ showToast, t }: Props) {
 
         <div style={{ padding: '1.2rem 2rem', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>
           <ShieldCheck size={16} color="var(--success)" />
-          <span>كل العمليات المسجلة في هذا السجل المؤسسي يتم حفظها محلياً في مسار مشفر ولا يمكن تعديلها يدوياً.</span>
+          <span>{t.lang === 'en' ? 'All activity records in this institutional ledger are stored locally in an encrypted path and cannot be manually modified.' : 'كل العمليات المسجلة في هذا السجل المؤسسي يتم حفظها محلياً في مسار مشفر ولا يمكن تعديلها يدوياً.'}</span>
         </div>
       </div>
     </div>

@@ -1,8 +1,78 @@
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Sovereign Cloud Bridge (Supabase REST)
  * جسر المزامنة السحابي - يعمل عبر واجهة البرمجة مباشرة لضمان الخفة والسيادة
  */
+
+let _supabase: any = null;
+
+export const getSupabase = () => {
+  if (_supabase) return _supabase;
+  
+  const url = localStorage.getItem('sov_supabase_url') || '';
+  const key = localStorage.getItem('sov_supabase_key') || '';
+  
+  if (!url || !key) return null;
+  
+  try {
+    _supabase = createClient(url, key);
+    return _supabase;
+  } catch (err) {
+    console.error('Supabase Initialization Error:', err);
+    return null;
+  }
+};
+
+// Exporting a proxy or a dummy object is safer than null for existing imports
+export const supabase = new Proxy({} as any, {
+  get: (_target, prop) => {
+    const client = getSupabase();
+    if (!client) {
+      console.warn(`Supabase client not initialized. Attempted to access: ${String(prop)}`);
+      
+      // Recursive dummy chain that returns itself for any access or call
+      const createDummy = (): any => {
+        const dummy: any = (..._args: any[]) => createDummy();
+        
+        // Add specific chainable methods and promise behavior
+        Object.assign(dummy, {
+          from: () => dummy,
+          select: () => dummy,
+          upsert: () => dummy,
+          insert: () => dummy,
+          update: () => dummy,
+          delete: () => dummy,
+          eq: () => dummy,
+          single: () => dummy,
+          order: () => dummy,
+          limit: () => dummy,
+          then: (onfulfilled: any) => 
+            Promise.resolve({ data: null, error: new Error('Supabase not configured') }).then(onfulfilled)
+        });
+
+        // Use Proxy to make the dummy object infinitely deep
+        return new Proxy(dummy, {
+          get: (t, p) => {
+            if (p === 'then') return t.then;
+            if (p in t) return t[p];
+            return createDummy();
+          }
+        });
+      };
+
+      const dummy = createDummy();
+      return typeof prop === 'string' && ['from', 'auth', 'storage'].includes(prop) 
+        ? (['auth', 'storage'].includes(prop) ? dummy : () => dummy)
+        : dummy;
+    }
+    const value = client[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  }
+});
 
 export const supabaseClient = {
   getSettings: () => {

@@ -5,6 +5,11 @@ const fs = require('fs');
 const os = require('os');
 const { app, BrowserWindow, protocol, ipcMain, shell, dialog } = electron;
 
+// Register privileged schemes for secure context in Electron
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { secure: true, standard: true, supportFetchAPI: true } }
+]);
+
 // Defensive check for app object
 if (!app) {
   console.error('Electron app module could not be initialized.');
@@ -16,25 +21,35 @@ const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
-    height: 800,
-    title: 'مؤسسة الغويري للتخليص الجمركي',
+    height: 850,
+    title: 'مؤسسة الغويري للتخليص الجمركي - المنظومة السيادية',
     icon: path.join(__dirname, isDev ? 'public/favicon.svg' : 'assets/icon.png'),
     autoHideMenuBar: true,
     backgroundColor: '#001a33',
+    show: false, // Show when ready to prevent flicker
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true,
-      sandbox: false
+      webSecurity: true, // Secure APIs like WebAuthn REQUIRE webSecurity to be true
+      allowRunningInsecureContent: false,
+      sandbox: false,
+      enableWebSQL: true, 
+      spellcheck: false
     },
+  });
+
+  win.once('ready-to-show', () => {
+    win.maximize();
+    win.show();
   });
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
   } else {
-    const indexPath = path.join(__dirname, 'dist/index.html');
-    win.loadFile(indexPath);
+    // IMPORTANT: Use the custom 'app://' protocol instead of file://
+    // file:// is NOT a secure context, so WebAuthn/biometrics will fail.
+    // The 'app' scheme was registered as privileged+secure at the top of this file.
+    win.loadURL('app://./dist/index.html');
   }
 
   // === IPC: Print to PDF ===
@@ -84,16 +99,12 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  try {
-    if (protocol && typeof protocol.registerFileProtocol === 'function') {
-      protocol.registerFileProtocol('app', (request, callback) => {
-        const url = request.url.substr(6);
-        callback({ path: path.normalize(`${__dirname}/${url}`) });
-      });
-    }
-  } catch (error) {
-    console.warn('Failed to register protocol:', error);
-  }
+  // Register custom app protocol
+  protocol.handle('app', (request) => {
+    const filePath = request.url.slice('app://'.length);
+    const resolvedPath = path.join(__dirname, filePath.split('?')[0]);
+    return electron.net.fetch(url.pathToFileURL(resolvedPath).toString());
+  });
 
   createWindow();
 
@@ -109,3 +120,4 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+

@@ -35,6 +35,7 @@ export interface Translations {
     trash: string;
     biometrics: string;
     affiliate: string;
+    contracts: string;
   };
   notifications: {
     success: string;
@@ -140,6 +141,14 @@ export interface Translations {
     adjustment_type: string;
     credit_adj: string;
     debit_adj: string;
+    journal: string;
+    general_ledger: string;
+    daily: string;
+    monthly: string;
+    yearly: string;
+    profit_loss: string;
+    ledger_summary: string;
+    statement_number: string;
   };
   tax: {
     title: string;
@@ -188,9 +197,28 @@ export interface Translations {
     gosi_deduction: string;
     print_slip: string;
     period_label: string;
+    enroll_success: string;
+    certify_confirm: string;
+    certify_success: string;
+    certify_payroll: string;
+    certified_badge: string;
+    no_pending: string;
+    sif_success: string;
+    audit_progress: string;
+    no_records: string;
     sif_export: string;
     secure_record: string;
     cancel: string;
+    slip: {
+      preview_title: string;
+      earnings: string;
+      deductions: string;
+      net: string;
+      description: string;
+      base: string;
+      allowances: string;
+      gosi: string;
+    };
   };
   customers: {
     lang: string;
@@ -250,6 +278,13 @@ export interface Translations {
       preview: string;
       options: string;
     };
+    preview: {
+      print: string;
+      whatsapp: string;
+      email: string;
+      mark_paid: string;
+      close: string;
+    };
     modal: {
       title: string;
       client_label: string;
@@ -285,6 +320,32 @@ export interface Translations {
     total_due_label?: string;
     print_invoice_label?: string;
     close_label?: string;
+    internal_invoice: string;
+    final_invoice: string;
+    statement_number: string;
+    bol_number: string;
+    operation_number: string;
+    customs_fees: string;
+    port_fees: string;
+    inventory_total: string;
+    final_profit: string;
+    client_name_label: string;
+    barcode: string;
+    remove_tax: string;
+  };
+  contracts: {
+    lang: string;
+    title: string;
+    client_contracts: string;
+    transport_contracts: string;
+    add_contract: string;
+    contract_date: string;
+    expiry_date: string;
+    terms: string;
+    transporter_name: string;
+    transport_fees: string;
+    client_name: string;
+    status: string;
   };
   expenses: {
     lang: string;
@@ -370,8 +431,23 @@ export interface Translations {
       documents: string;
       security: string;
       backup: string;
+      cloud: string;
     };
     lang: string;
+    cloud_sync: {
+      title: string;
+      subtitle: string;
+      status: string;
+      enable_sync: string;
+      disable_sync: string;
+      sync_now: string;
+      connected: string;
+      disconnected: string;
+      last_sync: string;
+      supabase_url: string;
+      supabase_key: string;
+      auto_sync_label: string;
+    };
   };
   security: {
     lang: string;

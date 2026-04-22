@@ -39,15 +39,19 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
 
   const fetchBackups = () => {
     try {
-        const data = localDB.getAll('backups').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setBackups(data as Backup[]);
+        const data = localDB.getAll('backups');
+        if (Array.isArray(data)) {
+           setBackups(data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+        }
     } catch {}
   };
 
   const fetchRealLogs = () => {
     try {
-        const data = localDB.getActive('activity_logs').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
-        setLogs(data as ActivityLog[]);
+        const data = localDB.getActive('activity_logs');
+        if (Array.isArray(data)) {
+           setLogs(data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
+        }
     } catch {}
   };
 
@@ -239,7 +243,7 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
               </div>
            </div>
 
-            <div className="card" style={{ background: 'var(--primary)', border: 'none', color: 'white', padding: '1.5rem' }}>
+            <div className="card" style={{ background: 'var(--primary)', border: 'none', color: 'var(--on-primary)', padding: '1.5rem' }}>
                <h3 style={{ fontSize: '1rem', fontFamily: 'Tajawal', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--secondary)', fontWeight: 900 }}>
                  <ShieldAlert size={20} /> {t.lang === 'ar' ? 'تنبيهات المؤسسة' : 'Institutional Alerts'}
                </h3>
@@ -302,7 +306,7 @@ function LogEntry({ text, time, positive }: any) {
     <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
        <div style={{ width: 8, height: 8, borderRadius: '50%', background: positive ? 'var(--secondary)' : 'var(--error)', marginTop: '6px' }}></div>
        <div>
-          <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, color: 'white' }}>{text}</p>
+          <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, color: 'inherit' }}>{text}</p>
           <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{time}</span>
        </div>
     </div>

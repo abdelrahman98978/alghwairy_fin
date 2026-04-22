@@ -23,9 +23,9 @@ const ActivityLogView: React.FC = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'financial': return <CreditCard size={16} className="text-blue-500" />;
-      case 'security': return <ShieldCheck size={16} className="text-yellow-600" />;
-      case 'system': return <Settings size={16} className="text-purple-500" />;
+      case 'financial': return <CreditCard size={16} style={{ color: 'var(--secondary)' }} />;
+      case 'security': return <ShieldCheck size={16} style={{ color: 'var(--secondary)' }} />;
+      case 'system': return <Settings size={16} style={{ color: 'var(--on-surface-variant)' }} />;
       default: return <FileText size={16} />;
     }
   };
