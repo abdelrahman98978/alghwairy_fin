@@ -168,7 +168,7 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.92)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
             <button 
               onClick={() => setShowAddModal(false)}

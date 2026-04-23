@@ -36,10 +36,12 @@ function createWindow() {
       enableWebSQL: true, 
       spellcheck: false
     },
+    resizable: false, // Disable resizing as requested ("خليه ثابت")
+    maximizable: false // Disable maximization for a truly fixed experience
   });
 
   win.once('ready-to-show', () => {
-    win.maximize();
+    // win.maximize(); // Removed to maintain the fixed 1280x850 size
     win.show();
   });
 

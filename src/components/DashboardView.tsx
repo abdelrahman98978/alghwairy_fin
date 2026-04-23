@@ -115,7 +115,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
         </div>
         <div style={{ flex: 1, paddingInlineStart: '2rem' }}>
           <h3 className="text-sovereign" style={{ color: 'var(--secondary)', marginBottom: '0.35rem', fontSize: '1.4rem' }}>{t.compliance_title}</h3>
-          <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-primary)', maxWidth: '600px' }}>{t.compliance_desc}</p>
+          <p style={{ opacity: 1, fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-primary)', maxWidth: '600px' }}>{t.compliance_desc}</p>
         </div>
         <div style={{ textAlign: 'center', paddingInlineStart: '2rem', borderInlineStart: '1px solid rgba(255,255,255,0.15)' }}>
             <div className="status-indicator" style={{ width: '12px', height: '12px', background: 'var(--success)', margin: '0 auto 0.6rem', boxShadow: '0 0 15px var(--success)' }}></div>
@@ -130,7 +130,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
         <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<Wallet size={24} />} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '2rem' }}>
-        <div className="card" style={{ border: 'none', background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+        <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', padding: '0 0.5rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>{t.log_title}</h3>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -146,7 +146,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
               </button>
             </div>
           </div>
-          <div style={{ overflowX: 'auto', borderRadius: '16px', background: 'var(--surface-container-lowest)' }}>
+          <div className="table-container">
             <table className="sovereign-table">
               <thead>
                 <tr>
@@ -189,7 +189,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
           </div>
         </div>
 
-        <div className="card" style={{ background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)', boxShadow: 'none' }}>
+        <div className="card-layer-2" style={{ background: 'var(--surface-container-low)', padding: '2rem' }}>
           <h3 style={{ marginBottom: '2rem', fontSize: '1.25rem', fontFamily: 'Tajawal', fontWeight: 800, color: 'var(--primary)' }}>{t.audit_alerts}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             <AuditAlert 
@@ -244,7 +244,7 @@ function StatCard({ title, value, unit = "SAR", trend, trendType, icon, sub }: {
   sub?: string 
 }) {
   return (
-    <div className="card hover-lift" style={{ padding: '2rem', border: 'none', background: 'var(--surface)', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+    <div className="card hover-lift" style={{ display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'flex-start' }}>
         <div style={{ padding: '0.85rem', borderRadius: '16px', background: 'rgba(26, 58, 95, 0.08)', color: 'var(--primary)', display: 'flex' }}>{icon}</div>
         {trend && (
@@ -255,7 +255,7 @@ function StatCard({ title, value, unit = "SAR", trend, trendType, icon, sub }: {
       </div>
       <p className="label-sovereign" style={{ color: 'var(--on-surface-variant)', marginBottom: '0.6rem', fontSize: '0.8rem' }}>{title}</p>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginTop: 'auto' }}>
-        <h2 style={{ fontSize: '2.4rem', margin: 0, fontWeight: 950, color: 'var(--primary)', letterSpacing: '-1px' }}>{value}</h2>
+        <h2 className="text-sovereign" style={{ fontSize: '2.4rem', margin: 0, fontWeight: 950, color: 'var(--secondary)', letterSpacing: '-1px' }}>{value}</h2>
         <span style={{ fontSize: '0.9rem', opacity: 0.5, fontWeight: 800 }}>{unit}</span>
       </div>
       {sub && <div style={{ fontSize: '0.78rem', marginTop: '1rem', color: 'var(--on-surface-variant)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8 }}>

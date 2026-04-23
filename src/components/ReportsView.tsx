@@ -370,7 +370,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       </div>
 
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'var(--header-bg)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+        <div className="modal-overlay" style={{ background: 'var(--header-bg)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-lg)' }}>
             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'تسجيل قيد مالي'}</h3>
@@ -532,7 +532,7 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
   };
 
   return (
-    <div className="modal-overlay invoice-print-overlay" style={{ background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(15px)', zIndex: 3000, overflowY: 'auto' }}>
+    <div className="modal-overlay invoice-print-overlay" style={{ background: 'rgba(0,0,0,0.98)', zIndex: 3000, overflowY: 'auto' }}>
        <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'rgba(0,26,51,0.9)', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '0.8rem', background: 'rgba(255,255,255,0.1)', padding: '0.4rem', borderRadius: '14px' }}>
              <button onClick={() => setStatementType('income')} className={`tab-btn-small ${statementType === 'income' ? 'active' : ''}`}>{isAr ? 'قائمة الدخل' : 'Income Statement'}</button>

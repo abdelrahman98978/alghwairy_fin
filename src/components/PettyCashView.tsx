@@ -329,7 +329,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.92)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '550px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'طلب عهدة سيادية جديدة' : 'New Sovereign Petty Cash Request'}</h3>
@@ -384,7 +384,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.92)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
              <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'تعديل بيانات العهدة' : 'Edit Petty Cash Record'}</h3>

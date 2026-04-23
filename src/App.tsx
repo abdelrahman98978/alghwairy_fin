@@ -1601,6 +1601,19 @@ export default function App() {
     const newNotif = { message, type, time: new Date().toLocaleTimeString() };
     setNotification({ message, type });
     setNotifHistory(prev => [newNotif, ...prev.slice(0, 9)]);
+    
+    // Play sound if enabled
+    const soundsEnabled = localStorage.getItem('sov_notif_sounds') === 'true';
+    if (soundsEnabled) {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) {
+        console.error('Audio error:', e);
+      }
+    }
+
     setTimeout(() => setNotification(null), 4000);
   }, []);
 
@@ -1879,9 +1892,9 @@ export default function App() {
 
   return (
     <div className={`app-layout ${isDark ? 'dark-theme' : 'light-theme'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {isLoggedIn && !publicInvoiceId && isMobileSize && !isCollapsed && <div className="sidebar-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 90 }} onClick={() => setIsCollapsed(true)} />}
+      {isLoggedIn && !publicInvoiceId && isMobileSize && !isCollapsed && <div className="sidebar-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90 }} onClick={() => setIsCollapsed(true)} />}
       {/* Sidebar - Traditional Sovereign Fixed Width */}
-      <aside className={`sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : 'var(--sidebar-collapsed-width)') : (isMobileSize ? '280px' : 'var(--sidebar-width)'), zIndex: 100 }}>
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : 'var(--sidebar-collapsed-width)') : 'var(--sidebar-width)', zIndex: 100, background: 'var(--sidebar-bg)' }}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           style={{ 
@@ -1905,27 +1918,27 @@ export default function App() {
           {isCollapsed ? (lang === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />) : (lang === 'ar' ? <ChevronRight size={16} /> : <ChevronLeft size={16} />)}
         </button>
 
-        <div className="sidebar-header-text" style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1rem 1.2rem', textAlign: 'center', borderBottom: '1px solid var(--separator)' }}>
+        <div className="sidebar-header-text" style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1.2rem 1.2rem', textAlign: 'center', borderBottom: '1px solid var(--separator)' }}>
           {!isCollapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--secondary)' }}>
-                  <img src="./logo.png" alt="Logo" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
-                  <h2 className="text-sovereign" style={{ fontSize: '1.05rem', margin: 0 }}>{t.title}</h2>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
+                  <img src="./logo.png" alt="Logo" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
+                   <h2 className="text-sovereign sharp-gold sharp-text" style={{ fontSize: '1.05rem', margin: 0, color: 'var(--secondary)', fontWeight: 1000 }}>{t.title}</h2>
                </div>
-               <p style={{ fontSize: '0.58rem', opacity: 0.5, marginTop: '0.5rem', color: '#abc8f5', textAlign: 'center', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase' }}>{t.subtitle}</p>
+               <p style={{ fontSize: '0.62rem', opacity: 1, marginTop: '0.5rem', color: 'var(--primary)', textAlign: 'center', fontWeight: 900, letterSpacing: '0.8px', textTransform: 'uppercase' }}>{t.subtitle}</p>
             </div>
           )}
           {isCollapsed && (
-            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.08)', borderRadius: '10px', margin: '0.5rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(0,28,57,0.05)', borderRadius: '10px', margin: '0.5rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid var(--outline)' }}>
                <img src="./logo.png" alt="Logo" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
             </div>
           )}
         </div>
 
-        <nav className="sidebar-scroll-area">
+        <nav className="sidebar-scroll-area custom-scrollbar">
           {(hasPermission(userRole, 'dashboard') || hasPermission(userRole, 'customers')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.25rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--secondary)', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
+              {!isCollapsed && <div style={{ padding: '1.25rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
               {hasPermission(userRole, 'dashboard') && <NavItem icon={<LayoutDashboard size={18} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'customers') && <NavItem icon={<Handshake size={18} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'contracts') && <NavItem icon={<FileText size={18} />} label={t.nav.contracts} active={activeTab === 'contracts'} onClick={() => setActiveTab('contracts')} lang={lang} isCollapsed={isCollapsed} />}
@@ -1934,7 +1947,7 @@ export default function App() {
 
           {(hasPermission(userRole, 'accounting') || hasPermission(userRole, 'invoices') || hasPermission(userRole, 'prepayments') || hasPermission(userRole, 'expenses') || hasPermission(userRole, 'petty_cash') || hasPermission(userRole, 'tax')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--secondary)', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
               {hasPermission(userRole, 'accounting') && <NavItem icon={<Wallet size={18} />} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'invoices') && <NavItem icon={<FileText size={18} />} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'prepayments') && <NavItem icon={<HistoryIcon size={18} />} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />}
@@ -1946,7 +1959,7 @@ export default function App() {
 
           {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--secondary)', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
               {hasPermission(userRole, 'payroll') && <NavItem icon={<Users size={18} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'reports') && <NavItem icon={<BarChart3 size={18} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'statements') && <NavItem icon={<FileSpreadsheet size={18} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
@@ -1964,7 +1977,7 @@ export default function App() {
 
           {(hasPermission(userRole, 'security') || hasPermission(userRole, 'roles') || hasPermission(userRole, 'audit_logs') || hasPermission(userRole, 'data_import') || hasPermission(userRole, 'settings') || hasPermission(userRole, 'trash')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--secondary)', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
               {hasPermission(userRole, 'security') && <NavItem icon={<ShieldCheck size={18} />} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'roles') && <NavItem icon={<UserPlus size={18} />} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'audit_logs') && <NavItem icon={<Activity size={18} />} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />}
@@ -1977,14 +1990,14 @@ export default function App() {
 
 
         {/* User Data Profiler - Miniature Version */}
-        <div style={{ padding: isCollapsed ? '0.6rem 0' : '1rem 1.25rem', borderTop: '1px solid var(--separator)', background: 'rgba(0,0,0,0.02)' }}>
+        <div style={{ padding: isCollapsed ? '0.6rem 0' : '1rem 1.25rem', borderTop: '1px solid var(--separator)', background: 'rgba(0,28,57,0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isCollapsed ? 0 : '0.65rem', marginBottom: isCollapsed ? '0.6rem' : '0.75rem', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
              <div style={{ width: 28, height: 28, borderRadius: '6px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
                 {userName.charAt(0).toUpperCase()}
              </div>
               {!isCollapsed && (
                 <div style={{ textAlign: lang === 'ar' ? 'right' : 'left', flex: 1 }}>
-                   <div style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--sidebar-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
+                   <div style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
                    <div style={{ color: 'var(--secondary)', fontSize: '0.7rem', fontWeight: 600 }}>{t.user_roles[userRole as keyof typeof t.user_roles]}</div>
                 </div>
               )}
@@ -2004,16 +2017,16 @@ export default function App() {
 
           {!isCollapsed && (
             <div style={{ marginTop: '0.8rem', padding: '0 0.2rem', borderTop: '1px solid var(--separator)', paddingTop: '0.8rem', textAlign: 'center' }}>
-               <div style={{ fontSize: '0.55rem', opacity: 0.5, color: 'var(--sidebar-text)', letterSpacing: '0.5px' }}>
+               <div style={{ fontSize: '0.55rem', opacity: 0.6, color: 'var(--primary)', letterSpacing: '0.5px', fontWeight: 700 }}>
                   {lang === 'ar' ? 'منشئ النظام' : 'SYSTEM CREATOR'}
                </div>
-               <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--secondary)', marginTop: '0.2rem', opacity: 1 }}>
+               <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.2rem' }}>
                   Abdel Rahman Abusalif
                </div>
-               <div style={{ fontSize: '0.55rem', color: 'var(--secondary)', marginTop: '0.05rem', opacity: 0.8 }}>
+               <div style={{ fontSize: '0.55rem', color: 'var(--secondary)', marginTop: '0.05rem', fontWeight: 700 }}>
                   966543389314
                </div>
-               <div style={{ fontSize: '0.5rem', marginTop: '0.6rem', color: 'var(--on-primary)', fontWeight: 800, opacity: 0.6, letterSpacing: '1px' }}>
+               <div style={{ fontSize: '0.5rem', marginTop: '0.6rem', color: 'var(--primary)', fontWeight: 900, opacity: 0.3, letterSpacing: '1px' }}>
                   v1.0.0 STABLE BUILD
                </div>
             </div>
@@ -2132,7 +2145,7 @@ export default function App() {
 
       {/* Sovereign Manual Entry Modal */}
       {showAddTrxModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,20,0.6)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,5,15,0.92)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
             <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem', background: 'var(--surface)', border: '1px solid var(--secondary)', boxShadow: '0 20px 80px rgba(0,0,0,0.6)' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h2 style={{ fontFamily: 'Tajawal', margin: 0, fontSize: '1.6rem', color: 'var(--primary)' }}>{lang === 'ar' ? 'توثيق عملية سيادية' : 'Document Sovereign TRX'}</h2>
@@ -2273,7 +2286,7 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
 
   return (
     <div className={`login-container premium-bg slide-in ${isDark ? 'dark-theme' : 'light-theme'}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
-      <div className="login-card glass-panel slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem', border: '1px solid var(--outline)' }}>
+      <div className="login-card premium-bg slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem', background: 'var(--surface)', border: '1px solid var(--outline)' }}>
         <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
            <div style={{ display: 'inline-flex', padding: '1.2rem', borderRadius: '24px', background: 'var(--primary)', color: 'var(--on-primary)', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
               <ShieldCheck size={42} />

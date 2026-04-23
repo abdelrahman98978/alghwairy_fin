@@ -191,7 +191,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
 
   return (
     <div className="slide-in no-print">
-      <header className="view-header" style={{ marginBottom: '2.5rem' }}>
+      <header className="payroll-header no-print">
         <div>
            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.4rem' }}>
               <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
@@ -200,13 +200,12 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
            <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ background: 'var(--surface-container-low)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+          <div className="payroll-period-selector">
              <Calendar size={18} color="var(--primary)" />
              <input 
                 type="month" 
                 value={currentPeriod} 
                 onChange={(e) => setCurrentPeriod(e.target.value)}
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontFamily: 'Tajawal', outline: 'none', cursor: 'pointer' }}
              />
           </div>
           <button 
@@ -228,19 +227,19 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
       </header>
 
       {/* Overview Cards */}
-      <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-        <div className="card" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none', padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+      <div className="payroll-metric-grid">
+        <div className="card payroll-card-budget">
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Building2 size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', borderRadius: '10px', textTransform: 'uppercase' }}>{currentPeriod} BUDGET</span>
+               <span className="budget-badge">{currentPeriod} BUDGET</span>
            </div>
            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.total_salaries}</p>
-           <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>
-              {totalNet.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span>
+           <h2 className="payroll-card-budget budget-amount">
+              <span className="item-amount" style={{ color: 'var(--secondary)' }}>{totalNet.toLocaleString()}</span> <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span>
            </h2>
         </div>
 
-        <div className="card" style={{ padding: '2.5rem', borderInlineStart: '6px solid var(--primary)' }}>
+        <div className="card payroll-card-staff">
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'var(--surface-container-high)', color: 'var(--primary)' }}><Users size={28} /></div>
                <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'var(--surface-container-low)', color: 'var(--primary)', borderRadius: '10px' }}>ENROLLED</span>
@@ -251,21 +250,21 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
            </h2>
         </div>
 
-        <div className="card" style={{ padding: '2.5rem', background: 'var(--secondary)', border: 'none', color: 'var(--primary)' }}>
+        <div className="card payroll-card-wps">
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(0,0,0,0.05)', color: 'var(--primary)' }}><ShieldCheck size={28} /></div>
                <span style={{ fontSize: '0.75rem', fontWeight: 900, padding: '0.4rem 1rem', background: 'rgba(0,0,0,0.05)', color: 'var(--primary)', borderRadius: '10px' }}>WPS STATUS</span>
            </div>
            <p style={{ fontSize: '0.95rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '0.5rem', opacity: 0.8 }}>{t.pending_payments}</p>
            <h2 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', color: 'var(--primary)', fontWeight: 900 }}>
-             {delayedTotal.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.7 }}>SAR</span>
+             <span className="item-amount" style={{ color: 'var(--primary)' }}>{delayedTotal.toLocaleString()}</span> <span style={{ fontSize: '1rem', opacity: 0.7 }}>SAR</span>
            </h2>
         </div>
       </div>
 
       {/* Main Table Area */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
-        <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
+      <div className="card payroll-table-card">
+        <div className="payroll-table-header">
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', color: 'var(--primary)', margin: 0, fontWeight: 900 }}>{t.ledger_title}</h3>
               <span style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.2rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900 }}>{currentPeriod}</span>
@@ -273,7 +272,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
            <div style={{ display: 'flex', gap: '0.8rem' }}>
               <button 
                 onClick={exportSIF} 
-                style={{ background: 'white', border: '1px solid var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                style={{ background: 'var(--surface)', border: '1px solid var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '8px' }}>
                  <Download size={18}/> {t.sif_export || 'SIF Export'}
               </button>
            </div>
@@ -309,10 +308,18 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
                           </div>
                        </div>
                     </td>
-                    <td style={{ fontWeight: 700, textAlign: 'right' }}>{Number(salary.base).toLocaleString()}</td>
-                    <td style={{ color: 'var(--success)', fontWeight: 800, textAlign: 'right' }}>+{Number(salary.allowances).toLocaleString()}</td>
-                    <td style={{ color: 'var(--error)', fontWeight: 800, textAlign: 'right' }}>-{Number(salary.deductions + (salary.gosi || 0)).toLocaleString()}</td>
-                    <td style={{ fontWeight: 900, fontSize: '1.2rem', background: 'rgba(0,0,0,0.02)', color: 'var(--primary)', textAlign: 'right' }}>{Number(salary.net).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                       <span className="item-amount">{Number(salary.base).toLocaleString()}</span>
+                    </td>
+                    <td style={{ color: 'var(--success)', textAlign: 'right' }}>
+                       +<span className="item-amount" style={{ color: 'var(--success)' }}>{Number(salary.allowances).toLocaleString()}</span>
+                    </td>
+                    <td style={{ color: 'var(--error)', textAlign: 'right' }}>
+                       -<span className="item-amount" style={{ color: 'var(--error)' }}>{Number(salary.deductions + (salary.gosi || 0)).toLocaleString()}</span>
+                    </td>
+                    <td style={{ background: 'rgba(0,0,0,0.02)', textAlign: 'right' }}>
+                       <span className="item-amount" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>{Number(salary.net).toLocaleString()}</span> <span style={{ fontSize: '0.7rem' }}>SAR</span>
+                    </td>
                     <td style={{ textAlign: 'center' }}>
                        <button onClick={() => handlePrintSlip(salary)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', opacity: 0.7 }}>
                           <FileText size={20} />
@@ -338,8 +345,8 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '600px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+        <div className="modal-overlay" style={{ zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '600px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-premium)' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.8rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>{t.add_staff_title}</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -414,9 +421,9 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
 
       {/* Salary Slip Modal */}
       {showSlipModal && selectedSalary && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.9)', zIndex: 4000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '800px', background: 'white', padding: 0, overflow: 'hidden', border: 'none' }}>
-             <div className="no-print" style={{ padding: '1rem 2rem', background: 'var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="modal-overlay" style={{ zIndex: 4000 }}>
+          <div className="card payroll-slip-modal slide-in">
+             <div className="payroll-slip-preview-header no-print">
                 <span style={{ color: 'var(--secondary)', fontWeight: 900 }}>{t.slip.preview_title}</span>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                    <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none', padding: '0.4rem 1rem' }}><Printer size={16} /> {t.lang === 'ar' ? 'طباعة' : 'PRINT'}</button>
@@ -425,7 +432,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
              </div>
              
              {/* Actual Slip Component */}
-             <div id="salary-slip-content" style={{ padding: '4rem', color: '#000', fontFamily: 'Tajawal' }}>
+             <div id="salary-slip-content" className="payroll-slip-content">
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #000', paddingBottom: '2rem', marginBottom: '3rem' }}>
                    <div>
                       <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 900 }}>ALGHWAIRY</h1>
@@ -500,15 +507,7 @@ export default function PayrollView({ showToast, logActivity, t }: Props) {
         </div>
       )}
 
-      {/* Styles for print slips */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #salary-slip-content, #salary-slip-content * { visibility: visible; }
-          #salary-slip-content { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
+
     </div>
   );
 }

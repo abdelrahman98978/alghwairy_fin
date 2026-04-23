@@ -304,7 +304,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       </div>
 
       {/* Table Section */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{t.invoices.active_title}</h3>
           <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>{t.invoices.zatca_ready}</span>
@@ -382,7 +382,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       {/* Add Modal */}
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '850px', padding: 0, border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '850px', padding: 0 }}>
             <div style={{ padding: '2rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ background: 'var(--primary)', padding: '0.8rem', borderRadius: '14px', color: 'var(--secondary)' }}>{isEditing ? <Edit size={22} /> : <Plus size={22} />}</div>
@@ -595,7 +595,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 
 function KPICard({ title, value, icon, color, t }: { title: string; value: number; icon: React.ReactNode; color: string; t: any }) {
   return (
-    <div className="card" style={{ padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderInlineStart: `5px solid ${color}` }}>
+    <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderInlineStart: `5px solid ${color}` }}>
       <div>
         <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 800, marginBottom: '0.4rem' }}>{title}</p>
         <h3 style={{ fontSize: '1.6rem', color: 'var(--primary)', margin: 0, fontFamily: 'Tajawal', fontWeight: 900 }}>

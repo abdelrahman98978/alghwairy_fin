@@ -304,7 +304,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2rem' }}>
+          <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, maxWidth: '500px', background: 'var(--surface-container-low)', padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
                 <Search size={18} color="var(--outline)" />
                 <input 
@@ -408,7 +408,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
               </div>
            </div>
 
-           <div className="card" style={{ background: 'var(--primary)', border: 'none', position: 'relative', overflow: 'hidden' }}>
+           <div className="card" style={{ background: 'var(--primary)', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.2rem' }}>
                     <ShieldCheck size={28} color="var(--secondary)" />
@@ -431,7 +431,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       {/* Add Modal */}
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', position: 'relative' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.modal.title}</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

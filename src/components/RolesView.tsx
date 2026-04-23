@@ -285,7 +285,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
 
       {/* Biometric Enrollment Modal */}
       {isScanning && targetUser && (
-        <div className="modal-overlay" style={{ background: 'rgba(5, 12, 28, 0.92)', backdropFilter: 'blur(15px)', zIndex: 2000 }}>
+        <div className="modal-overlay" style={{ background: 'rgba(5, 12, 28, 0.95)', zIndex: 2000 }}>
           <div className="card" style={{ width: '100%', maxWidth: '440px', padding: '4rem 3rem', textAlign: 'center', border: '1px solid rgba(212, 167, 106, 0.2)', background: 'var(--primary)' }}>
              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 3rem' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid rgba(212, 167, 106, 0.1)' }}></div>
@@ -315,7 +315,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000 }}>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
              <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>تخصيص صلاحيات الوصول</h3>
