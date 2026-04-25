@@ -1,18 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Download, 
-  Plus,
-  X,
-  Wallet,
-  Calculator,
-  CheckCircle2,
-  Filter,
-  Printer,
-  Calendar
-} from 'lucide-react';
-import { 
   AreaChart, 
   Area, 
   XAxis, 
@@ -257,7 +244,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-container-low)', padding: '0.2rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)', gap: '0.8rem' }}>
-            <Calendar size={18} color="var(--primary)" />
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>calendar_today</span>
             <select 
                value={period}
                onChange={(e) => handlePeriodChange(e.target.value)}
@@ -284,27 +271,27 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
           </div>
           
           <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none' }}>
-             <Printer size={18} /> {t.lang === 'ar' ? 'القائمة الرسمية' : 'Official Print'}
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {t.lang === 'ar' ? 'القائمة الرسمية' : 'Official Print'}
           </button>
           <button onClick={exportReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-             <Download size={18} /> {t.export || 'تصدير'}
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> {t.export || 'تصدير'}
           </button>
           <button onClick={() => setShowAddModal(true)} className="btn-executive" style={{ border: 'none' }}>
-             <Plus size={18} /> {t.manual_trx || 'قيد تسوية جديد'}
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> {t.manual_trx || 'قيد تسوية جديد'}
           </button>
         </div>
       </header>
 
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-        <MetricBox title={t.revenue} value={fmtNumber(revenue, t.lang)} sub={t.historical_high} positive icon={<TrendingUp size={24} />} highlight />
-        <MetricBox title={t.expenses} value={fmtNumber(expenses, t.lang)} sub={t.operating_costs} icon={<TrendingDown size={24} />} />
-        <MetricBox title={t.net_income} value={fmtNumber(netProfit, t.lang)} sub={t.quarterly_target} positive icon={<Calculator size={24} />} />
+        <MetricBox title={t.revenue} value={fmtNumber(revenue, t.lang)} sub={t.historical_high} positive icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>trending_up</span>} highlight />
+        <MetricBox title={t.expenses} value={fmtNumber(expenses, t.lang)} sub={t.operating_costs} icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>trending_down</span>} />
+        <MetricBox title={t.net_income} value={fmtNumber(netProfit, t.lang)} sub={t.quarterly_target} positive icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>calculate</span>} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 2.6fr', gap: '2rem' }}>
          <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--surface-container-high)', paddingBottom: '1.5rem' }}>
-                <div style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '16px', color: 'var(--secondary)' }}><Wallet size={24} /></div>
+                <div style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '16px', color: 'var(--secondary)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>account_balance_wallet</span></div>
                 <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.summary_ledger || 'الميزان العمومي'}</h3>
              </div>
              
@@ -329,7 +316,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                     {t.growth_chart || 'تحليل الأداء المالي'}
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.8rem', fontWeight: 700 }}>
-                    <Filter size={14} /> {t.lang === 'en' ? 'Last 6 Months' : 'آخر 6 أشهر'}
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>filter_alt</span> {t.lang === 'en' ? 'Last 6 Months' : 'آخر 6 أشهر'}
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={280}>
@@ -355,7 +342,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
             <div className="card" style={{ background: 'var(--surface-container-low)', border: 'none', padding: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
              <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)', boxShadow: 'var(--shadow-sm)' }}>
-                  <CheckCircle2 size={32} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>check_circle</span>
                </div>
                <div>
                  <h4 style={{ color: 'var(--primary)', marginBottom: '0.4rem', fontFamily: 'Tajawal', fontWeight: 900, fontSize: '1.1rem' }}>
@@ -372,7 +359,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'var(--header-bg)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-lg)' }}>
-            <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+            <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'تسجيل قيد مالي'}</h3>
             
             <form onSubmit={handleManualTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -381,12 +368,12 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                  <div style={{ display: 'flex', gap: '1rem' }}>
                     <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'income' ? 'var(--success)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'income' ? 'var(--success-container)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
                        <input type="radio" value="income" checked={manualForm.type === 'income'} onChange={() => setManualForm({...manualForm, type: 'income'})} style={{ display: 'none' }} /> 
-                       <TrendingUp size={20} color={manualForm.type === 'income' ? 'var(--success)' : 'var(--outline)'} />
+                       <span className="material-symbols-outlined" style={{ fontSize: '20px', color: manualForm.type === 'income' ? 'var(--success)' : 'var(--outline)' }}>trending_up</span>
                        <span style={{ fontWeight: 900, fontSize: '0.85rem', color: manualForm.type === 'income' ? 'var(--success)' : 'var(--on-surface-variant)' }}>{t.income}</span>
                     </label>
                     <label style={{ flex: 1, padding: '1.2rem', borderRadius: '12px', border: `2px solid ${manualForm.type === 'expense' ? 'var(--error)' : 'var(--surface-container-high)'}`, background: manualForm.type === 'expense' ? 'var(--error-container)' : 'var(--surface-container-low)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}>
                        <input type="radio" value="expense" checked={manualForm.type === 'expense'} onChange={() => setManualForm({...manualForm, type: 'expense'})} style={{ display: 'none' }} /> 
-                       <TrendingDown size={20} color={manualForm.type === 'expense' ? 'var(--error)' : 'var(--outline)'} />
+                       <span className="material-symbols-outlined" style={{ fontSize: '20px', color: manualForm.type === 'expense' ? 'var(--error)' : 'var(--outline)' }}>trending_down</span>
                        <span style={{ fontWeight: 900, fontSize: '0.85rem', color: manualForm.type === 'expense' ? 'var(--error)' : 'var(--on-surface-variant)' }}>{t.expense}</span>
                     </label>
                  </div>
@@ -541,10 +528,10 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button onClick={() => window.print()} className="btn-executive" style={{ background: '#d4a76a', color: '#001a33', border: 'none' }}>
-               <Printer size={18} /> {isAr ? 'طباعة المستند' : 'Print Document'}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {isAr ? 'طباعة المستند' : 'Print Document'}
             </button>
             <button onClick={onClose} className="btn-executive" style={{ background: '#ba1a1a', color: 'white', border: 'none' }}>
-               <X size={18} /> {isAr ? 'إغلاق' : 'Close'}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span> {isAr ? 'إغلاق' : 'Close'}
             </button>
           </div>
        </div>
@@ -585,7 +572,7 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
 
           <div style={{ padding: '6mm', border: '1px dashed #001a33', borderRadius: '4mm', marginBottom: '15mm', background: '#fcfcfc' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '4mm', marginBottom: '3mm' }}>
-                <CheckCircle2 size={24} color="#1b5e20" />
+                <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#1b5e20' }}>check_circle</span>
                 <h4 style={{ margin: 0, fontSize: '11pt', fontWeight: 900 }}>إقرار الامتثال والتدقيق</h4>
              </div>
              <p style={{ margin: 0, fontSize: '9pt', lineHeight: '1.6', color: '#444' }}>

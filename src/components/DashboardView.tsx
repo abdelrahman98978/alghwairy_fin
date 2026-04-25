@@ -1,13 +1,4 @@
 import { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  Wallet, 
-  Building2, 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertCircle,
-  Download
-} from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Transaction } from '../App';
 
@@ -111,7 +102,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
         style={{ cursor: 'pointer', border: 'none', marginBottom: '3rem', background: 'var(--primary)', boxShadow: 'var(--shadow-lg)' }}
       >
         <div style={{ background: 'var(--secondary)', padding: '1rem', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', boxShadow: '0 8px 24px rgba(212, 167, 106, 0.3)' }}>
-          <CheckCircle2 size={28} />
+          <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>check_circle</span>
         </div>
         <div style={{ flex: 1, paddingInlineStart: '2rem' }}>
           <h3 className="text-sovereign" style={{ color: 'var(--secondary)', marginBottom: '0.35rem', fontSize: '1.4rem' }}>{t.compliance_title}</h3>
@@ -125,9 +116,9 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
 
       {/* Core Metrics - Power of Scale */}
       <div className="metric-grid" style={{ marginBottom: '3rem', gap: '2rem' }}>
-        <StatCard title={t.total_balance} value={netProfit.toLocaleString()} trend="+Real-time" trendType="up" icon={<TrendingUp size={24} />} />
-        <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<Building2 size={24} />} />
-        <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<Wallet size={24} />} />
+        <StatCard title={t.total_balance} value={netProfit.toLocaleString()} trend="+Real-time" trendType="up" icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>trending_up</span>} />
+        <StatCard title={t.operating_profit} value={totalRevenue.toLocaleString()} trend={t.stable_growth} trendType="up" icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>business</span>} />
+        <StatCard title={t.available_liquidity} value={availableLiquidity.toLocaleString()} sub={t.accounts_count} icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>account_balance_wallet</span>} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '2rem' }}>
         <div className="card">
@@ -135,14 +126,14 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
             <h3 className="section-title" style={{ margin: 0 }}>{t.log_title}</h3>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button onClick={exportToExcel} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.65rem 1.5rem', fontSize: '0.85rem', borderRadius: '100px' }}>
-                <Download size={16} /> {t.export_report}
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> {t.export_report}
               </button>
               <button 
                 onClick={() => { fetchData(); showToast(t.syncing, 'success'); }} 
                 className="btn-executive hover-lift"
                 style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.65rem', borderRadius: '50%', minWidth: '42px', height: '42px', justifyContent: 'center' }}
               >
-                 <RefreshCw size={20} />
+                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>sync</span>
               </button>
             </div>
           </div>
@@ -211,7 +202,7 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
                   </div>
                   <span style={{ fontSize: '0.7rem', fontWeight: 900 }}>100% OFFLINE SECURED</span>
                </div>
-               <div style={{ position: 'absolute', right: '-10%', bottom: '-10%', opacity: 0.1 }}><TrendingUp size={60} /></div>
+               <div style={{ position: 'absolute', right: '-10%', bottom: '-10%', opacity: 0.1 }}><span className="material-symbols-outlined" style={{ fontSize: '60px' }}>trending_up</span></div>
             </div>
             <AuditAlert 
                type="success" 
@@ -259,7 +250,7 @@ function StatCard({ title, value, unit = "SAR", trend, trendType, icon, sub }: {
         <span style={{ fontSize: '0.9rem', opacity: 0.5, fontWeight: 800 }}>{unit}</span>
       </div>
       {sub && <div style={{ fontSize: '0.78rem', marginTop: '1rem', color: 'var(--on-surface-variant)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8 }}>
-        <CheckCircle2 size={13} style={{ color: 'var(--success)' }} /> {sub}
+        <span className="material-symbols-outlined" style={{ fontSize: '13px', color: 'var(--success)' }}>check_circle</span> {sub}
       </div>}
     </div>
   );
@@ -269,7 +260,7 @@ function AuditAlert({ type, title, desc }: { type: 'error' | 'warning' | 'succes
   const accent = type === 'error' ? 'var(--error)' : type === 'warning' ? 'var(--secondary)' : 'var(--success)';
   return (
     <div className="card-layer-2 hover-lift" style={{ padding: '1.25rem', borderRadius: '16px', display: 'flex', gap: '1.1rem', borderInlineStart: `5px solid ${accent}`, border: '1px solid var(--outline-variant)' }}>
-       <div style={{ marginTop: '0.2rem', color: accent }}><AlertCircle size={20} /></div>
+       <div style={{ marginTop: '0.2rem', color: accent }}><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>error</span></div>
        <div style={{ flex: 1 }}>
          <h4 className="text-sovereign" style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.35rem', color: 'var(--on-surface)' }}>{title}</h4>
          <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', lineHeight: '1.5', fontWeight: 600 }}>{desc}</p>

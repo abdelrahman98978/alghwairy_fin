@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  Download, Printer, Mail, MessageSquare, TrendingUp, PieChart as PieChartIcon
-} from 'lucide-react';
+
 import { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, PieChart, Pie 
 } from 'recharts';
@@ -187,24 +185,24 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
                 className="btn-executive" style={{ background: '#25D366', color: 'white', border: 'none', padding: '0.8rem' }}
                 title="WhatsApp"
               >
-                <MessageSquare size={18} />
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>forum</span>
               </button>
               <button 
                 onClick={handleShareEmail}
                 className="btn-executive" style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '0.8rem' }}
                 title="Email"
               >
-                <Mail size={18} />
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span>
               </button>
            </div>
 
            <button 
              onClick={handleExportCSV}
              className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none' }}>
-              <Download size={18} /> تصدير CSV
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginLeft: '0.5rem' }}>download</span> تصدير CSV
            </button>
            <button className="btn-executive" onClick={() => window.print()} style={{ border: 'none' }}>
-              <Printer size={18} /> {t.print_report}
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginLeft: '0.5rem' }}>print</span> {t.print_report}
            </button>
         </div>
       </header>
@@ -295,7 +293,7 @@ function AnalyticalCharts({ transactions, stats }: any) {
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
        <div className="card shadow-royal" style={{ padding: '1.5rem' }}>
           <h4 style={{ margin: '0 0 1.5rem', fontWeight: 900, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-             <TrendingUp size={18} /> اتجاه الإيرادات الشهرية
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_up</span> اتجاه الإيرادات الشهرية
           </h4>
           <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -321,7 +319,7 @@ function AnalyticalCharts({ transactions, stats }: any) {
 
        <div className="card shadow-royal" style={{ padding: '1.5rem' }}>
           <h4 style={{ margin: '0 0 1.5rem', fontWeight: 900, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-             <PieChartIcon size={18} /> التوزيع المالي السنوي
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>pie_chart</span> التوزيع المالي السنوي
           </h4>
           <div style={{ height: '300px', width: '100%' }}>
              <ResponsiveContainer width="100%" height="100%">

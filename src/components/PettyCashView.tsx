@@ -1,4 +1,3 @@
-import { Banknote, Plus, Download, Search, X, User, Receipt, Trash2, Edit3, DollarSign, CheckCircle2, ClipboardList, ShieldCheck } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
@@ -198,10 +197,10 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
         </div>
         <div style={{ display: 'flex', gap: '0.8rem' }}>
             <button className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
-               <Download size={18} /> {lang === 'ar' ? 'تصدير السجل المالي' : 'Export Financial Log'}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> {lang === 'ar' ? 'تصدير السجل المالي' : 'Export Financial Log'}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-executive">
-               <Plus size={18} /> {t.add_request}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> {t.add_request}
             </button>
         </div>
       </header>
@@ -209,8 +208,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
          <div className="card" style={{ borderInlineStart: '5px solid var(--secondary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{lang === 'ar' ? 'إجمالي العهد المصروفة 2026' : 'Total Disbursed 2026'}</span>
-               <ShieldCheck size={16} color="var(--secondary)" />
+               <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--secondary)' }}>security</span>
             </div>
             <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
                {settledTotal.toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.6 }}>SAR</span>
@@ -219,7 +217,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
          <div className="card" style={{ borderInlineStart: '5px solid var(--error)' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>{lang === 'ar' ? 'بانتظار التعميد المالي' : 'Awaiting Authorization'}</span>
             <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '0.5rem', color: 'var(--error)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-               <ClipboardList size={24} /> {pendingCount.toString().padStart(2, '0')}
+               <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>assignment</span> {pendingCount.toString().padStart(2, '0')}
             </div>
          </div>
          <div className="card" style={{ borderInlineStart: '5px solid var(--success)' }}>
@@ -234,7 +232,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
             <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-              <Search size={18} style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+              <span className="material-symbols-outlined" style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '18px' }}>search</span>
               <input 
                 type="text" 
                 placeholder={lang === 'ar' ? 'البحث بالمرجع، الموظف، أو الغرض...' : 'Search by reference, staff, or purpose...'} 
@@ -295,22 +293,22 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
                         color: record.status === 'settled' ? 'var(--success)' : 'var(--secondary)',
                         textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
                       }}>
-                        {record.status === 'settled' && <CheckCircle2 size={12} />}
+                        {record.status === 'settled' && <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>}
                         {record.status === 'settled' ? t.settled_status : (record.status === 'approved' ? (lang === 'ar' ? 'معتمد للصرف' : 'Authorized') : (lang === 'ar' ? 'بانتظار المراجعة' : 'In Review'))}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                           {record.status !== 'settled' && (
-                             <button onClick={() => handleDisburse(record)} className="btn-executive" style={{ padding: '0.45rem 0.8rem', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '0.75rem', fontWeight: 900 }}>
-                                <DollarSign size={14} /> {t.disburse_btn}
+                             <button onClick={() => handleDisburse(record)} className="btn-executive" style={{ padding: '0.45rem 0.8rem', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>payments</span> {t.disburse_btn}
                              </button>
                           )}
-                          <button onClick={() => openEditModal(record)} className="btn-executive" style={{ padding: '0.45rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)' }}>
-                             <Edit3 size={16} />
+                          <button onClick={() => openEditModal(record)} className="btn-executive" style={{ padding: '0.45rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                           </button>
-                          <button onClick={() => handleDelete(record.id)} className="btn-executive" style={{ padding: '0.45rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--error)' }}>
-                             <Trash2 size={16} />
+                          <button onClick={() => handleDelete(record.id)} className="btn-executive" style={{ padding: '0.45rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                           </button>
                        </div>
                     </td>
@@ -331,13 +329,13 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.92)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '550px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
-             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'طلب عهدة سيادية جديدة' : 'New Sovereign Petty Cash Request'}</h3>
              
              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <User size={16} /> {t.employee_picker}
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span> {t.employee_picker}
                    </label>
                    <select required value={formData.requester} onChange={e => setFormData({...formData, requester: e.target.value})} className="input-executive" style={{ fontWeight: 700 }}>
                       <option value="">{lang === 'ar' ? 'اختر الموظف المسؤول...' : 'Select responsible staff...'}</option>
@@ -349,7 +347,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                    <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Receipt size={16} /> {lang === 'ar' ? 'البند / الغرض من العهدة' : 'Purpose / Item'}
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>receipt_long</span> {lang === 'ar' ? 'البند / الغرض من العهدة' : 'Purpose / Item'}
                    </label>
                    <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="input-executive" placeholder={lang === 'ar' ? 'مثال: مشتريات مكتبية عاجلة' : 'e.g. Urgent Office Supplies'} style={{ fontWeight: 600 }} />
                 </div>
@@ -357,13 +355,13 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                         <Banknote size={16} color="var(--secondary)" /> {lang === 'ar' ? 'المبلغ المطلوب' : 'Amount'}
+                         <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--secondary)' }}>payments</span> {lang === 'ar' ? 'المبلغ المطلوب' : 'Amount'}
                       </label>
                       <input required type="number" step="0.01" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="input-executive" placeholder="0.00" style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }} />
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       <label style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                         <ClipboardList size={16} /> {t.allocation_label}
+                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>assignment</span> {t.allocation_label}
                       </label>
                       <select value={formData.allocation} onChange={e => setFormData({...formData, allocation: e.target.value})} className="input-executive" style={{ fontWeight: 700 }}>
                          {allocationOptions.map(opt => (
@@ -386,7 +384,7 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
       {showEditModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.92)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
-             <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+             <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{lang === 'ar' ? 'تعديل بيانات العهدة' : 'Edit Petty Cash Record'}</h3>
              
              <form onSubmit={handleUpdateRecord} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

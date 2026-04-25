@@ -1,30 +1,20 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Plus,
-  Trash2,
-  Printer,
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { 
+  X, 
+  Download, 
+  Plus, 
+  PenTool, 
+  Trash2, 
+  Printer, 
+  ShieldCheck, 
+  Search, 
+  Activity, 
+  Package, 
+  TrendingUp, 
   Receipt,
-  X,
-  CheckCircle2,
-  BookOpen,
-  Calendar,
-  Download,
-  Activity,
-  BarChart as LucideBarChart,
-  ShieldCheck,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Briefcase,
-  Search,
-  Package,
-  AlertTriangle,
-  Share2,
-  PenTool,
-  Database,
-  Calculator,
-  FileBarChart
+  AlertTriangle
 } from 'lucide-react';
+
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   BarChart, 
@@ -74,14 +64,14 @@ interface RecentTrxProps {
 interface ReportMetricProps {
   label: string;
   value: string;
-  icon: React.ReactNode;
+  icon: string; // Changed to string for Material Symbol name
   isSuccess?: boolean;
 }
 
 interface SummaryMetricProps {
   label: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: string; // Changed to string for Material Symbol name
   primary?: boolean;
 }
 
@@ -89,7 +79,7 @@ interface QuickActionCardProps {
   title: string;
   desc: string;
   onClick: () => void;
-  icon: React.ReactNode;
+  icon: string; // Changed to string for Material Symbol name
 }
 
 interface ReportsViewProps {
@@ -860,10 +850,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
     return (
       <div className="dashboard-sovereign fade-in" style={{ marginBottom: '2.5rem' }}>
         <div className="metrics-grid-stable">
-          <ReportMetric label={isAr ? 'الإيرادات السيادية' : 'Sovereign Revenue'} value={totalRevenue.toLocaleString()} icon={<DollarSign size={22} />} isSuccess />
-          <ReportMetric label={isAr ? 'تكاليف التشغيل' : 'Operating Costs'} value={totalCosts.toLocaleString()} icon={<TrendingDown size={22} />} />
-          <ReportMetric label={isAr ? 'الأرباح التشغيلية' : 'Operating Profit'} value={netProfit.toLocaleString()} icon={<TrendingUp size={22} />} isSuccess />
-          <ReportMetric label={isAr ? 'العقود النشطة' : 'Active Contracts'} value={activeContractCount.toString()} icon={<Briefcase size={22} />} />
+          <ReportMetric label={isAr ? 'الإيرادات السيادية' : 'Sovereign Revenue'} value={totalRevenue.toLocaleString()} icon="attach_money" isSuccess />
+          <ReportMetric label={isAr ? 'تكاليف التشغيل' : 'Operating Costs'} value={totalCosts.toLocaleString()} icon="trending_down" />
+          <ReportMetric label={isAr ? 'الأرباح التشغيلية' : 'Operating Profit'} value={netProfit.toLocaleString()} icon="trending_up" isSuccess />
+          <ReportMetric label={isAr ? 'العقود النشطة' : 'Active Contracts'} value={activeContractCount.toString()} icon="work" />
         </div>
 
         <div className="quick-actions-stable">
@@ -871,19 +861,19 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
              title={isAr ? 'تقرير الربحية المحاسبي' : 'Accounting Profit Report'} 
              desc={isAr ? 'تحليل الأداء المالي والامتثال' : 'Analyze performance & compliance'} 
              onClick={() => setActiveTab('reports')} 
-             icon={<LucideBarChart size={24} />} 
+             icon="bar_chart" 
            />
            <QuickActionCard 
              title={isAr ? 'إهلاك الأصول الثابتة' : 'Fixed Asset Depreciation'} 
              desc={isAr ? 'تحديث مجمع الإهلاك السيادي' : 'Update sovereign depreciation'} 
              onClick={() => setActiveTab('assets')} 
-             icon={<TrendingDown size={24} />} 
+             icon="trending_down" 
            />
            <QuickActionCard 
              title={isAr ? 'تحليل ضريبة VAT' : 'VAT Tax Analysis'} 
              desc={isAr ? 'مراجعة الإقرارات والامتثال' : 'Review returns & compliance'} 
              onClick={() => { setActiveTab('reports'); setActiveReportTab('vat'); }} 
-             icon={<ShieldCheck size={24} />} 
+             icon="verified_user" 
            />
         </div>
 
@@ -1029,10 +1019,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
         <div className="invoice-actions-premium">
           <button disabled={loading} onClick={handleIssueInvoice} className="btn-sovereign-primary flex-2">
-             {loading ? '...' : <><CheckCircle2 size={20} /> {isAr ? 'اعتماد وإرسال الفاتورة' : 'Approve & Issue Invoice'}</>}
+             {loading ? '...' : <><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span> {isAr ? 'اعتماد وإرسال الفاتورة' : 'Approve & Issue Invoice'}</>}
           </button>
           <button onClick={() => { if (items.length > 0) setShowPreview(true); else showToast(isAr ? 'أضف بنوداً للمعاينة' : 'Add items to preview', 'error'); }} className="btn-sovereign-outline flex-1">
-            <Printer size={20} /> {t.print_pdf}
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span> {t.print_pdf}
           </button>
         </div>
       </div>
@@ -1057,7 +1047,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
         <div className="card shadow-elite" style={{ padding: '2rem', background: 'var(--surface)' }}>
           <h3 className="recent-title" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--primary)', marginBottom: '1.5rem', borderRight: '4px solid var(--secondary)', paddingRight: '1rem' }}>
-            <Activity size={20} /> {t.recent_title}
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>ecg</span> {t.recent_title}
           </h3>
           <div className="recent-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
              {recentInvoices.map((inv) => (
@@ -1083,7 +1073,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
       <div className="card shadow-elite overflow-hidden">
         <div className="table-header-premium">
           <div className="header-info-premium">
-            <div className="icon-container-gold"><BookOpen size={24} /></div>
+            <div className="icon-container-gold"><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>menu_book</span></div>
             <div>
               <h3 className="section-title-premium sharp-text">{t.journal}</h3>
               <p className="section-subtitle-premium">{isAr ? 'السجل التاريخي لجميع القيود المالية' : 'Chronological log of all financial entries'}</p>
@@ -1091,15 +1081,15 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
           <div className="header-actions-premium">
             <button onClick={() => setShowJournalModal(true)} className="btn-sovereign-primary">
-              <Plus size={16} /> {isAr ? 'قيد يدوي' : 'Manual Entry'}
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span> {isAr ? 'قيد يدوي' : 'Manual Entry'}
             </button>
             <div className="date-range-container">
-               <Calendar size={16} />
+               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_today</span>
                <input type="date" className="input-clean" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
                <input type="date" className="input-clean" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
             </div>
             <div className="search-box-executive">
-               <Search size={16} />
+               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>
                <input 
                  type="text" 
                  placeholder={isAr ? 'بحث في القيود...' : 'Search entries...'} 
@@ -1108,7 +1098,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                  className="input-clean"
                />
             </div>
-            <button onClick={() => downloadCSV(journalEntries, 'Journal_Sovereign')} className="btn-export-excel"><Download size={16} /> Export</button>
+            <button onClick={() => downloadCSV(journalEntries, 'Journal_Sovereign')} className="btn-export-excel"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export</button>
           </div>
         </div>
 
@@ -1153,7 +1143,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
       <div className="card shadow-elite">
         <div className="table-header-premium">
           <div className="header-info-premium">
-            <div className="icon-container-gold"><Database size={24} /></div>
+            <div className="icon-container-gold"><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>database</span></div>
             <div>
               <h3 className="section-title-premium sharp-text">{t.general_ledger}</h3>
               <p className="section-subtitle-premium">{isAr ? 'ملخص أرصدة الحسابات والأستاذ العام' : 'Summary of account balances & general ledger'}</p>
@@ -1161,7 +1151,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
           <div className="header-actions-premium">
             <div className="search-box-executive">
-              <Search size={16} />
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>
               <input 
                 type="text" 
                 placeholder={isAr ? 'بحث في الحسابات...' : 'Search accounts...'} 
@@ -1170,7 +1160,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                 className="input-clean"
               />
             </div>
-            <button onClick={() => downloadCSV(ledgerAccounts, 'Ledger_Sovereign')} className="btn-export-excel"><Download size={16} /> Export</button>
+            <button onClick={() => downloadCSV(ledgerAccounts, 'Ledger_Sovereign')} className="btn-export-excel"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export</button>
           </div>
         </div>
 
@@ -1215,7 +1205,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <h2 className="sovereign-title-elite sharp-gold">
-                <ShieldCheck size={24} className="icon-gold-glow" style={{ marginInlineEnd: '0.75rem' }} />
+                <span className="material-symbols-outlined icon-gold-glow" style={{ marginInlineEnd: '0.75rem', fontSize: '24px' }}>verified_user</span>
                 {t.nav_title || (isAr ? 'نظام المحاسبة الموحد السيادي' : 'Sovereign Fiscal System')}
               </h2>
               <div className="sovereign-status-badge">
@@ -1254,19 +1244,19 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
         <div className="sovereign-nav-container">
            {[
-             { id: 'invoice', label: t.invoice_editor, icon: <Receipt size={16} /> },
-             { id: 'journal', label: t.journal, icon: <BookOpen size={16} /> },
-             { id: 'ledger', label: t.ledger_summary, icon: <Database size={16} /> },
-             { id: 'inventory', label: isAr ? 'المخزون' : 'Stock', icon: <Package size={16} /> },
-             { id: 'assets', label: isAr ? 'الأصول' : 'Assets', icon: <Calculator size={16} /> },
-             { id: 'reports', label: isAr ? 'التقارير' : 'Reports', icon: <FileBarChart size={16} /> },
+             { id: 'invoice', label: t.invoice_editor, icon: 'receipt' },
+             { id: 'journal', label: t.journal, icon: 'menu_book' },
+             { id: 'ledger', label: t.ledger_summary, icon: 'database' },
+             { id: 'inventory', label: isAr ? 'المخزون' : 'Stock', icon: 'package' },
+             { id: 'assets', label: isAr ? 'الأصول' : 'Assets', icon: 'calculate' },
+             { id: 'reports', label: isAr ? 'التقارير' : 'Reports', icon: 'assessment' },
            ].map(tab => (
              <button
                key={tab.id}
                onClick={() => setActiveTab(tab.id as any)}
                className={`sovereign-tab ${activeTab === tab.id ? 'active' : ''}`}
              >
-               {tab.icon}
+               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{tab.icon}</span>
                <span>{tab.label}</span>
              </button>
            ))}
@@ -1397,27 +1387,27 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
     <div className="fade-in">
        <div className="card shadow-elite padding-2">
           <div className="report-header-premium">
-            <h3 className="sovereign-header-gold sharp-text" style={{ border: 'none', padding: 0, marginBottom: 0 }}><LucideBarChart size={24} /> {isAr ? 'التحليل المالي السيادي' : 'Sovereign Financial Analysis'}</h3>
+            <h3 className="sovereign-header-gold sharp-text" style={{ border: 'none', padding: 0, marginBottom: 0 }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>bar_chart</span> {isAr ? 'التحليل المالي السيادي' : 'Sovereign Financial Analysis'}</h3>
             <div className="report-tabs-premium">
                <button onClick={() => setActiveReportTab('profit')} className={`tab-btn-small ${activeReportTab === 'profit' ? 'active' : ''}`}>{isAr ? 'قائمة الدخل' : 'Income Statement'}</button>
                <button onClick={() => setActiveReportTab('trial')} className={`tab-btn-small ${activeReportTab === 'trial' ? 'active' : ''}`}>{isAr ? 'ميزان المراجعة' : 'Trial Balance'}</button>
                <button onClick={() => setActiveReportTab('balance_sheet')} className={`tab-btn-small ${activeReportTab === 'balance_sheet' ? 'active' : ''}`}>{isAr ? 'الميزانية العمومية' : 'Balance Sheet'}</button>
                <button onClick={() => setActiveReportTab('vat')} className={`tab-btn-small ${activeReportTab === 'vat' ? 'active' : ''}`}>{isAr ? 'تحليل الضريبة' : 'VAT Analysis'}</button>
             </div>
-            <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline"><Download size={16} /> Export CSV</button>
+            <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export CSV</button>
           </div>
 
           {activeReportTab === 'profit' && (
             <div className="slide-in">
               <div className="metrics-grid-premium">
-                 <SummaryMetric label={isAr ? 'الهامش الربحي الصافي' : 'Net Profit Margin'} value={`${metrics.margin}%`} icon={<Activity size={18} />} primary />
-                 <SummaryMetric label={isAr ? 'إجمالي الإيرادات' : 'Total Revenue'} value={metrics.rev.toLocaleString()} icon={<DollarSign size={18} />} />
-                 <SummaryMetric label={isAr ? 'صافي الدخل' : 'Net Income'} value={metrics.net.toLocaleString()} icon={<TrendingUp size={18} />} />
+                 <SummaryMetric label={isAr ? 'الهامش الربحي الصافي' : 'Net Profit Margin'} value={`${metrics.margin}%`} icon="ecg" primary />
+                 <SummaryMetric label={isAr ? 'إجمالي الإيرادات' : 'Total Revenue'} value={metrics.rev.toLocaleString()} icon="attach_money" />
+                 <SummaryMetric label={isAr ? 'صافي الدخل' : 'Net Income'} value={metrics.net.toLocaleString()} icon="trending_up" />
               </div>
 
               <section className="chart-section-premium">
                 <h4 className="chart-title-premium sharp-text" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                  <Activity size={20} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>ecg</span>
                   {isAr ? 'منحنى الإيرادات (آخر 10 عمليات)' : 'Revenue Trend (Latest 10)'}
                 </h4>
                 <div className="chart-wrapper-sovereign">
@@ -1438,19 +1428,19 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                    title={isAr ? 'تقرير الربحية' : 'Profit Report'} 
                    desc={isAr ? 'مراجعة الأداء المالي للفترة' : 'Review financial performance'} 
                    onClick={() => setActiveTab('reports')} 
-                   icon={<LucideBarChart size={24} />} 
+                   icon="bar_chart" 
                  />
                  <QuickActionCard 
                    title={isAr ? 'إهلاك الأصول' : 'Asset Depreciation'} 
                    desc={isAr ? 'تحديث مجمع الإهلاك الشهري' : 'Update monthly depreciation'} 
                    onClick={() => setActiveTab('assets')} 
-                   icon={<TrendingDown size={24} />} 
+                   icon="trending_down" 
                  />
                  <QuickActionCard 
                    title={isAr ? 'تحليل الضريبة' : 'VAT Analysis'} 
                    desc={isAr ? 'مراجعة ضريبة القيمة المضافة' : 'Review VAT status'} 
                    onClick={() => { setActiveTab('reports'); setActiveReportTab('vat'); }} 
-                   icon={<ShieldCheck size={24} />} 
+                   icon="verified_user" 
                  />
               </div>
 
@@ -1879,7 +1869,7 @@ function RecentTrx({ id, client, amount, onShare, onCertify, isCertified }: Rece
        <div style={{ flex: 1 }} onClick={onShare}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
              <p style={{ fontSize: '0.9rem', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{id}</p>
-             {isCertified && <ShieldCheck size={14} style={{ color: 'var(--success)' }} />}
+             {isCertified && <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>verified_user</span>}
           </div>
           <p style={{ fontSize: '0.75rem', margin: '0.2rem 0', fontWeight: 800, color: 'var(--on-surface-variant)' }}>{client}</p>
        </div>
@@ -1891,11 +1881,11 @@ function RecentTrx({ id, client, amount, onShare, onCertify, isCertified }: Rece
           <div style={{ display: 'flex', gap: '0.4rem' }}>
              {!isCertified && (
                <button onClick={onCertify} className="btn-action-small" title="Certify with ZATCA">
-                 <ShieldCheck size={14} />
+                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>verified_user</span>
                </button>
              )}
              <button onClick={onShare} className="btn-action-small">
-               <Share2 size={14} />
+               <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>share</span>
              </button>
           </div>
        </div>
@@ -1907,7 +1897,9 @@ function RecentTrx({ id, client, amount, onShare, onCertify, isCertified }: Rece
 function ReportMetric({ label, value, icon, isSuccess }: ReportMetricProps) {
   return (
     <div className="report-metric-card">
-      <div className={`icon-box ${isSuccess ? 'success' : ''}`}>{icon}</div>
+      <div className={`icon-box ${isSuccess ? 'success' : ''}`}>
+        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{icon}</span>
+      </div>
       <div>
         <p className="label sharp-text" style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '0.25rem' }}>{label}</p>
         <h4 className="value sharp-gold" style={{ fontSize: '1.6rem', margin: 0 }}>{value} <small>SAR</small></h4>
@@ -1919,7 +1911,9 @@ function ReportMetric({ label, value, icon, isSuccess }: ReportMetricProps) {
 function SummaryMetric({ label, value, icon, primary }: SummaryMetricProps) {
   return (
     <div className={`summ-met ${primary ? 'prim' : ''}`}>
-       <div className="icon">{icon}</div>
+       <div className="icon">
+         <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{icon}</span>
+       </div>
        <div>
           <label>{label}</label>
           <span>{value}</span>
@@ -1941,12 +1935,14 @@ function StatementRow({ label, value, isTotal, isHighlight }: any) {
 function QuickActionCard({ title, desc, onClick, icon }: QuickActionCardProps) {
   return (
     <button className="quick-action-card glass-premium" onClick={onClick}>
-      <div className="icon-box">{icon}</div>
+      <div className="icon-box">
+        <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{icon}</span>
+      </div>
       <div style={{ textAlign: 'start' }}>
         <h4 style={{ margin: 0, fontWeight: 1000 }}>{title}</h4>
         <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>{desc}</p>
       </div>
-      <Plus className="plus-icon" size={18} />
+      <span className="material-symbols-outlined plus-icon" style={{ fontSize: '18px' }}>add</span>
     </button>
   );
 }

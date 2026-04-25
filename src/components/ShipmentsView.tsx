@@ -1,15 +1,5 @@
 import { useState } from 'react';
-import { 
-  Package, 
-  Truck, 
-  Plus, 
-  Search, 
-  Download,
-  Filter,
-  ArrowRightLeft,
-  FileSearch,
-  ShieldCheck
-} from 'lucide-react';
+
 import type { Translations } from '../types/translations';
 
 interface Props {
@@ -51,7 +41,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
           onClick={() => showToast(lang === 'ar' ? 'جاري فتح محرر الشحنات السيادي...' : 'Opening Sovereign shipment editor...', 'success')}
           className="btn-executive"
         >
-          <Plus size={18} /> {t.add_title}
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginLeft: lang === 'ar' ? '0.5rem' : '0' }}>add</span> {t.add_title}
         </button>
       </header>
 
@@ -59,7 +49,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
       <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
         <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '3px solid var(--secondary)' }}>
           <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)' }}>
-            <Package size={24} />
+            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>inventory_2</span>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', opacity: 0.8 }}>{t.active_shipments}</div>
@@ -68,7 +58,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
         </div>
         <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '3px solid #3182ce' }}>
           <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'rgba(49, 130, 206, 0.1)', color: '#3182ce' }}>
-            <Truck size={24} />
+            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>local_shipping</span>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', opacity: 0.8 }}>{t.under_clearance}</div>
@@ -77,7 +67,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
         </div>
         <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '3px solid var(--success)' }}>
           <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'rgba(39, 103, 73, 0.1)', color: 'var(--success)' }}>
-            <ShieldCheck size={24} />
+            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>verified_user</span>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--on-surface-variant)', opacity: 0.8 }}>{t.total_fees_sar}</div>
@@ -91,7 +81,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1.5rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', flex: 1 }}>
             <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-              <Search size={16} style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+              <span className="material-symbols-outlined" style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4, fontSize: '16px' }}>search</span>
               <input 
                 type="text" 
                 placeholder={t.search_placeholder} 
@@ -101,12 +91,12 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
               />
             </div>
             <button className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.6rem 1rem' }}>
-              <Filter size={16} /> {t.filter}
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle' }}>filter_alt</span> {t.filter}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
              <button className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', padding: '0.6rem 1rem' }}>
-                <Download size={16} /> {t.export}
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle' }}>download</span> {t.export}
              </button>
           </div>
         </div>
@@ -133,7 +123,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.6rem', borderRadius: '6px', background: item.type === t.type_import ? 'rgba(0,43,85,0.05)' : 'rgba(212,167,106,0.05)', color: item.type === t.type_import ? 'var(--primary)' : 'var(--secondary)', fontSize: '0.75rem', fontWeight: 800 }}>
-                      <ArrowRightLeft size={12} /> {item.type}
+                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>swap_horiz</span> {item.type}
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>
@@ -156,7 +146,7 @@ export default function ShipmentsView({ showToast, t, lang }: Props) {
                       onClick={() => showToast(lang === 'ar' ? 'جاري استعراض ملف الشحنة...' : 'Opening shipment record...', 'success')}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', opacity: 0.6 }}
                     >
-                      <FileSearch size={18} />
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>find_in_page</span>
                     </button>
                   </td>
                 </tr>

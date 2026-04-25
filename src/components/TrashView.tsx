@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Trash2, RotateCcw, Search, 
-  FileText, Users, Receipt, 
-  Trash, Database, AlertTriangle
-} from 'lucide-react';
+
 import { localDB } from '../lib/localDB';
 
 import type { Translations } from '../types/translations';
@@ -80,7 +76,7 @@ export function TrashView({ showToast, lang, t }: Props) {
              </p>
           </div>
           <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(211, 47, 47, 0.1)', color: 'var(--error)' }}>
-             <Trash size={32} strokeWidth={2.5} />
+             <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>delete</span>
           </div>
        </div>
 
@@ -96,7 +92,7 @@ export function TrashView({ showToast, lang, t }: Props) {
               padding: '0.8rem'
             }}
           >
-             <FileText size={18} style={{ marginInlineEnd: '0.5rem' }} />
+             <span className="material-symbols-outlined" style={{ fontSize: '18px', marginInlineEnd: '0.5rem', verticalAlign: 'middle' }}>description</span>
               {t.invoices}
           </button>
           <button 
@@ -110,7 +106,7 @@ export function TrashView({ showToast, lang, t }: Props) {
               padding: '0.8rem'
             }}
           >
-             <Users size={18} style={{ marginInlineEnd: '0.5rem' }} />
+             <span className="material-symbols-outlined" style={{ fontSize: '18px', marginInlineEnd: '0.5rem', verticalAlign: 'middle' }}>group</span>
               {t.customers}
           </button>
           <button 
@@ -124,7 +120,7 @@ export function TrashView({ showToast, lang, t }: Props) {
               padding: '0.8rem'
             }}
           >
-             <Receipt size={18} style={{ marginInlineEnd: '0.5rem' }} />
+             <span className="material-symbols-outlined" style={{ fontSize: '18px', marginInlineEnd: '0.5rem', verticalAlign: 'middle' }}>receipt</span>
               {t.petty_cash}
           </button>
        </div>
@@ -132,7 +128,7 @@ export function TrashView({ showToast, lang, t }: Props) {
        <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', gap: '1rem', alignItems: 'center', background: 'var(--surface-container-low)' }}>
              <div style={{ position: 'relative', flex: 1 }}>
-                <Search size={18} style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <span className="material-symbols-outlined" style={{ position: 'absolute', [lang === 'ar' ? 'right' : 'left']: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '18px' }}>search</span>
                 <input 
                   type="text" 
                   placeholder={lang === 'ar' ? 'البحث في المحذوفات...' : 'Search trash...'}
@@ -143,7 +139,7 @@ export function TrashView({ showToast, lang, t }: Props) {
                 />
              </div>
              <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--error)' }}>
-                <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginInlineEnd: '0.3rem' }} />
+                <span className="material-symbols-outlined" style={{ verticalAlign: 'middle', marginInlineEnd: '0.3rem', fontSize: '14px' }}>warning</span>
                 OFFLINE OBJECTS CACHE
              </div>
           </div>
@@ -184,14 +180,14 @@ export function TrashView({ showToast, lang, t }: Props) {
                                 className="btn-executive" 
                                 style={{ padding: '0.5rem 1rem', background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', fontSize: '0.75rem', gap: '0.4rem' }}
                               >
-                                 <RotateCcw size={14} />
+                                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>settings_backup_restore</span>
                                  {lang === 'ar' ? 'استعادة' : 'Restore'}
                               </button>
                               <button 
                                 onClick={() => handlePermanentDelete(item.id)}
                                 style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', opacity: 0.6 }}
                               >
-                                 <Trash2 size={18} />
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete_forever</span>
                               </button>
                            </div>
                         </td>
@@ -204,7 +200,7 @@ export function TrashView({ showToast, lang, t }: Props) {
 
        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1.5rem', borderRadius: '12px', background: 'var(--surface-container-high)', border: '1px dashed var(--error)' }}>
-             <Database size={16} color="var(--error)" />
+             <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--error)' }}>database</span>
              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--on-surface-variant)' }}>
                 {lang === 'ar' ? 'يتم تنظيف سلة المهملات تلقائياً كل 30 يوم من ملف قاعدة البيانات المحلي' : 'Trash is automatically cleared every 30 days from the local database file'}
              </span>

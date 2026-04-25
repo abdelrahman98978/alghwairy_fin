@@ -1,17 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { localDB } from '../lib/localDB';
-import { 
-  Send, 
-  Paperclip, 
-  MessageSquare, 
-  FolderSync, 
-  Clock, 
-  ShieldCheck, 
-  Database,
-  ArrowRightLeft,
-  Download,
-  Activity
-} from 'lucide-react';
 
 interface CommunicationsProps {
   showToast: (msg: string, type?: string) => void;
@@ -116,7 +104,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
               className={`btn-executive ${activeTab === 'sync' ? '' : 'btn-outline'}`}
               style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', border: 'none' }}
             >
-               <FolderSync size={18} /> {lang === 'ar' ? 'إدارة المزامنة' : 'Node Sync'}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>sync</span> {lang === 'ar' ? 'إدارة المزامنة' : 'Node Sync'}
             </button>
         </div>
       </header>
@@ -203,13 +191,13 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                       <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900 }}>{selectedUser.name || selectedUser.role}</h3>
                       <span style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', background: 'rgba(27, 94, 32, 0.1)', color: 'var(--success)', fontSize: '0.65rem', fontWeight: 900 }}>NODE: SECURE</span>
                    </div>
-                   <ShieldCheck size={20} color="var(--primary)" />
+                   <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>verified_user</span>
                 </div>
                 
                 <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                    {filteredMessages.length === 0 ? (
                      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
-                        <MessageSquare size={48} />
+                        <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>chat</span>
                         <p style={{ fontWeight: 800, marginTop: '1rem' }}>{lang === 'ar' ? 'لا توجد رسائل سابقة' : 'No previous messages'}</p>
                      </div>
                    ) : (
@@ -235,7 +223,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
 
                 <div style={{ padding: '1.5rem', background: 'var(--surface-container-low)', borderTop: '1px solid var(--surface-container-high)', display: 'flex', gap: '1rem' }}>
                    <button className="btn-hover-scale" style={{ background: 'none', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer' }}>
-                      <Paperclip size={24} />
+                      <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>attach_file</span>
                    </button>
                    <input 
                      type="text" 
@@ -247,7 +235,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                      style={{ flex: 1, border: 'none', background: 'white' }} 
                    />
                    <button onClick={sendMessage} className="btn-executive" style={{ width: 'auto', minWidth: 'auto', padding: '0.8rem 1.2rem', border: 'none' }}>
-                      <Send size={20} />
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>send</span>
                    </button>
                 </div>
               </>
@@ -261,13 +249,13 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                        <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>{lang === 'ar' ? 'رفع ومزامنة المستندات الرسمية بين الأجهزة.' : 'Upload and sync institutional docs between nodes.'}</p>
                     </div>
                     <button onClick={handleFileSync} className="btn-executive" style={{ border: 'none', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                       <ArrowRightLeft size={18} /> {lang === 'ar' ? 'مزامنة الخزينة' : 'Sync Vault'}
+                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>sync_alt</span> {lang === 'ar' ? 'مزامنة الخزينة' : 'Sync Vault'}
                     </button>
                  </div>
 
                  <div style={{ flex: 1, border: '2px dashed var(--surface-container-high)', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
                     <div style={{ width: 80, height: 80, borderRadius: '20px', background: 'var(--surface-container-low)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                       <Download size={40} />
+                       <span className="material-symbols-outlined" style={{ fontSize: '40px' }}>download</span>
                     </div>
                     <div>
                        <p style={{ fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{lang === 'ar' ? 'اسحب الملفات هنا للرفع السيادي' : 'Drag files here for sovereign upload'}</p>
@@ -281,7 +269,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                <div style={{ padding: '3rem', height: '100%' }}>
                   <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
                      <div style={{ width: 100, height: 100, borderRadius: '30px', background: 'rgba(212, 167, 106, 0.1)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem' }}>
-                        <Database size={50} />
+                        <span className="material-symbols-outlined" style={{ fontSize: '50px' }}>storage</span>
                      </div>
                      <h2 style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem' }}>{lang === 'ar' ? 'عنقود التزامن السيادي' : 'Sovereign Sync Cluster'}</h2>
                      <p style={{ color: 'var(--on-surface-variant)', fontWeight: 700 }}>{lang === 'ar' ? 'إدارة ربط ومزامنة الأجهزة عبر الشبكة المحلية.' : 'Manage multi-device cluster sync over LAN.'}</p>
@@ -290,7 +278,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                      <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
                         <h4 style={{ margin: '0 0 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--primary)', fontWeight: 950 }}>
-                           <Clock size={20} /> {lang === 'ar' ? 'معلومات العقدة' : 'Node Information'}
+                           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>schedule</span> {lang === 'ar' ? 'معلومات العقدة' : 'Node Information'}
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -306,7 +294,7 @@ export default function CommunicationsView({ showToast, lang }: CommunicationsPr
 
                      <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
                         <h4 style={{ margin: '0 0 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--primary)', fontWeight: 950 }}>
-                           <Activity size={20} /> {lang === 'ar' ? 'حالة الشبكة' : 'Cluster Status'}
+                           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>monitoring</span> {lang === 'ar' ? 'حالة الشبكة' : 'Cluster Status'}
                         </h4>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--success)' }}>
                            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'currentColor' }}></div>

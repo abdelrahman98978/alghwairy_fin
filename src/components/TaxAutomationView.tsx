@@ -1,20 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Sparkles, 
-  FileCheck, 
-  TrendingUp, 
-  Download, 
-  Cpu, 
-  ShieldCheck, 
-  Server, 
-  Activity,
-  Printer,
-  Package,
-  Globe,
-  Coins,
-  Mail,
-  MessageSquare
-} from 'lucide-react';
+
 import { localDB } from '../lib/localDB';
 import { fmtDate } from '../lib/dateUtils';
 import type { Transaction } from '../App';
@@ -180,7 +165,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', border: '1px solid var(--surface-container-high)', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'var(--surface-container-low)', color: 'var(--success)' }}>
-               <Activity size={18} className={loading ? 'spin-animation' : ''} />
+               <span className="material-symbols-outlined {loading ? 'spin-animation' : ''}" style={{ fontSize: '18px' }}>monitoring</span>
                <span style={{ fontSize: '0.85rem', fontWeight: 900, fontFamily: 'Tajawal' }}>{syncStatus}</span>
             </div>
              <button 
@@ -188,7 +173,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                 className="btn-executive" 
                 style={{ border: 'none', padding: '0.8rem 1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)' }}
              >
-                <Printer size={18} /> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>print</span> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
              </button>
             <button 
                disabled={loading || vatSummary.count === 0}
@@ -196,7 +181,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                className="btn-executive" 
                style={{ border: 'none', padding: '0.8rem 2rem' }}
             >
-               <Sparkles size={18} /> {loading ? '...' : (t.lang === 'en' ? 'Institutional Certification' : 'الاعتماد المؤسسي (ZATCA)')}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>auto_awesome</span> {loading ? '...' : (t.lang === 'en' ? 'Institutional Certification' : 'الاعتماد المؤسسي (ZATCA)')}
             </button>
          </div>
       </header>
@@ -204,7 +189,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
       {/* Compliance Master Card - Enhanced for Customs */}
       <div className="compliance-shield" style={{ background: 'var(--primary)', padding: '3rem', color: 'var(--on-primary)', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '3rem', position: 'relative', overflow: 'hidden', border: 'none' }}>
          <div style={{ padding: '1.5rem', background: 'rgba(var(--on-primary-rgb), 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Globe size={50} color="var(--secondary)" />
+            <span className="material-symbols-outlined" style={{ fontSize: '50px', color: 'var(--secondary)' }}>public</span>
          </div>
          <div style={{ flex: 1, zIndex: 2 }}>
             <h3 style={{ fontSize: '1.8rem', fontFamily: 'Tajawal', margin: '0 0 1rem 0', fontWeight: 900, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -230,7 +215,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)', borderBottom: '4px solid var(--secondary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <Server size={24} color="var(--primary)" />
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>dns</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--secondary)' }}>ZATCA (VAT)</span>
                   </div>
                   <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.5rem 0' }}>{t.net_vat}</p>
@@ -240,7 +225,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                </div>
                <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)', borderBottom: '4px solid var(--secondary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <Globe size={24} color="var(--secondary)" />
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--secondary)' }}>public</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--secondary)' }}>{t.lang === 'ar' ? 'الرسوم الجمركية' : 'CUSTOMS DUTY'}</span>
                   </div>
                   <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.5rem 0' }}>{t.customs_fees}</p>
@@ -253,18 +238,18 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
             {/* In-Depth Customs Automation Analysis */}
             <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
                <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--primary)', fontWeight: 900 }}>
-                  <Cpu size={24} /> {t.lang === 'en' ? 'Sovereign Customs Intelligence' : 'ذكاء التخليص الجمركي السيادي'}
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px', verticalAlign: 'middle', marginInlineEnd: '0.5rem' }}>memory</span> {t.lang === 'en' ? 'Sovereign Customs Intelligence' : 'ذكاء التخليص الجمركي السيادي'}
                </h3>
                
                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.2rem' }}>
-                  <MetricSquare title={t.platform_fees} value={customsSummary.platform} icon={<Activity size={18}/>} />
-                  <MetricSquare title={t.declaration_count} value={customsSummary.declarations} isCount icon={<Package size={18}/>} />
-                  <MetricSquare title={t.total_clearance} value={customsSummary.totalValue} icon={<Coins size={18}/>} />
+                  <MetricSquare title={t.platform_fees} value={customsSummary.platform} icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>monitoring</span>} />
+                  <MetricSquare title={t.declaration_count} value={customsSummary.declarations} isCount icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>package_2</span>} />
+                  <MetricSquare title={t.total_clearance} value={customsSummary.totalValue} icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>} />
                </div>
 
                 <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', border: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                    <div style={{ width: 60, height: 60, background: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <ShieldCheck size={32} color="var(--secondary)" />
+                      <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--secondary)' }}>verified_user</span>
                    </div>
                    <div style={{ flex: 1 }}>
                       <p style={{ margin: 0, fontWeight: 900, color: 'var(--primary)', fontSize: '1.1rem' }}>{t.ai_audit}</p>
@@ -283,7 +268,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                </div>
                {taxReturns.length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '6rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>
-                      <FileCheck size={48} style={{ opacity: 0.1, marginBottom: '1.5rem' }} />
+                      <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.1, marginBottom: '1.5rem' }}>task_alt</span>
                       <p>No certified returns in the local database.</p>
                    </div>
                ) : (
@@ -305,12 +290,12 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)' }}>
                <h4 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', fontFamily: 'Tajawal', display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--primary)', fontWeight: 900 }}>
-                  <TrendingUp size={20} color="var(--secondary)" /> Institutional Protocol
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--secondary)', verticalAlign: 'middle', marginInlineEnd: '0.5rem' }}>trending_up</span> Institutional Protocol
                </h4>
                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <InsightItem icon={<FileCheck size={18}/>} title="Duty Verification" desc="Direct automated linking with Bayen export protocols." bg="var(--surface-container-low)" color="var(--success)" />
-                  <InsightItem icon={<Coins size={18}/>} title="VAT Aggregation" desc="15% standard rate applied with exemptions logic." bg="var(--surface-container-low)" color="var(--primary)" />
-                  <InsightItem icon={<Globe size={18}/>} title="Customs Authority" desc="Fully compliant with ZATCA Phase 2 (Institutional)." bg="var(--surface-container-low)" color="var(--secondary)" />
+                  <InsightItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>task_alt</span>} title="Duty Verification" desc="Direct automated linking with Bayen export protocols." bg="var(--surface-container-low)" color="var(--success)" />
+                  <InsightItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>} title="VAT Aggregation" desc="15% standard rate applied with exemptions logic." bg="var(--surface-container-low)" color="var(--primary)" />
+                  <InsightItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>public</span>} title="Customs Authority" desc="Fully compliant with ZATCA Phase 2 (Institutional)." bg="var(--surface-container-low)" color="var(--secondary)" />
                </ul>
             </div>
 
@@ -318,7 +303,7 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
                <h4 style={{ fontSize: '0.9rem', marginBottom: '1.2rem', fontFamily: 'Tajawal', color: 'var(--secondary)', fontWeight: 900 }}>EXPORT SECURITY</h4>
                <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
                   <div style={{ padding: '0.8rem', background: 'rgba(var(--on-primary-rgb), 0.1)', borderRadius: '12px' }}>
-                     <ShieldCheck size={24} color="var(--secondary)" />
+                     <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--secondary)' }}>verified_user</span>
                   </div>
                   <div>
                      <p style={{ fontSize: '0.9rem', fontWeight: 800, margin: '0 0 0.2rem 0' }}>Institutional UUID Signatures</p>
@@ -405,7 +390,7 @@ function TaxRecordItem({ tax, showToast, t }: any) {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.8rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-container-high)', boxShadow: 'var(--shadow-sm)' }}>
        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
           <div style={{ padding: '0.8rem', background: 'var(--surface-container-low)', borderRadius: '12px', color: 'var(--secondary)' }}>
-             <FileCheck size={20} />
+             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>task_alt</span>
           </div>
           <div>
              <h4 style={{ fontSize: '0.95rem', fontWeight: 900, margin: '0 0 0.3rem 0', color: 'var(--primary)' }}>{tax.title}</h4>
@@ -426,19 +411,19 @@ function TaxRecordItem({ tax, showToast, t }: any) {
               onClick={handleShareWhatsApp}
               style={{ width: 40, height: 40, background: 'var(--surface-container-low)', color: '#25D366', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
-               <MessageSquare size={18} />
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>forum</span>
             </button>
             <button 
               onClick={handleShareEmail}
               style={{ width: 40, height: 40, background: 'var(--surface-container-low)', color: 'var(--primary)', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
-               <Mail size={18} />
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span>
             </button>
             <button 
               onClick={() => downloadTaxReturn(tax)}
               style={{ width: 40, height: 40, background: 'var(--surface-container-low)', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)' }}
             >
-               <Download size={18} />
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
             </button>
           </div>
        </div>

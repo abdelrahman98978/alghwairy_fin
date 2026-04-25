@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  ShieldAlert, 
-  Lock as LockIcon,
-  Database as DatabaseIcon,
-  Laptop,
-  Globe,
-  Key
-} from 'lucide-react';
+
 import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
@@ -149,21 +141,21 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         <SecurityCard 
-          icon={<ShieldCheck size={24}/>} 
+          icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>shield_check</span>} 
           title={t.firewall} 
           subtitle={t.lang === 'ar' ? 'حماية المؤسسة المحلية' : 'Local Institution Protection'} 
           status={t.lang === 'en' ? 'Protected' : 'محمي'} 
           positive 
         />
         <SecurityCard 
-          icon={<LockIcon size={24}/>} 
+          icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>lock</span>} 
           title={t.encryption} 
           subtitle="Military Grade AES-256 (Disk)" 
           status={t.lang === 'en' ? 'Active' : 'نشط'} 
           positive 
         />
         <SecurityCard 
-          icon={<Key size={24}/>} 
+          icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>vpn_key</span>} 
           title="Access Control" 
           subtitle="Electronic Signatures" 
           status={t.lang === 'en' ? 'Required' : 'مطلوب'} 
@@ -171,7 +163,7 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
           toggleStatus
         />
         <SecurityCard 
-          icon={<Globe size={24}/>} 
+          icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>public</span>} 
           title="Data Sovereignty" 
           subtitle="Offline Local Storage" 
           status={t.lang === 'en' ? 'Secured' : 'مؤمن'} 
@@ -193,7 +185,7 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
                  className="btn-executive"
                  style={{ border: 'none' }}
               >
-                 <DatabaseIcon size={18} /> {loading ? '...' : (t.lang === 'en' ? 'Create Security Snapshot' : 'توليد لقطة أمنية')}
+                 <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>database</span> {loading ? '...' : (t.lang === 'en' ? 'Create Security Snapshot' : 'توليد لقطة أمنية')}
               </button>
            </div>
 
@@ -213,7 +205,7 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
               {backups.map((bkp) => (
                 <div key={bkp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'white', borderRadius: '14px', border: '1px solid var(--surface-container-high)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
-                      <div style={{ padding: '0.8rem', background: 'var(--surface-container-low)', borderRadius: '12px', color: 'var(--primary)' }}><DatabaseIcon size={20} /></div>
+                      <div style={{ padding: '0.8rem', background: 'var(--surface-container-low)', borderRadius: '12px', color: 'var(--primary)' }}><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>database</span></div>
                       <div>
                          <p style={{ fontWeight: 800, margin: 0, fontSize: '1rem', color: 'var(--primary)' }}>SNAPSHOT-RECOVERY</p>
                          <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0', fontWeight: 700 }}>
@@ -236,16 +228,16 @@ export default function SecurityView({ showToast, t }: SecurityProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
               <h3 style={{ fontSize: '1.1rem', fontFamily: 'Tajawal', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>
-                 <Laptop size={20} color="var(--primary)" /> {t.lang === 'ar' ? 'جلسات العمل' : 'Sessions'}
+                 <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>computer</span> {t.lang === 'ar' ? 'جلسات العمل' : 'Sessions'}
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                 <SessionItem icon={<Laptop size={18} />} title={navigator.platform || 'Workstation'} location="Institution Terminal" current />
+                 <SessionItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>computer</span>} title={navigator.platform || 'Workstation'} location="Institution Terminal" current />
               </div>
            </div>
 
             <div className="card" style={{ background: 'var(--primary)', border: 'none', color: 'var(--on-primary)', padding: '1.5rem' }}>
                <h3 style={{ fontSize: '1rem', fontFamily: 'Tajawal', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--secondary)', fontWeight: 900 }}>
-                 <ShieldAlert size={20} /> {t.lang === 'ar' ? 'تنبيهات المؤسسة' : 'Institutional Alerts'}
+                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>security</span> {t.lang === 'ar' ? 'تنبيهات المؤسسة' : 'Institutional Alerts'}
                </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {logs.length > 0 ? logs.map(l => (

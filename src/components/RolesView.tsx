@@ -1,15 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Users, 
-  Lock, 
-  ShieldAlert, 
-  Plus,
-  X,
-  Fingerprint,
-  Shield,
-  Eye,
-  EyeOff
-} from 'lucide-react';
+
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
 import { ALL_MODULES } from '../lib/permissions';
@@ -172,21 +162,21 @@ export default function RolesView({ showToast, t }: RolesProps) {
           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="btn-executive" style={{ border: 'none' }}>
-          <Plus size={18} /> {t.add_role}
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>add</span> {t.add_role}
         </button>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-         <StatsCard icon={<Users size={24} />} label={t.lang === 'en' ? 'Total Authorized' : 'إجمالي المخولين'} value={employees.length} />
-         <StatsCard icon={<Shield size={24} color="var(--success)" />} label={t.lang === 'en' ? 'Roles Defined' : 'رتب وظيفية'} value={rolePermissions.length} />
-         <StatsCard icon={<ShieldAlert size={24} color="var(--error)" />} label={t.lang === 'en' ? 'Security Alerts' : 'تنبيهات الأمان'} value="0" />
+         <StatsCard icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>group</span>} label={t.lang === 'en' ? 'Total Authorized' : 'إجمالي المخولين'} value={employees.length} />
+         <StatsCard icon={<span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--success)' }}>shield</span>} label={t.lang === 'en' ? 'Roles Defined' : 'رتب وظيفية'} value={rolePermissions.length} />
+         <StatsCard icon={<span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--error)' }}>security</span>} label={t.lang === 'en' ? 'Security Alerts' : 'تنبيهات الأمان'} value="0" />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
          {/* PERMISSIONS MATRIX SECTION */}
          <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)', overflowX: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
-                <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.8rem', borderRadius: '12px' }}><Lock size={20} /></div>
+                <div style={{ background: 'var(--primary)', color: 'var(--secondary)', padding: '0.8rem', borderRadius: '12px' }}><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>lock</span></div>
                 <div>
                    <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>مصفوفة الصلاحيات المؤسسية</h3>
                    <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.6 }}>التحكم الديناميكي في مستويات الوصول لكل رتبة</p>
@@ -291,7 +281,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid rgba(212, 167, 106, 0.1)' }}></div>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid var(--secondary)', borderBottomColor: 'transparent', transform: `rotate(${scanProgress * 3.6}deg)`, transition: 'transform 0.1s linear' }}></div>
                 <div style={{ position: 'absolute', inset: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)' }}>
-                   <Fingerprint size={60} className={scanProgress < 100 ? "pulse" : ""} />
+                   <span className="material-symbols-outlined" style={{ fontSize: '60px' }} className={scanProgress < 100 ? "pulse" : ""}>fingerprint</span>
                 </div>
              </div>
              
@@ -307,7 +297,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
              </div>
              
              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', color: 'var(--secondary)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                <Shield size={16} /> {scanProgress < 100 ? (t.lang === 'ar' ? 'جاري تحليل الأنماط...' : 'Analyzing Patterns...') : (t.lang === 'ar' ? 'اكتمل التحقق' : 'Verification Complete')}
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shield</span> {scanProgress < 100 ? (t.lang === 'ar' ? 'جاري تحليل الأنماط...' : 'Analyzing Patterns...') : (t.lang === 'ar' ? 'اكتمل التحقق' : 'Verification Complete')}
              </div>
           </div>
         </div>
@@ -317,7 +307,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
-             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>تخصيص صلاحيات الوصول</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Plus, Search, Truck, User, 
-  DollarSign, Clock, X, FileCheck, Download, Briefcase, ShieldCheck,
-  Trash2, PenTool, Printer
-} from 'lucide-react';
+
 import { localDB } from '../lib/localDB';
 import type { Contract } from '../lib/localDB';
 
@@ -328,7 +324,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
         </div>
         <div style={{ display: 'flex', gap: '0.8rem' }}>
            <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-executive">
-              <Plus size={18} /> إضافة عقد جديد
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> إضافة عقد جديد
            </button>
         </div>
       </header>
@@ -345,7 +341,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
             transition: 'all 0.3s'
           }}
         >
-          <User size={18} /> عقود العملاء
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person</span> عقود العملاء
         </button>
         <button 
           onClick={() => setActiveTab('transporter')}
@@ -357,22 +353,22 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
             transition: 'all 0.3s'
           }}
         >
-          <Truck size={18} /> عقود الناقلين
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>local_shipping</span> عقود الناقلين
         </button>
       </div>
 
       {/* KPI Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <KPICard title="إجمالي قيمة العقود" value={totalValue.toLocaleString()} icon={<DollarSign size={22} />} color="var(--primary)" />
-        <KPICard title="العقود النشطة" value={activeCount.toString()} icon={<FileCheck size={22} />} color="var(--success)" />
-        <KPICard title="عقود قاربت على الانتهاء" value={expiringCount.toString()} icon={<Clock size={22} />} color="var(--secondary)" />
+        <KPICard title="إجمالي قيمة العقود" value={totalValue.toLocaleString()} icon={<span className="material-symbols-outlined" style={{ fontSize: '22px' }}>payments</span>} color="var(--primary)" />
+        <KPICard title="العقود النشطة" value={activeCount.toString()} icon={<span className="material-symbols-outlined" style={{ fontSize: '22px' }}>task_alt</span>} color="var(--success)" />
+        <KPICard title="عقود قاربت على الانتهاء" value={expiringCount.toString()} icon={<span className="material-symbols-outlined" style={{ fontSize: '22px' }}>schedule</span>} color="var(--secondary)" />
       </div>
 
       {/* Search & List */}
       <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
         <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ position: 'relative', width: '300px' }}>
-            <Search size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4, fontSize: '18px' }}>search</span>
             <input 
               type="text" 
               placeholder="البحث في العقود..." 
@@ -384,7 +380,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
           </div>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
             <button onClick={handleExportFullReport} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem 1rem' }}>
-              <Download size={16} /> كشف كامل (CSV)
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> كشف كامل (CSV)
             </button>
           </div>
         </div>
@@ -412,7 +408,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                     <td style={{ paddingInlineStart: '2rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                         <div style={{ padding: '0.6rem', background: 'var(--surface-container-high)', borderRadius: '10px', color: 'var(--primary)' }}>
-                          {contract.type === 'client' ? <User size={16} /> : <Briefcase size={16} />}
+                          {contract.type === 'client' ? <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>work</span>}
                         </div>
                         <div>
                           <span style={{ fontWeight: 900, fontSize: '0.95rem', display: 'block' }}>{contract.entity_name}</span>
@@ -427,7 +423,7 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                     <td style={{ textAlign: 'center' }}>
                       {contract.signed ? (
                         <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontWeight: 800, fontSize: '0.8rem' }}>
-                          <CheckCircle2 size={14} /> {contract.signature_date}
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span> {contract.signature_date}
                         </span>
                       ) : (
                         <span style={{ opacity: 0.4, fontWeight: 700, fontSize: '0.8rem' }}>غير موقع</span>
@@ -444,15 +440,15 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                     <td style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>
                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                           <button onClick={(e) => { e.stopPropagation(); handleDownload(contract); }} className="btn-action-small" title="تحميل PDF / طباعة">
-                             <Printer size={16} />
+                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
                           </button>
                           {!contract.signed && (
                             <button onClick={(e) => { e.stopPropagation(); handleSign(contract.id); }} className="btn-action-small" title="توقيع" style={{ color: 'var(--secondary)' }}>
-                               <PenTool size={16} />
+                               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                             </button>
                           )}
                           <button onClick={(e) => { e.stopPropagation(); handleDelete(contract.id); }} className="btn-action-small" title="حذف" style={{ color: 'var(--error)' }}>
-                             <Trash2 size={14} />
+                             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
                           </button>
                        </div>
                     </td>
@@ -470,12 +466,12 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
           <div className="card slide-in" style={{ width: '100%', maxWidth: '720px', padding: 0, position: 'relative', border: 'none' }}>
             <div style={{ padding: '2rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ background: 'var(--primary)', padding: '0.8rem', borderRadius: '14px', color: 'var(--secondary)' }}><FileCheck size={22} /></div>
+                <div style={{ background: 'var(--primary)', padding: '0.8rem', borderRadius: '14px', color: 'var(--secondary)' }}><span className="material-symbols-outlined" style={{ fontSize: '22px' }}>task_alt</span></div>
                 <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>
                   {selectedContract ? 'تعديل عقد سيادي' : 'عقد سيادي جديد'}
                 </h3>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
             </div>
 
             <form onSubmit={handleSubmit} style={{ padding: '2.5rem' }}>
@@ -517,11 +513,11 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
                  <button type="button" onClick={() => setShowModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none' }}>إلغاء</button>
                  {selectedContract && (
                     <button type="button" onClick={() => handleDownload(selectedContract)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-                       <Printer size={18} /> طباعة
+                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> طباعة
                     </button>
                   )}
                  <button type="submit" className="btn-executive" style={{ flex: 2, border: 'none' }}>
-                    <ShieldCheck size={20} /> اعتماد وحفظ العقد
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>verified_user</span> اعتماد وحفظ العقد
                  </button>
               </div>
             </form>
@@ -540,11 +536,7 @@ function isNearExpiry(dateStr?: string) {
   return diff > 0 && diff < (30 * 24 * 60 * 60 * 1000);
 }
 
-function CheckCircle2({ size }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
-  );
-}
+
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (

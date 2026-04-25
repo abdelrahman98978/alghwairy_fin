@@ -1,38 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  LayoutDashboard, 
-  Handshake, 
-  Wallet, 
-  ShieldCheck, 
-  Bell,
-  Search,
-  Plus,
-  Clock,
-  Zap,
-  LogOut,
-  Users,
-  UserPlus,
-  AlertCircle,
-  CheckCircle2,
-  FileText,
-  Activity,
-  Sun,
-  Moon,
-  Languages,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Settings,
-  History as HistoryIcon,
-  TrendingDown,
-  Loader2,
-  Banknote,
-  BarChart3,
-  FileSpreadsheet,
-  Trash2,
-  Share2
-} from 'lucide-react';
 import { localDB } from './lib/localDB';
 import { syncEngine } from './lib/syncEngine';
 import { hasPermission, type AppModule } from './lib/permissions';
@@ -1915,7 +1881,7 @@ export default function App() {
             boxShadow: '0 4px 10px rgba(0,0,0,0.2)' 
           }}
         >
-          {isCollapsed ? (lang === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />) : (lang === 'ar' ? <ChevronRight size={16} /> : <ChevronLeft size={16} />)}
+          {isCollapsed ? (lang === 'ar' ? <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_left</span> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span>) : (lang === 'ar' ? <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_left</span>)}
         </button>
 
         <div className="sidebar-header-text" style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1.2rem 1.2rem', textAlign: 'center', borderBottom: '1px solid var(--separator)' }}>
@@ -1939,32 +1905,32 @@ export default function App() {
           {(hasPermission(userRole, 'dashboard') || hasPermission(userRole, 'customers')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.25rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
-              {hasPermission(userRole, 'dashboard') && <NavItem icon={<LayoutDashboard size={18} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'customers') && <NavItem icon={<Handshake size={18} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'contracts') && <NavItem icon={<FileText size={18} />} label={t.nav.contracts} active={activeTab === 'contracts'} onClick={() => setActiveTab('contracts')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'dashboard') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>dashboard</span>} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'customers') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>handshake</span>} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'contracts') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>} label={t.nav.contracts} active={activeTab === 'contracts'} onClick={() => setActiveTab('contracts')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
           {(hasPermission(userRole, 'accounting') || hasPermission(userRole, 'invoices') || hasPermission(userRole, 'prepayments') || hasPermission(userRole, 'expenses') || hasPermission(userRole, 'petty_cash') || hasPermission(userRole, 'tax')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
-              {hasPermission(userRole, 'accounting') && <NavItem icon={<Wallet size={18} />} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'invoices') && <NavItem icon={<FileText size={18} />} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'prepayments') && <NavItem icon={<HistoryIcon size={18} />} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'expenses') && <NavItem icon={<TrendingDown size={18} />} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'petty_cash') && <NavItem icon={<Banknote size={18} />} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'tax') && <NavItem icon={<Zap size={18} />} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'accounting') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>account_balance_wallet</span>} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'invoices') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'prepayments') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>history</span>} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'expenses') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_down</span>} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'petty_cash') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'tax') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bolt</span>} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
           {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
-              {hasPermission(userRole, 'payroll') && <NavItem icon={<Users size={18} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'reports') && <NavItem icon={<BarChart3 size={18} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'statements') && <NavItem icon={<FileSpreadsheet size={18} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'payroll') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'reports') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'statements') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_chart</span>} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
               <NavItem 
-                 icon={<Share2 size={18} />} 
+                 icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share</span>} 
                  label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} 
                  active={activeTab === 'communications'} 
                  onClick={() => setActiveTab('communications')} 
@@ -1978,12 +1944,12 @@ export default function App() {
           {(hasPermission(userRole, 'security') || hasPermission(userRole, 'roles') || hasPermission(userRole, 'audit_logs') || hasPermission(userRole, 'data_import') || hasPermission(userRole, 'settings') || hasPermission(userRole, 'trash')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
-              {hasPermission(userRole, 'security') && <NavItem icon={<ShieldCheck size={18} />} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'roles') && <NavItem icon={<UserPlus size={18} />} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'audit_logs') && <NavItem icon={<Activity size={18} />} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'data_import') && <NavItem icon={<Download size={18} />} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'settings') && <NavItem icon={<Settings size={18} />} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'trash') && <NavItem icon={<Trash2 size={18} />} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'security') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified_user</span>} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'roles') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'audit_logs') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>monitoring</span>} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'data_import') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'settings') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span>} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'trash') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
         </nav>
@@ -2011,7 +1977,7 @@ export default function App() {
             width: isCollapsed ? '44px' : 'calc(100% - 1rem)',
             margin: isCollapsed ? '0 auto' : '0 0.5rem'
           }}>
-             <LogOut size={18} />
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
              {!isCollapsed && <span style={{ fontSize: '0.8rem' }}>{t.logout}</span>}
           </button>
 
@@ -2043,7 +2009,7 @@ export default function App() {
                 {t.roles[userRole as keyof typeof t.roles]}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.75rem', fontWeight: 800, opacity: 0.7 }}>
-                 <Clock size={12} /> {t.last_sync}: {lastSyncTime}
+                 <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>schedule</span> {t.last_sync}: {lastSyncTime}
               </div>
             </div>
             <h1 className="view-title" style={{ fontSize: '1.5rem' }}>
@@ -2054,7 +2020,7 @@ export default function App() {
 
           <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
             <div className="card-layer-2" style={{ padding: '0.65rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '320px', borderRadius: '100px', border: '1px solid var(--outline-variant)' }}>
-              <Search size={16} color="var(--primary)" style={{ opacity: 0.4 }} />
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', opacity: 0.4, color: 'var(--primary)' }}>search</span>
               <input type="text" placeholder={t.search} style={{ border: 'none', outline: 'none', background: 'none', width: '100%', fontSize: '0.82rem', color: 'var(--on-surface)', fontWeight: 700 }} />
             </div>
 
@@ -2085,23 +2051,23 @@ export default function App() {
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button title="Toggle Theme" onClick={toggleTheme} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  {isDark ? <Sun size={17} /> : <Moon size={17} />}
+                  {isDark ? <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>light_mode</span> : <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>dark_mode</span>}
                 </button>
                 <button title="Change Language" onClick={toggleLang} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <Languages size={17} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>language</span>
                 </button>
                 <button title="Direct Print" onClick={handlePrint} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <Printer size={17} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>print</span>
                 </button>
               </div>
             </div>
 
             <button onClick={() => setShowAddTrxModal(true)} className="btn-executive" style={{ padding: '0.65rem 1.25rem', borderRadius: '100px' }}>
-              <Plus size={18} /> <span style={{ fontWeight: 900 }}>{lang === 'ar' ? 'إضافة عملية' : 'Add TRX'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> <span style={{ fontWeight: 900 }}>{lang === 'ar' ? 'إضافة عملية' : 'Add TRX'}</span>
             </button>
             
             <div style={{ position: 'relative', cursor: 'pointer', padding: '0.4rem', borderRadius: '50%', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowNotifDrawer(true)}>
-              <Bell size={20} color="var(--primary)" />
+              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>notifications</span>
               {notifHistory.length > 0 && (
                 <span className="status-indicator" style={{ position: 'absolute', top: -2, right: -2, background: 'var(--error)', border: '2.5px solid var(--surface)', width: '12px', height: '12px' }}></span>
               )}
@@ -2122,7 +2088,7 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h3 style={{ fontFamily: 'Tajawal' }}>{lang === 'ar' ? 'سجل الإشعارات السيادية' : 'Sovereign Notification Log'}</h3>
               <button onClick={() => setShowNotifDrawer(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface)' }}>
-                <Clock size={20} />
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -2150,7 +2116,7 @@ export default function App() {
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h2 style={{ fontFamily: 'Tajawal', margin: 0, fontSize: '1.6rem', color: 'var(--primary)' }}>{lang === 'ar' ? 'توثيق عملية سيادية' : 'Document Sovereign TRX'}</h2>
                   <button onClick={() => setShowAddTrxModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}>
-                     <LogOut size={24} style={{ transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }} />
+                     <span className="material-symbols-outlined" style={{ fontSize: '24px', transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }}>logout</span>
                   </button>
                </div>
                
@@ -2197,7 +2163,7 @@ export default function App() {
                   </div>
 
                   <button disabled={isActionLoading} type="submit" className="btn-executive" style={{ width: '100%', padding: '1.2rem', justifyContent: 'center', gap: '1rem', fontSize: '1.1rem' }}>
-                     {isActionLoading ? <Loader2 className="spin" /> : <><ShieldCheck size={22} /> {lang === 'ar' ? 'اعتماد العملية في الميزان' : 'Authorize Sovereign TRX'}</>}
+                     {isActionLoading ? <span className="material-symbols-outlined spin" style={{ fontSize: '24px' }}>sync</span> : <><span className="material-symbols-outlined" style={{ fontSize: '22px' }}>verified_user</span> {lang === 'ar' ? 'اعتماد العملية في الميزان' : 'Authorize Sovereign TRX'}</>}
                   </button>
                </form>
             </div>
@@ -2208,7 +2174,7 @@ export default function App() {
       {notification ? (
         <div className="toast-container" style={{ zIndex: 2000 }}>
           <div className={`toast-notification ${notification.type === 'error' ? 'toast-error' : ''}`}>
-            {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} color="#88d982" />}
+            {notification.type === 'error' ? <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>error</span> : <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#88d982' }}>check_circle</span>}
             <span>{notification.message}</span>
           </div>
         </div>
@@ -2289,7 +2255,7 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
       <div className="login-card premium-bg slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem', background: 'var(--surface)', border: '1px solid var(--outline)' }}>
         <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
            <div style={{ display: 'inline-flex', padding: '1.2rem', borderRadius: '24px', background: 'var(--primary)', color: 'var(--on-primary)', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-              <ShieldCheck size={42} />
+              <span className="material-symbols-outlined" style={{ fontSize: '42px' }}>verified_user</span>
            </div>
            <h2 style={{ fontSize: '2.2rem', fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.8rem' }}>
               {lang === 'ar' ? 'تنشيط الميزان السيادي' : 'Sovereign Ledger Activation'}
@@ -2322,19 +2288,19 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
           </div>
 
           <button type="submit" className="btn-executive primary" style={{ width: '100%', padding: '1.5rem', justifyContent: 'center', fontSize: '1.1rem' }}>
-            <Zap size={20} /> {lang === 'ar' ? 'تنشيط المنظومة الآن' : 'Activate System Now'}
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>bolt</span> {lang === 'ar' ? 'تنشيط المنظومة الآن' : 'Activate System Now'}
           </button>
         </form>
 
         <footer style={{ marginTop: '3.5rem', paddingTop: '2rem', borderTop: '1px solid var(--outline)', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
           <button onClick={toggleLang} className="btn-executive" style={{ fontSize: '0.85rem', fontWeight: 800, padding: '0.8rem 1.5rem' }}>
-             <Languages size={18} /> {lang === 'ar' ? 'English Version' : 'اللغة العربية'}
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>language</span> {lang === 'ar' ? 'English Version' : 'اللغة العربية'}
           </button>
         </footer>
         
         <div style={{ textAlign: 'center', marginTop: '1.5rem', opacity: 0.4 }}>
            <span className="version-badge">
-              <ShieldCheck size={12} /> v1.0.0 STABLE BUILD
+              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>verified_user</span> v1.0.0 STABLE BUILD
            </span>
         </div>
       </div>

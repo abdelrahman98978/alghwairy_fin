@@ -1,28 +1,5 @@
 import { useState } from 'react';
-import { 
-  Building2, 
-  Globe, 
-  Bell, 
-  Palette, 
-  Cloud,
-  CheckCircle2,
-  Save,
-  FileText,
-  Fingerprint,
-  ShieldCheck,
-  Loader2,
-  Upload,
-  Database,
-  Trash2,
-  Share2,
-  FolderOpen,
-  Network,
-  Volume2,
-  Monitor,
-  Smartphone,
-  ShieldAlert,
-  QrCode
-} from 'lucide-react';
+
 import { QRCodeSVG } from 'qrcode.react';
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
@@ -310,15 +287,15 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
   ];
 
   const menuItems = [
-    { id: 'general', label: t.tabs.general, icon: <Building2 size={18} /> },
-    { id: 'financial', label: t.tabs.financial, icon: <Globe size={18} /> },
-    { id: 'notifications', label: t.tabs.notifications, icon: <Bell size={18} /> },
-    { id: 'appearance', label: t.tabs.appearance, icon: <Palette size={18} /> },
-    { id: 'documents', label: t.tabs.documents, icon: <FileText size={18} /> },
-    { id: 'biometrics', label: t.tabs.security, icon: <Fingerprint size={18} /> },
-    { id: 'backup', label: t.tabs.backup, icon: <Cloud size={18} /> },
-    { id: 'cloud', label: t.lang === 'ar' ? 'التزامن السحابي' : 'Cloud Sync', icon: <Globe size={18} /> },
-    { id: 'cluster', label: t.lang === 'ar' ? 'عنقود التزامن' : 'Cluster Sync', icon: <Share2 size={18} /> },
+    { id: 'general', label: t.tabs.general, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>domain</span> },
+    { id: 'financial', label: t.tabs.financial, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>public</span> },
+    { id: 'notifications', label: t.tabs.notifications, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>notifications</span> },
+    { id: 'appearance', label: t.tabs.appearance, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>palette</span> },
+    { id: 'documents', label: t.tabs.documents, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span> },
+    { id: 'biometrics', label: t.tabs.security, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>fingerprint</span> },
+    { id: 'backup', label: t.tabs.backup, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>cloud</span> },
+    { id: 'cloud', label: t.lang === 'ar' ? 'التزامن السحابي' : 'Cloud Sync', icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>public</span> },
+    { id: 'cluster', label: t.lang === 'ar' ? 'عنقود التزامن' : 'Cluster Sync', icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share</span> },
   ];
 
   return (
@@ -329,7 +306,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
         <button onClick={handleSave} className="btn-executive" style={{ border: 'none' }}>
-           {loading ? <Save size={18} className="animate-spin" /> : <Save size={18} />}
+           {loading ? <span className="material-symbols-outlined animate-spin" style={{ fontSize: '18px' }}>autorenew</span> : <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>}
            {t.save}
         </button>
       </div>
@@ -381,7 +358,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                       {settings.logo && <img src={settings.logo} alt="Logo" style={{ width: 45, height: 45, borderRadius: '8px', objectFit: 'contain' }} />}
                       <label className="btn-executive" style={{ cursor: 'pointer', padding: '0.6rem 1rem', fontSize: '0.75rem', background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-                        <Upload size={14} /> {t.lang === 'en' ? 'Upload' : 'رفع'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle', marginLeft: t.lang === 'ar' ? '0.3rem' : '0' }}>upload</span> {t.lang === 'en' ? 'Upload' : 'رفع'}
                         <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: 'none' }} />
                       </label>
                     </div>
@@ -436,14 +413,14 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                         <Volume2 size={20} color="var(--primary)" />
+                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>volume_up</span>
                          <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'System Notification Sounds' : 'أصوات تنبيهات النظام'}</span>
                       </div>
                       <input type="checkbox" checked={settings.notifSounds} onChange={e => setSettings({...settings, notifSounds: e.target.checked})} />
                    </div>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                         <Monitor size={20} color="var(--primary)" />
+                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>desktop_windows</span>
                          <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'Desktop Notifications' : 'إشعارات سطح المكتب'}</span>
                       </div>
                       <input type="checkbox" checked={settings.notifDesktop} onChange={e => setSettings({...settings, notifDesktop: e.target.checked})} />
@@ -469,7 +446,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}
                         >
-                           {settings.primaryColor === theme.color && <ShieldCheck size={20} color="var(--secondary)" />}
+                           {settings.primaryColor === theme.color && <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--secondary)' }}>verified_user</span>}
                         </button>
                       ))}
                    </div>
@@ -526,7 +503,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal' }}>{t.lang === 'en' ? 'Biometric Security' : 'الأمان الحيوي'}</h3>
                 <div style={{ padding: '2rem', background: 'var(--surface-container-low)', borderRadius: '20px', textAlign: 'center' }}>
                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--surface-container-high)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {isEnrolling ? <Loader2 size={40} className="spin" /> : <Fingerprint size={40} color="var(--primary)" />}
+                      {isEnrolling ? <span className="material-symbols-outlined spin" style={{ fontSize: '40px' }}>autorenew</span> : <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--primary)' }}>fingerprint</span>}
                    </div>
                    <button onClick={enrollBiometric} className="btn-executive" disabled={isEnrolling} style={{ padding: '0.85rem 3rem', background: 'var(--primary)', color: 'var(--secondary)' }}>
                        {isEnrolling ? (t.lang === 'ar' ? 'جاري الربط...' : 'Connecting...') : (t.lang === 'ar' ? 'بدء عملية التسجيل' : 'Start Enrollment')}
@@ -539,7 +516,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                 {/* Google Authenticator Section */}
                 <div style={{ padding: '1.5rem', borderRadius: '18px', border: totpData.enabled ? '1px solid var(--success)' : '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
                    <h4 style={{ fontSize: '1.1rem', fontWeight: 950, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <Smartphone size={20} /> {t.lang === 'en' ? 'Two-Factor Authentication' : 'التحقق بخطوتين (Google Authenticator)'}
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>smartphone</span> {t.lang === 'en' ? 'Two-Factor Authentication' : 'التحقق بخطوتين (Google Authenticator)'}
                    </h4>
                    
                    {!totpData.enabled ? (
@@ -548,7 +525,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                         
                         {!totpData.qrVisible ? (
                            <button onClick={generateTOTP} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--secondary)', border: 'none', width: 'fit-content' }}>
-                              <QrCode size={18} /> {t.lang === 'en' ? 'Setup Authenticator' : 'إعداد تطبيق التحقق'}
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginLeft: t.lang === 'ar' ? '0.5rem' : '0' }}>qr_code</span> {t.lang === 'en' ? 'Setup Authenticator' : 'إعداد تطبيق التحقق'}
                            </button>
                         ) : (
                            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', background: 'white', padding: '1.5rem', borderRadius: '14px' }}>
@@ -583,7 +560,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(74, 169, 108, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <ShieldCheck size={24} color="#4AA96C" />
+                              <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#4AA96C' }}>verified_user</span>
                            </div>
                            <div>
                               <p style={{ margin: 0, fontWeight: 900, color: '#4AA96C' }}>{t.lang === 'en' ? 'Authenticator Active' : 'تطبيق التحقق نشط'}</p>
@@ -591,7 +568,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                            </div>
                         </div>
                         <button onClick={disableTOTP} className="btn-executive" style={{ background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)', border: '1px solid var(--error)', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                           <ShieldAlert size={14} /> {t.lang === 'en' ? 'Disable' : 'تعطيل'}
+                           <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle' }}>security</span> {t.lang === 'en' ? 'Disable' : 'تعطيل'}
                         </button>
                      </div>
                    )}
@@ -599,7 +576,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
 
                 <div style={{ padding: '1.5rem', borderRadius: '18px', border: '1px solid var(--surface-container-high)', background: 'var(--surface-container-low)' }}>
                    <h4 style={{ fontSize: '1rem', fontWeight: 900, marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <ShieldCheck size={18} /> {t.lang === 'en' ? 'Security Credentials' : 'بيانات الوصول الأمنية'}
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified_user</span> {t.lang === 'en' ? 'Security Credentials' : 'بيانات الوصول الأمنية'}
                    </h4>
                    <form onSubmit={handlePasswordChange} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1rem' }}>
                       <input type="password" placeholder="Pass 1" className="input-executive" value={passwordData.new} onChange={e => setPasswordData({...passwordData, new: e.target.value})} />
@@ -617,7 +594,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                         <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>{t.lang === 'ar' ? 'عنقود التزامن' : 'Cluster Sync'}</h3>
                         <p style={{ margin: 0, opacity: 0.6, fontWeight: 700 }}>{t.lang === 'ar' ? 'تجهيز مسار المزامنة المشترك.' : 'Configure shared sync path.'}</p>
                      </div>
-                     <Network size={24} color="var(--primary)" />
+                     <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>hub</span>
                   </div>
                   <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -632,7 +609,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                                    localDB.update('sync_settings', 'settings', { ...current, sync_folder: e.target.value });
                                 }}
                               />
-                              <button className="btn-executive" style={{ width: 'auto', border: 'none' }}><FolderOpen size={18} /></button>
+                              <button className="btn-executive" style={{ width: 'auto', border: 'none' }}><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>folder_open</span></button>
                            </div>
                         </div>
                      </div>
@@ -645,17 +622,17 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                  <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal' }}>{t.lang === 'en' ? 'Sovereign Backup' : 'النسخ الاحتياطي السيادي'}</h3>
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
-                       <Database size={24} color="var(--primary)" style={{ marginBottom: '1.5rem' }} />
+                       <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)', marginBottom: '1.5rem' }}>database</span>
                        <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Export/Import Local Instance' : 'تصدير واستيراد السجل المحلي'}</h4>
                        <div style={{ display: 'flex', gap: '1rem' }}>
                           <button onClick={exportBackup} className="btn-executive" style={{ flex: 1, border: 'none' }}>Export JSON</button>
                           <button onClick={importBackup} className="btn-executive btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                             <Upload size={16} /> {t.lang === 'en' ? 'Import' : 'استيراد'}
+                             <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle', marginLeft: t.lang === 'ar' ? '0.5rem' : '0' }}>upload</span> {t.lang === 'en' ? 'Import' : 'استيراد'}
                           </button>
                        </div>
                     </div>
                     <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--error)' }}>
-                       <Trash2 size={24} color="var(--error)" style={{ marginBottom: '1.5rem' }} />
+                       <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--error)', marginBottom: '1.5rem' }}>delete</span>
                        <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Wipe System' : 'تصفير النظام'}</h4>
                        <button onClick={() => setShowWipeConfirm(true)} className="btn-executive" style={{ width: '100%', background: 'var(--error)', border: 'none' }}>System Wipe</button>
                     </div>
@@ -733,7 +710,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
       </div>
 
       <div style={{ marginTop: '3rem', padding: '2rem', borderRadius: '20px', background: 'var(--primary)', color: 'white', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-         <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}><CheckCircle2 size={24} color="var(--secondary)" /></div>
+         <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}><span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--secondary)' }}>check_circle</span></div>
          <div>
             <h4 style={{ color: 'white', fontWeight: 900, margin: 0 }}>Sovereign Security Protocol</h4>
             <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.3rem 0 0' }}>All settings are locked into your local encrypted ledger.</p>
