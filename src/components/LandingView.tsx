@@ -1,22 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  ArrowRight, 
-  ChevronRight, 
-  Activity, 
-  Lock, 
-  Globe, 
-  Zap, 
-  FileText, 
-  BarChart3, 
-  Menu, 
-  X,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
-  CheckCircle2
-} from 'lucide-react';
 
 interface LandingViewProps {
   t: any;
@@ -48,10 +30,10 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
   ];
 
   const features = [
-    { icon: <Lock className="w-6 h-6" />, title: 'أمن سيادي', desc: 'تشفير AES-256 لحماية كافة المعاملات والبيانات الحساسة.' },
-    { icon: <Zap className="w-6 h-6" />, title: 'سرعة التنفيذ', desc: 'أتمتة كاملة للدورة المستندية لضمان أسرع تخليص جمركي.' },
-    { icon: <BarChart3 className="w-6 h-6" />, title: 'ذكاء مالي', desc: 'تقارير تحليلية وميزانيات عمومية فورية بدقة متناهية.' },
-    { icon: <Globe className="w-6 h-6" />, title: 'تغطية شاملة', desc: 'دعم كافة المنافذ الحدودية والأنظمة الجمركية العالمية.' },
+    { icon: <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>lock</span>, title: 'أمن سيادي', desc: 'تشفير AES-256 لحماية كافة المعاملات والبيانات الحساسة.' },
+    { icon: <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>bolt</span>, title: 'سرعة التنفيذ', desc: 'أتمتة كاملة للدورة المستندية لضمان أسرع تخليص جمركي.' },
+    { icon: <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>bar_chart</span>, title: 'ذكاء مالي', desc: 'تقارير تحليلية وميزانيات عمومية فورية بدقة متناهية.' },
+    { icon: <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>public</span>, title: 'تغطية شاملة', desc: 'دعم كافة المنافذ الحدودية والأنظمة الجمركية العالمية.' },
   ];
 
   const stats = [
@@ -529,7 +511,7 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
             justifyContent: 'center',
             boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)'
           }}>
-            <Shield className="text-navy-dark w-6 h-6" style={{ color: '#000D1A' }} />
+            <span className="material-symbols-outlined" style={{ color: '#000D1A', fontSize: '24px' }}>shield</span>
           </div>
           <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff' }}>
             الغويري <span style={{ color: 'var(--gold)' }}>السيادية</span>
@@ -543,9 +525,9 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
           <a href="#contact" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontWeight: 700 }}>اتصل بنا</a>
         </div>
 
-        <button onClick={onEnterPortal} className="btn-gold" style={{ padding: '0.6rem 1.5rem', fontSize: '0.9rem' }}>
+        <button onClick={onEnterPortal} className="btn-gold" style={{ padding: '0.6rem 1.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           دخول المنظومة
-          {isRtl ? <ChevronRight size={18} /> : <ArrowRight size={18} />}
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{isRtl ? 'chevron_right' : 'arrow_forward'}</span>
         </button>
       </nav>
 
@@ -555,7 +537,7 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
         <div className="hero-glow" />
         <div className="hero-content">
           <div className="hero-badge">
-            <Shield size={16} />
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shield</span>
             التميز الجمركي الرقمي - إصدار 2026
           </div>
           <h1 className="hero-title">
@@ -568,7 +550,7 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
           <div className="cta-group">
             <button onClick={onEnterPortal} className="btn-gold">
               الدخول للمنصة السيادية
-              <ArrowRight />
+              <span className="material-symbols-outlined">arrow_forward</span>
             </button>
             <button className="btn-outline" onClick={() => document.getElementById('showcase')?.scrollIntoView()}>
               استكشاف المنظومة
@@ -617,9 +599,9 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
             <p className="section-desc">نعمل وفق أعلى المعايير التنظيمية والمهنية في المملكة</p>
          </div>
          <div className="partners-flex">
-            {partners.map((p, idx) => (
+             {partners.map((p, idx) => (
               <div key={idx} className="partner-badge">
-                 <Shield className="w-4 h-4" />
+                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified_user</span>
                  <span>{p.logo}</span>
               </div>
             ))}
@@ -699,15 +681,15 @@ const LandingView: React.FC<LandingViewProps> = ({ t, lang, onEnterPortal, isDar
             <h4>تواصل معنا</h4>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                <Phone size={18} className="text-gold" style={{ color: 'var(--gold)' }} />
+                <span className="material-symbols-outlined" style={{ color: 'var(--gold)', fontSize: '18px' }}>call</span>
                 +962 7XXXXXXXX
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                <Mail size={18} className="text-gold" style={{ color: 'var(--gold)' }} />
+                <span className="material-symbols-outlined" style={{ color: 'var(--gold)', fontSize: '18px' }}>mail</span>
                 info@alghwairy.jo
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                <MapPin size={18} className="text-gold" style={{ color: 'var(--gold)' }} />
+                <span className="material-symbols-outlined" style={{ color: 'var(--gold)', fontSize: '18px' }}>location_on</span>
                 عمان، الأردن - المنطقة الحرة
               </li>
             </ul>

@@ -1,13 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  ShieldCheck, 
-  Printer, 
-  Clock, 
-  AlertCircle,
-  FileText,
-  Phone,
-  Globe
-} from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -64,8 +55,8 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '2rem' }}>
         <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <div className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '1.5rem' }}>
-            <Clock size={48} />
+          <div className="spin" style={{ color: 'var(--primary)', marginBottom: '1.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>schedule</span>
           </div>
           <h2 style={{ fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)' }}>جاري استرجاع السجل المؤسسي...</h2>
           <p style={{ opacity: 0.6, fontWeight: 700 }}>Alghwairy Local Ledger Secure Retrieval</p>
@@ -78,7 +69,7 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '2rem' }}>
         <div className="card" style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem' }}>
-          <AlertCircle size={48} color="var(--error)" style={{ marginBottom: '1.5rem' }} />
+          <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--error)', marginBottom: '1.5rem' }}>error</span>
           <h2 style={{ fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--error)' }}>خطأ في استرجاع السجل</h2>
           <p style={{ opacity: 0.8, fontWeight: 700, marginBottom: '2rem' }}>لم يتم العثور على الفاتورة المطلوبة في قاعدة البيانات المحلية.</p>
           <button onClick={() => window.location.href = '/'} className="btn-executive" style={{ width: '100%' }}>العودة للرئيسية</button>
@@ -91,7 +82,7 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
   const totalAmount = (invoice.amount || 0) + vatAmount;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '2rem 1rem', fontFamily: 'Inter, Tajawal, sans-serif' }}>
+    <div className="light-theme" style={{ minHeight: '100vh', background: '#f1f5f9', padding: '2rem 1rem', fontFamily: 'Inter, Tajawal, sans-serif' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         
         {/* Verification Status */}
@@ -106,12 +97,12 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
           boxShadow: '0 10px 30px rgba(0,26,51,0.1)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <ShieldCheck size={20} color="var(--secondary)" />
-            <span style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '0.5px', color: 'white' }}>وثيقة رسمية موثقة • متوافقة مع متطلبات هيئة الزكاة والضريبة والجمارك</span>
+            <span className="material-symbols-outlined on-color" style={{ fontSize: '20px', color: 'var(--secondary)' }}>verified_user</span>
+            <span className="on-color" style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '0.5px', color: 'white' }}>وثيقة رسمية موثقة • متوافقة مع متطلبات هيئة الزكاة والضريبة والجمارك</span>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={() => window.print()} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Printer size={14} /> طباعة / تصدير PDF
+            <button className="on-color" onClick={() => window.print()} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className="material-symbols-outlined on-color" style={{ fontSize: '14px' }}>print</span> طباعة / تصدير PDF
             </button>
           </div>
         </div>
@@ -126,7 +117,7 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
                 {logo ? (
                     <img src={logo} alt="Logo" style={{ height: 60, objectFit: 'contain' }} />
                 ) : (
-                    <ShieldCheck size={40} strokeWidth={2.5} color="var(--primary)" />
+                    <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--primary)' }}>shield_with_heart</span>
                 )}
                 <div>
                   <h1 style={{ fontSize: '1.6rem', margin: 0, fontWeight: 950, letterSpacing: '-0.5px' }}>مؤسسة الغويري للتخليص الجمركي</h1>
@@ -162,8 +153,8 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ background: 'var(--primary)', color: 'white', padding: '2rem', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 15px 35px rgba(0,26,51,0.2)' }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', opacity: 0.8, fontWeight: 700 }}>إجمالي القيمة المستحقة (TOTAL)</p>
-                <h2 style={{ fontSize: '2.8rem', margin: 0, fontWeight: 950, color: 'var(--secondary)' }}>{totalAmount.toLocaleString()} <span style={{ fontSize: '1rem', color: 'white' }}>ر.س</span></h2>
+                <p className="on-color" style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', opacity: 0.8, fontWeight: 700 }}>إجمالي القيمة المستحقة (TOTAL)</p>
+                <h2 className="on-color" style={{ fontSize: '2.8rem', margin: 0, fontWeight: 950, color: 'var(--secondary)' }}>{totalAmount.toLocaleString()} <span className="on-color" style={{ fontSize: '1rem', color: 'white' }}>ر.س</span></h2>
                 <div style={{ position: 'absolute', right: '-10%', bottom: '-20%', width: '100px', height: '100px', background: 'rgba(212, 167, 106, 0.1)', borderRadius: '30px', transform: 'rotate(15deg)' }}></div>
               </div>
             </div>
@@ -225,9 +216,9 @@ export default function PublicInvoiceView({ invoiceId }: { invoiceId: string }) 
                 جميع البيانات محفوظة في السجل المركزي للمؤسسة وموثقة محلياً لضمان السيادة الرقمية والامتثال الضريبي الكامل.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '2.5rem', opacity: 0.6 }}>
-                 <p style={{ fontSize: '0.75rem', fontWeight: 900 }}><Phone size={12} /> {localStorage.getItem('sov_phone') || '920000000'}</p>
-                 <p style={{ fontSize: '0.75rem', fontWeight: 900 }}><Globe size={12} /> alghwairy.com.sa</p>
-                 <p style={{ fontSize: '0.75rem', fontWeight: 900 }}><FileText size={12} /> Institutional Ledger v4.1</p>
+                 <p style={{ fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span className="material-symbols-outlined" style={{ fontSize: '12px' }}>phone</span> {localStorage.getItem('sov_phone') || '920000000'}</p>
+                 <p style={{ fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span className="material-symbols-outlined" style={{ fontSize: '12px' }}>language</span> alghwairy.com.sa</p>
+                 <p style={{ fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span className="material-symbols-outlined" style={{ fontSize: '12px' }}>description</span> Institutional Ledger v4.1</p>
               </div>
             </div>
           </div>

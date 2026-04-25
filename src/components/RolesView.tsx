@@ -207,11 +207,19 @@ export default function RolesView({ showToast, t }: RolesProps) {
                                  border: 'none', 
                                  cursor: 'pointer',
                                  color: rp.permissions.includes(module) ? 'var(--success)' : 'var(--outline)',
-                                 transition: 'transform 0.2s'
+                                 transition: 'transform 0.2s',
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 justifyContent: 'center',
+                                 margin: '0 auto'
                                }}
                                className="btn-hover-scale"
                              >
-                                {rp.permissions.includes(module) ? <Eye size={20} /> : <EyeOff size={20} />}
+                                {rp.permissions.includes(module) ? (
+                                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>visibility</span>
+                                ) : (
+                                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>visibility_off</span>
+                                )}
                              </button>
                           </td>
                         ))}
@@ -247,10 +255,13 @@ export default function RolesView({ showToast, t }: RolesProps) {
                                  background: emp.biometric_key ? 'rgba(27, 94, 32, 0.1)' : 'var(--surface-container-high)', 
                                  color: emp.biometric_key ? 'var(--success)' : 'var(--primary)', 
                                  border: 'none', 
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 justifyContent: 'center'
                                }}
                                title={emp.biometric_key ? (t.lang === 'en' ? 'Biometric Enrolled' : 'البصمة مفعلة') : (t.lang === 'en' ? 'Enroll Biometrics' : 'تفعيل البصمة')}
                              >
-                                <Fingerprint size={18} /> 
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>fingerprint</span> 
                              </button>
                              <button 
                                 onClick={() => deleteEmployee(emp.id, emp.name || emp.role)}
@@ -261,9 +272,12 @@ export default function RolesView({ showToast, t }: RolesProps) {
                                   background: 'rgba(186, 26, 26, 0.05)', 
                                   color: 'var(--error)', 
                                   border: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
                                 }}
                               >
-                                 <X size={18} />
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                               </button>
                          </div>
                       </div>
@@ -281,7 +295,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid rgba(212, 167, 106, 0.1)' }}></div>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid var(--secondary)', borderBottomColor: 'transparent', transform: `rotate(${scanProgress * 3.6}deg)`, transition: 'transform 0.1s linear' }}></div>
                 <div style={{ position: 'absolute', inset: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)' }}>
-                   <span className="material-symbols-outlined" style={{ fontSize: '60px' }} className={scanProgress < 100 ? "pulse" : ""}>fingerprint</span>
+                   <span className={`material-symbols-outlined ${scanProgress < 100 ? "pulse" : ""}`} style={{ fontSize: '60px' }}>fingerprint</span>
                 </div>
              </div>
              

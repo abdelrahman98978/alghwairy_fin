@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+
 import { QRCodeSVG } from 'qrcode.react';
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
@@ -330,7 +331,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
            ))}
         </aside>
 
-        <main className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)' }}>
+        <main className="card shadow-elite" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)' }}>
            {activeTab === 'general' && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal' }}>
@@ -501,7 +502,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
            {activeTab === 'biometrics' && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal' }}>{t.lang === 'en' ? 'Biometric Security' : 'الأمان الحيوي'}</h3>
-                <div style={{ padding: '2rem', background: 'var(--surface-container-low)', borderRadius: '20px', textAlign: 'center' }}>
+                <div className="card shadow-elite" style={{ padding: '2rem', background: 'var(--surface-container-low)', textAlign: 'center' }}>
                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--surface-container-high)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {isEnrolling ? <span className="material-symbols-outlined spin" style={{ fontSize: '40px' }}>autorenew</span> : <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--primary)' }}>fingerprint</span>}
                    </div>
@@ -596,7 +597,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                      </div>
                      <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>hub</span>
                   </div>
-                  <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
+                  <div className="card shadow-elite" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                            <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>{t.lang === 'ar' ? 'مسار الشبكة' : 'Network Path'}</label>
@@ -621,7 +622,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                  <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', fontFamily: 'Tajawal' }}>{t.lang === 'en' ? 'Sovereign Backup' : 'النسخ الاحتياطي السيادي'}</h3>
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
+                    <div className="card shadow-elite" style={{ padding: '1.5rem', border: '1px solid var(--surface-container-high)' }}>
                        <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)', marginBottom: '1.5rem' }}>database</span>
                        <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Export/Import Local Instance' : 'تصدير واستيراد السجل المحلي'}</h4>
                        <div style={{ display: 'flex', gap: '1rem' }}>
@@ -631,7 +632,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                           </button>
                        </div>
                     </div>
-                    <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--error)' }}>
+                    <div className="card shadow-elite" style={{ padding: '1.5rem', border: '1px solid var(--error)' }}>
                        <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--error)', marginBottom: '1.5rem' }}>delete</span>
                        <h4 style={{ margin: '0 0 1rem', fontWeight: 900 }}>{t.lang === 'en' ? 'Wipe System' : 'تصفير النظام'}</h4>
                        <button onClick={() => setShowWipeConfirm(true)} className="btn-executive" style={{ width: '100%', background: 'var(--error)', border: 'none' }}>System Wipe</button>
@@ -660,10 +661,10 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                           {t.lang === 'ar' ? 'ربط السجل السيادي للوصول عبر المتصفح.' : 'Link sovereign ledger for web access.'}
                        </p>
                     </div>
-                    <Cloud size={24} color="var(--primary)" />
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>cloud</span>
                  </div>
                  
-                 <div className="card" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
+                 <div className="card shadow-elite" style={{ padding: '2rem', background: 'var(--surface-container-low)', border: '1px solid var(--surface-container-high)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                           <label style={{ fontSize: '0.9rem', fontWeight: 900 }}>Supabase URL</label>

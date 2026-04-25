@@ -165,42 +165,42 @@
   --shadow-elite: 0 10px 40px rgba(0, 0, 0, 0.7);
 }
 
-/* Legibility Fix for Numerical Values in Light Theme - Forced Black */
-.light-theme .ledger-balance,
-.light-theme .item-amount,
-.light-theme .amount-premium,
-.light-theme .text-amount,
-.light-theme .vat-card-value,
-.light-theme .value-premium,
-.light-theme .contract-metrics .value,
-.light-theme .bs-row-premium span:last-child,
-.light-theme .report-metric-card .value,
-.light-theme .summ-met span,
-.light-theme .statement-value,
-.light-theme .vat-value-premium,
-.light-theme .bs-row-premium .font-black,
-.light-theme .bs-total-row span:last-child,
-.light-theme .recent-trx-row span,
-.light-theme .metric-value,
-.light-theme .total-value,
-.light-theme .summary-row-value,
-.light-theme .invoice-total-value,
-.light-theme .balance-value,
-.light-theme .card-value,
-.light-theme .stat-value,
-.light-theme .number-premium,
-.light-theme .trx-amount,
-.light-theme .cell-amount,
-.light-theme .total-amount,
-.light-theme td:has(.text-amount),
-.light-theme .premium-number,
-.light-theme .text-black,
-.light-theme [class*="amount"],
-.light-theme [class*="value"],
-.light-theme [class*="balance"],
-.light-theme [style*="fontWeight: 1000"],
-.light-theme [style*="fontWeight: 900"],
-.light-theme .font-black {
+/* Legibility Fix for Numerical Values in Light Theme - Forced Black (with exceptions for themed cards) */
+.light-theme .ledger-balance:not(.on-color),
+.light-theme .item-amount:not(.on-color),
+.light-theme .amount-premium:not(.on-color),
+.light-theme .text-amount:not(.on-color),
+.light-theme .vat-card-value:not(.on-color),
+.light-theme .value-premium:not(.on-color),
+.light-theme .contract-metrics .value:not(.on-color),
+.light-theme .bs-row-premium span:last-child:not(.on-color),
+.light-theme .report-metric-card .value:not(.on-color),
+.light-theme .summ-met span:not(.on-color),
+.light-theme .statement-value:not(.on-color),
+.light-theme .vat-value-premium:not(.on-color),
+.light-theme .bs-row-premium .font-black:not(.on-color),
+.light-theme .bs-total-row span:last-child:not(.on-color),
+.light-theme .recent-trx-row span:not(.on-color),
+.light-theme .metric-value:not(.on-color),
+.light-theme .total-value:not(.on-color),
+.light-theme .summary-row-value:not(.on-color),
+.light-theme .invoice-total-value:not(.on-color),
+.light-theme .balance-value:not(.on-color),
+.light-theme .card-value:not(.on-color),
+.light-theme .stat-value:not(.on-color),
+.light-theme .number-premium:not(.on-color),
+.light-theme .trx-amount:not(.on-color),
+.light-theme .cell-amount:not(.on-color),
+.light-theme .total-amount:not(.on-color),
+.light-theme td:has(.text-amount):not(.on-color),
+.light-theme .premium-number:not(.on-color),
+.light-theme .text-black:not(.on-color),
+.light-theme [class*="amount"]:not(.on-color),
+.light-theme [class*="value"]:not(.on-color),
+.light-theme [class*="balance"]:not(.on-color),
+.light-theme [style*="fontWeight: 1000"]:not(.on-color),
+.light-theme [style*="fontWeight: 900"]:not(.on-color),
+.light-theme .font-black:not(.on-color) {
   color: #000000 !important;
   font-weight: 1000 !important;
 }
@@ -455,18 +455,92 @@ body {
   overflow-y: auto;
   padding: 1.5rem 2rem;
   height: 100%;
+  min-width: 0; /* Prevents flex-children from collapsing or causing overflow issues */
   scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center content for stability */
 }
 
 .view-content-wrapper {
   width: 100%;
-  max-width: 1600px; /* Fixed maximum width for institutional stability */
-  margin: 0 auto;
+  max-width: 100%; /* Eliminated side gaps for fluid executive layout */
+  min-width: 0;
+  margin: 0;
   flex: 1;
 }
+
+/* Executive Tier Card System - Reference: Image 1 */
+.card-executive {
+  background: var(--surface-container-lowest);
+  border-radius: 24px;
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--outline-variant);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+  border-inline-start: 6px solid var(--accent-color, var(--secondary));
+}
+
+.card-executive:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-color, var(--secondary));
+}
+
+.card-executive-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color, var(--primary));
+  margin-bottom: 1rem;
+}
+
+.card-executive-title {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--on-surface-variant);
+  margin: 0;
+  text-align: end;
+}
+
+.card-executive-value-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.card-executive-value {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 950;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.card-executive-unit {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+}
+
+/* Executive Color Variants */
+.accent-red { --accent-color: #BA1A1A; }
+.accent-gold { --accent-color: #C5A059; }
+.accent-blue { --accent-color: #00234B; }
+.accent-navy { --accent-color: #001C39; }
+.accent-green { --accent-color: #00875A; }
 
 /* Sidebar Styling - Enhanced Sovereign Tier */
 .sidebar {
@@ -1888,6 +1962,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--outline-variant);
   margin-bottom: 0.75rem;
   transition: all 0.3s;
+  min-width: 0;
 }
 
 .item-row-premium:hover {
@@ -2378,11 +2453,11 @@ h1, h2, h3, h4 {
     font-family: 'Tajawal', sans-serif;
 }
 
-[data-theme='light'] .item-amount {
+[data-theme='light'] .item-amount:not(.on-dark) {
     color: #000000 !important;
 }
 
-[data-theme='dark'] .item-amount {
+[data-theme='dark'] .item-amount, .item-amount.on-dark {
     color: #ffffff !important;
 }
 
@@ -2548,3 +2623,13 @@ h1, h2, h3, h4 {
     font-weight: 800; 
 }
 
+
+.spin {
+  animation: sovereign-spin 2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes sovereign-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

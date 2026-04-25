@@ -1,17 +1,4 @@
 import { useState, useEffect } from 'react';
-import { 
-  Lock, 
-  User, 
-  ShieldCheck, 
-  ArrowRight,
-  Fingerprint,
-  Loader2,
-  AlertCircle,
-  ShieldAlert,
-  Key,
-  Database,
-  Smartphone
-} from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import { biometricService } from '../lib/biometricService';
 
@@ -247,7 +234,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
 
             {error && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: '#fce8e6', color: '#b3261e', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.7rem', fontWeight: 800 }}>
-                 <AlertCircle size={14} /> {error}
+                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>error</span> {error}
               </div>
             )}
 
@@ -262,7 +249,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
-                    <User size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
+                    <span className="material-symbols-outlined" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4, fontSize: '16px' }}>person</span>
                   </div>
                </div>
 
@@ -277,23 +264,23 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                     />
-                    <Lock size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4 }} />
+                    <span className="material-symbols-outlined" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', insetInlineStart: '1rem', color: 'var(--primary)', opacity: 0.4, fontSize: '16px' }}>lock</span>
                   </div>
                </div>
 
                <div style={{ textAlign: 'start', marginBottom: '1.25rem' }}>
                   <button type="button" onClick={() => setShowRecovery(true)} style={{ all: 'unset', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Key size={12} /> نسيت كلمة المرور؟ (استعادة مؤسسية)
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>vpn_key</span> نسيت كلمة المرور؟ (استعادة مؤسسية)
                   </button>
                </div>
 
                <button disabled={loading || isLocked} type="submit" className="btn-executive" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontSize: '0.9rem', justifyContent: 'center', gap: '0.5rem', filter: isLocked ? 'grayscale(1)' : 'none', opacity: isLocked ? 0.5 : 1 }}>
                   {isLocked ? (
-                    <><ShieldAlert size={16} /> النظام مغلق أمنياً</>
+                    <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>shield_lock</span> النظام مغلق أمنياً</>
                   ) : loading ? (
-                    <><Loader2 size={16} className="spin" /> جاري المصادقة...</>
+                    <><span className="material-symbols-outlined spin" style={{ fontSize: '18px' }}>progress_activity</span> جاري المصادقة...</>
                   ) : (
-                    <>دخول آمن للمنصة <ArrowRight size={16} /></>
+                    <>دخول آمن للمنصة <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span></>
                   )}
                </button>
             </form>
@@ -305,7 +292,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                 disabled={isLocked}
                 style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
                 >
-                  <Fingerprint size={14} /> تسجيل الدخول بالبصمة
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>fingerprint</span> تسجيل الدخول بالبصمة
                </button>
 
                {(localDB.get('user_roles').find((u: any) => u.name === username)?.totp_enabled) && (
@@ -315,14 +302,14 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                   disabled={isLocked}
                   style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', opacity: isLocked ? 0.2 : 0.6 }}
                   >
-                    <Smartphone size={14} /> استخدام رمز Google Auth
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>smartphone</span> استخدام رمز Google Auth
                  </button>
                )}
             </div>
             
             <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--outline-variant)', opacity: 0.5 }}>
                <span className="version-badge">
-                  <ShieldCheck size={12} /> v1.0.0 STABLE BUILD
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>verified_user</span> v1.0.0 STABLE BUILD
                </span>
             </div>
          </div>
@@ -334,7 +321,12 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
             <div style={{ textAlign: 'center', color: 'white' }}>
                <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 2rem' }}>
                   {scanStatus === 'scanning' && <div className="scanning-line"></div>}
-                  <Fingerprint size={120} color={scanStatus === 'success' ? '#4AA96C' : scanStatus === 'failed' ? '#BA1A1A' : 'var(--secondary)'} style={{ opacity: scanStatus === 'scanning' ? 0.5 : 1, transition: 'all 0.3s ease' }} />
+                  <span className="material-symbols-outlined" style={{ 
+                    fontSize: '120px', 
+                    color: scanStatus === 'success' ? '#4AA96C' : scanStatus === 'failed' ? '#BA1A1A' : 'var(--secondary)',
+                    opacity: scanStatus === 'scanning' ? 0.5 : 1, 
+                    transition: 'all 0.3s ease' 
+                  }}>fingerprint</span>
                </div>
                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Tajawal' }}>
                   {scanStatus === 'scanning' ? 'جاري مسح البصمة...' : scanStatus === 'success' ? 'تم التحقق بنجاح' : 'فشل التحقق'}
@@ -348,7 +340,11 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.85)', backdropFilter: 'blur(20px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
             <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem', textAlign: 'center', border: '1px solid rgba(212,167,106,0.2)', boxShadow: '0 30px 60px -12px rgba(0,0,0,0.5)' }}>
                <div style={{ width: 64, height: 64, borderRadius: '16px', background: 'var(--surface-container-high)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                  {recoverySuccess ? <ShieldCheck size={32} color="var(--success)" /> : <Database size={32} />}
+                  {recoverySuccess ? (
+                    <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--success)' }}>verified_user</span>
+                  ) : (
+                    <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>database</span>
+                  )}
                </div>
                
                <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>
@@ -380,7 +376,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
 
                {recoverySuccess && (
                  <div style={{ padding: '1rem' }}>
-                    <Loader2 size={32} className="spin" style={{ color: 'var(--success)' }} />
+                    <span className="material-symbols-outlined spin" style={{ fontSize: '32px', color: 'var(--success)' }}>progress_activity</span>
                  </div>
                )}
             </div>
@@ -391,7 +387,7 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,10,20,0.9)', backdropFilter: 'blur(25px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
             <div className="card shadow-executive" style={{ width: '100%', maxWidth: '380px', padding: '2.5rem', textAlign: 'center', background: 'var(--surface)', borderRadius: '24px', border: 'none' }}>
                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0, 26, 51, 0.05)', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                  <Smartphone size={32} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>smartphone</span>
                </div>
                
                <h3 style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.5rem', fontFamily: 'Tajawal' }}>تحقق Google Authenticator</h3>
@@ -410,7 +406,9 @@ export default function LoginView({ onLogin }: { onLogin: (role: string, name: s
                   />
                   
                   <button type="submit" disabled={verifying2FA || twoFACode.length < 6} className="btn-executive" style={{ width: '100%', justifyContent: 'center', padding: '1rem', background: 'var(--primary)', color: 'var(--secondary)' }}>
-                     {verifying2FA ? <Loader2 size={18} className="spin" /> : 'تحقق ودخول'}
+                     {verifying2FA ? (
+                       <span className="material-symbols-outlined spin" style={{ fontSize: '20px' }}>progress_activity</span>
+                     ) : 'تحقق ودخول'}
                   </button>
                   
                   <button type="button" onClick={() => setShow2FA(false)} style={{ background: 'none', border: 'none', color: 'var(--on-surface-variant)', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }}>

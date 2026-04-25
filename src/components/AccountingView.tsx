@@ -1,20 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  X, 
-  Download, 
-  Plus, 
-  PenTool, 
-  Trash2, 
-  Printer, 
-  ShieldCheck, 
-  Search, 
-  Activity, 
-  Package, 
-  TrendingUp, 
-  Receipt,
-  AlertTriangle
-} from 'lucide-react';
-
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   BarChart, 
@@ -61,19 +45,8 @@ interface RecentTrxProps {
   isCertified: boolean;
 }
 
-interface ReportMetricProps {
-  label: string;
-  value: string;
-  icon: string; // Changed to string for Material Symbol name
-  isSuccess?: boolean;
-}
+// Unused types removed to resolve warnings
 
-interface SummaryMetricProps {
-  label: string;
-  value: string | number;
-  icon: string; // Changed to string for Material Symbol name
-  primary?: boolean;
-}
 
 interface QuickActionCardProps {
   title: string;
@@ -850,10 +823,10 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
     return (
       <div className="dashboard-sovereign fade-in" style={{ marginBottom: '2.5rem' }}>
         <div className="metrics-grid-stable">
-          <ReportMetric label={isAr ? 'الإيرادات السيادية' : 'Sovereign Revenue'} value={totalRevenue.toLocaleString()} icon="attach_money" isSuccess />
-          <ReportMetric label={isAr ? 'تكاليف التشغيل' : 'Operating Costs'} value={totalCosts.toLocaleString()} icon="trending_down" />
-          <ReportMetric label={isAr ? 'الأرباح التشغيلية' : 'Operating Profit'} value={netProfit.toLocaleString()} icon="trending_up" isSuccess />
-          <ReportMetric label={isAr ? 'العقود النشطة' : 'Active Contracts'} value={activeContractCount.toString()} icon="work" />
+          <SummaryMetric label={isAr ? 'الإيرادات السيادية' : 'Sovereign Revenue'} value={totalRevenue.toLocaleString()} icon="payments" variant="accent-blue" showCurrency />
+          <SummaryMetric label={isAr ? 'تكاليف التشغيل' : 'Operating Costs'} value={totalCosts.toLocaleString()} icon="trending_down" variant="accent-red" showCurrency />
+          <SummaryMetric label={isAr ? 'الأرباح التشغيلية' : 'Operating Profit'} value={netProfit.toLocaleString()} icon="monitoring" variant="accent-gold" showCurrency />
+          <SummaryMetric label={isAr ? 'العقود النشطة' : 'Active Contracts'} value={activeContractCount.toString()} icon="description" variant="accent-success" />
         </div>
 
         <div className="quick-actions-stable">
@@ -886,10 +859,12 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
       <div className="card shadow-elite" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)', borderRadius: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginBottom: '2.5rem', borderBottom: '2px solid var(--secondary)', paddingBottom: '1.5rem' }}>
-          <div style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '16px', color: 'var(--secondary)', boxShadow: 'var(--shadow-brand)' }}><Receipt size={24} /></div>
+          <div style={{ background: 'var(--primary)', padding: '1.2rem', borderRadius: '18px', color: 'var(--secondary)', boxShadow: 'var(--shadow-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>receipt_long</span>
+          </div>
           <div>
-            <h3 className="text-sovereign sharp-text" style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', margin: 0 }}>{t.items_title}</h3>
-            <p className="sharp-text" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>{isAr ? 'منظومة إعداد الفواتير والقيود السيادية' : 'Sovereign Invoice & Entry System'}</p>
+            <h3 className="text-sovereign sharp-text" style={{ fontSize: '1.8rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 950 }}>{t.items_title}</h3>
+            <p className="sharp-text" style={{ margin: 0, fontSize: '0.95rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>{isAr ? 'منظومة إعداد الفواتير والقيود السيادية' : 'Sovereign Invoice & Entry System'}</p>
           </div>
         </div>
 
@@ -919,20 +894,20 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
         <div className="bento-grid-form">
           <section className="bento-card">
             <h4 className="sovereign-header-gold sharp-text" style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-              <ShieldCheck size={20} className="icon-gold-glow" /> {isAr ? 'الهوية والتعاقد' : 'Identity & Contract'}
+              <span className="material-symbols-outlined icon-gold-glow" style={{ fontSize: '22px' }}>verified_user</span> {isAr ? 'الهوية والتعاقد' : 'Identity & Contract'}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div className="form-group-premium">
-                  <label className="label-premium"><PenTool size={14} /> {t.client_name}</label>
+                  <label className="label-premium"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span> {t.client_name}</label>
                   <div className="input-wrapper-premium">
-                    <Search size={18} className="input-icon" />
+                    <span className="material-symbols-outlined input-icon">search</span>
                     <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} className="input-premium-styled" placeholder={isAr ? 'اسم الشركة أو الفرد' : 'Entity Name'} />
                   </div>
               </div>
               <div className="form-group-premium">
-                  <label className="label-premium"><Activity size={14} /> {t.tax_id}</label>
+                  <label className="label-premium"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>activity_zone</span> {t.tax_id}</label>
                   <div className="input-wrapper-premium">
-                    <Activity size={18} className="input-icon" />
+                    <span className="material-symbols-outlined input-icon">activity_zone</span>
                     <input type="text" value={taxId} onChange={e => setTaxId(e.target.value)} className="input-premium-styled" placeholder="310XXXXXXXXXXXX" />
                   </div>
               </div>
@@ -941,7 +916,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
           <section className="bento-card">
             <h4 className="sovereign-header-gold sharp-text" style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-              <Package size={20} className="icon-gold-glow" /> {isAr ? 'البيانات الجمركية' : 'Customs Data'}
+              <span className="material-symbols-outlined icon-gold-glow" style={{ fontSize: '22px' }}>package_2</span> {isAr ? 'البيانات الجمركية' : 'Customs Data'}
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
               <div className="form-group-premium">
@@ -970,20 +945,20 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
         <div className="items-container-premium glass-card" style={{ marginTop: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <TrendingUp size={20} className="text-gold" />
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--accent-color)' }}>trending_up</span>
             <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 900 }}>{isAr ? 'بنود الفاتورة والخدمات' : 'Invoice Items & Services'}</h4>
           </div>
           
           <div className="item-add-row-premium">
               <input type="text" value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} placeholder={isAr ? 'وصف الخدمة أو البند...' : 'Service description...'} className="input-premium-styled flex-3" />
               <input type="number" value={newItemAmount} onChange={e => setNewItemAmount(e.target.value)} placeholder="0.00" className="input-premium-styled flex-1 text-center" />
-              <button onClick={addItem} className="btn-sovereign-add"><Plus size={24} /></button>
+              <button onClick={addItem} className="btn-sovereign-add"><span className="material-symbols-outlined">add</span></button>
           </div>
 
           <div className="items-list-premium">
               {items.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--on-surface-variant)', opacity: 1 }}>
-                  <Receipt size={48} style={{ marginBottom: '1rem' }} />
+                  <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '1rem', color: 'var(--outline-variant)' }}>receipt_long</span>
                   <p>{isAr ? 'لا توجد بنود مضافة بعد' : 'No items added yet'}</p>
                 </div>
               ) : items.map((item, index) => (
@@ -994,7 +969,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                     </div>
                     <div className="item-actions-premium">
                        <span className="item-amount">{item.amount.toLocaleString()} <small>{currency}</small></span>
-                       <button onClick={() => removeItem(index)} className="btn-delete-premium"><Trash2 size={18} /></button>
+                       <button onClick={() => removeItem(index)} className="btn-delete-premium">
+                         <span className="material-symbols-outlined">delete</span>
+                       </button>
                     </div>
                   </div>
               ))}
@@ -1019,19 +996,19 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
         <div className="invoice-actions-premium">
           <button disabled={loading} onClick={handleIssueInvoice} className="btn-sovereign-primary flex-2">
-             {loading ? '...' : <><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span> {isAr ? 'اعتماد وإرسال الفاتورة' : 'Approve & Issue Invoice'}</>}
+             {loading ? '...' : <><span className="material-symbols-outlined">verified_user</span> {isAr ? 'اعتماد وإرسال الفاتورة' : 'Approve & Issue Invoice'}</>}
           </button>
           <button onClick={() => { if (items.length > 0) setShowPreview(true); else showToast(isAr ? 'أضف بنوداً للمعاينة' : 'Add items to preview', 'error'); }} className="btn-sovereign-outline flex-1">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span> {t.print_pdf}
+            <span className="material-symbols-outlined">print</span> {t.print_pdf}
           </button>
         </div>
       </div>
 
       <div className="sidebar-premium" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        <div className="card glass-premium shadow-sovereign-lg" style={{ padding: '2rem', minHeight: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="card-executive accent-gold" style={{ minHeight: 'auto' }}>
           <div className="summary-content">
-             <h3 className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--secondary)', marginBottom: '2rem', fontSize: '1.4rem' }}>
-               <ShieldCheck size={24} className="icon-gold-glow" /> {t.summation}
+             <h3 className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--accent-color)', marginBottom: '2rem', fontSize: '1.4rem' }}>
+               <span className="material-symbols-outlined">verified_user</span> {t.summation}
              </h3>
              <div className="summary-rows" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                <SummaryRow label={t.subtotal} value={calculateSubtotal().toLocaleString()} currency={currency} />
@@ -1042,14 +1019,13 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                </div>
              </div>
           </div>
-          <div className="glass-ornament"></div>
         </div>
 
-        <div className="card shadow-elite" style={{ padding: '2rem', background: 'var(--surface)' }}>
-          <h3 className="recent-title" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--primary)', marginBottom: '1.5rem', borderRight: '4px solid var(--secondary)', paddingRight: '1rem' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>ecg</span> {t.recent_title}
+        <div className="card-executive accent-blue" style={{ minHeight: 'auto' }}>
+          <h3 className="recent-title" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--accent-color)', marginBottom: '1.5rem' }}>
+            <span className="material-symbols-outlined">history</span> {t.recent_title}
           </h3>
-          <div className="recent-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="recent-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
              {recentInvoices.map((inv) => (
                 <RecentTrx 
                   key={`inv-${inv.id}-${inv.reference_number}`} 
@@ -1061,7 +1037,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                   onShare={() => showToast('Share feature active', 'info')}
                 />
              ))}
-             {recentInvoices.length === 0 && <p className="empty-state-text" style={{ padding: '3rem 1rem' }}>{t.no_recent}</p>}
+             {recentInvoices.length === 0 && <p className="empty-state-text" style={{ padding: '2rem 1rem', textAlign: 'center' }}>{t.no_recent}</p>}
           </div>
         </div>
       </div>
@@ -1217,9 +1193,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-             <button onClick={() => {
+             <button className="btn-compact-gold" onClick={() => {
                 try {
-                  const data = localDB.exportJSON();
+                  const data = JSON.stringify({ invoices, journalEntries, ledgerAccounts, contracts, products }, null, 2);
                   const blob = new Blob([data], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -1233,11 +1209,11 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                 } catch (e) {
                   showToast(isAr ? 'فشل تصدير النسخة الاحتياطية' : 'Failed to export backup', 'error');
                 }
-             }} className="btn-compact-gold">
-                <Download size={18} /> {isAr ? 'النسخ الاحتياطي' : 'Cloud Backup'}
+             }}>
+                <span className="material-symbols-outlined">cloud_download</span> {isAr ? 'النسخ الاحتياطي' : 'Cloud Backup'}
              </button>
              <button className="btn-compact-outline" onClick={() => setActiveTab('invoice')}>
-                <Plus size={18} /> {isAr ? 'فاتورة جديدة' : 'New Invoice'}
+                <span className="material-symbols-outlined">add</span> {isAr ? 'فاتورة جديدة' : 'New Invoice'}
              </button>
           </div>
         </div>
@@ -1399,10 +1375,10 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
 
           {activeReportTab === 'profit' && (
             <div className="slide-in">
-              <div className="metrics-grid-premium">
-                 <SummaryMetric label={isAr ? 'الهامش الربحي الصافي' : 'Net Profit Margin'} value={`${metrics.margin}%`} icon="ecg" primary />
-                 <SummaryMetric label={isAr ? 'إجمالي الإيرادات' : 'Total Revenue'} value={metrics.rev.toLocaleString()} icon="attach_money" />
-                 <SummaryMetric label={isAr ? 'صافي الدخل' : 'Net Income'} value={metrics.net.toLocaleString()} icon="trending_up" />
+              <div className="metrics-grid-stable">
+                 <SummaryMetric label={isAr ? 'الهامش الربحي الصافي' : 'Net Profit Margin'} value={`${metrics.margin}%`} icon="monitoring" variant="accent-gold" />
+                 <SummaryMetric label={isAr ? 'إجمالي الإيرادات' : 'Total Revenue'} value={metrics.rev.toLocaleString()} icon="payments" variant="accent-blue" />
+                 <SummaryMetric label={isAr ? 'صافي الدخل' : 'Net Income'} value={metrics.net.toLocaleString()} icon="trending_up" variant="accent-success" />
               </div>
 
               <section className="chart-section-premium">
@@ -1410,7 +1386,7 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>ecg</span>
                   {isAr ? 'منحنى الإيرادات (آخر 10 عمليات)' : 'Revenue Trend (Latest 10)'}
                 </h4>
-                <div className="chart-wrapper-sovereign">
+                <div className="chart-wrapper-sovereign" style={{ minWidth: 0 }}>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={invoices.slice(-10).map((i: Invoice) => ({ date: i.created_at, amount: i.amount }))}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
@@ -1423,12 +1399,12 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                 </div>
               </section>
 
-              <div className="quick-actions-container">
+              <div className="quick-actions-stable" style={{ marginTop: '2.5rem' }}>
                  <QuickActionCard 
                    title={isAr ? 'تقرير الربحية' : 'Profit Report'} 
                    desc={isAr ? 'مراجعة الأداء المالي للفترة' : 'Review financial performance'} 
                    onClick={() => setActiveTab('reports')} 
-                   icon="bar_chart" 
+                   icon="analytics" 
                  />
                  <QuickActionCard 
                    title={isAr ? 'إهلاك الأصول' : 'Asset Depreciation'} 
@@ -1655,7 +1631,7 @@ function ManualJournalModal({ newEntry, setNewEntry, ledgerAccounts, onClose, on
       <div className="modal-card shadow-elite slide-up">
         <div className="modal-header-premium">
           <h3 className="sovereign-header-gold sharp-text" style={{ border: 'none', padding: 0, marginBottom: 0 }}>{isAr ? 'إضافة قيد محاسبي يدوي' : 'Add Manual Journal Entry'}</h3>
-          <button onClick={onClose} className="btn-icon-clean"><X size={24} /></button>
+          <button onClick={onClose} className="btn-icon-clean"><span className="material-symbols-outlined">close</span></button>
         </div>
         <div className="form-grid-premium-2">
            <div className="form-group-premium span-2">
@@ -1765,7 +1741,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
               className="btn-sovereign-secondary" 
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 900 }}
             >
-              <Download size={18} />
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
               {isAr ? 'تنزيل CSV' : 'Download CSV'}
             </button>
             <button 
@@ -1773,7 +1749,7 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
               className="btn-sovereign-secondary" 
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 900 }}
             >
-              <Printer size={18} />
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
               {isAr ? 'طباعة' : 'Print'}
             </button>
             <button onClick={onClose} className="btn-sovereign-outline" style={{ padding: '0.8rem 2.5rem', fontWeight: 900 }}>{isAr ? 'إغلاق' : 'Close'}</button>
@@ -1786,14 +1762,40 @@ function LedgerDetailModal({ account, journalEntries, onClose, isAr }: LedgerDet
 function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDownload, onDelete, downloadCSV }: ContractsSubViewProps) {
   return (
     <div className="fade-in">
+      <div className="metrics-grid-stable" style={{ marginBottom: '2.5rem' }}>
+          <SummaryMetric 
+            label={isAr ? 'إجمالي قيمة العقود' : 'Total Contract Value'} 
+            value={contracts.reduce((sum, c) => sum + (c.value || 0), 0).toLocaleString()} 
+            icon="account_balance_wallet" 
+            variant="accent-gold" 
+            showCurrency 
+          />
+          <SummaryMetric 
+            label={isAr ? 'العقود النشطة' : 'Active Contracts'} 
+            value={contracts.length.toString()} 
+            icon="description" 
+            variant="accent-blue" 
+          />
+          <SummaryMetric 
+            label={isAr ? 'اتفاقيات موقعة' : 'Signed Agreements'} 
+            value={contracts.filter(c => c.signed).length.toString()} 
+            icon="verified_user" 
+            variant="accent-success" 
+          />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
             <h3 style={{ fontWeight: 1000, color: 'var(--primary)', margin: 0 }} className="sharp-text">{isAr ? 'إدارة العقود اللوجستية' : 'Logistics Contract Management'}</h3>
             <p style={{ margin: 0, opacity: 1, fontWeight: 800, color: 'var(--primary)' }}>{isAr ? 'تتبع الاتفاقيات المالية مع العملاء والناقلين' : 'Track financial agreements with clients and carriers'}</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={() => downloadCSV(contracts, 'Contracts_Full_Ledger')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1rem', fontSize: '0.95rem' }}><Download size={18} /> {isAr ? 'كشف كامل' : 'Full Report'}</button>
-            <button onClick={() => setShowContractModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'عقد جديد' : 'New Contract'}</button>
+            <button onClick={() => downloadCSV(contracts, 'Contracts_Full_Ledger')} className="btn-sovereign-outline" style={{ padding: '0.6rem 1rem', fontSize: '0.95rem' }}>
+              <span className="material-symbols-outlined">download</span> {isAr ? 'كشف كامل' : 'Full Report'}
+            </button>
+            <button onClick={() => setShowContractModal(true)} className="btn-sovereign-primary">
+              <span className="material-symbols-outlined">add</span> {isAr ? 'عقد جديد' : 'New Contract'}
+            </button>
           </div>
       </div>
 
@@ -1824,26 +1826,26 @@ function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDow
                       onClick={() => onDownload(c)}
                       className="btn-action-small" 
                       style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <Download size={14} /> {isAr ? 'تحميل كملف' : 'Download'}
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>download</span> {isAr ? 'تحميل كملف' : 'Download'}
                     </button>
                     {!c.signed && (
                       <button 
                         onClick={() => onSign(c.id)}
                         className="btn-sovereign-outline" 
                         style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem 0' }}>
-                        <PenTool size={14} /> {isAr ? 'توقيع العقد' : 'Sign Now'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>signature</span> {isAr ? 'توقيع العقد' : 'Sign Now'}
                       </button>
                     )}
-                    <button 
-                       onClick={() => {
-                         if(confirm(isAr ? 'هل أنت متأكد من حذف هذا العقد؟' : 'Are you sure you want to delete this contract?')) {
-                           onDelete(c.id);
-                         }
-                       }}
-                       className="btn-action-small" 
-                       style={{ color: 'var(--error)', width: 'auto', padding: '0.5rem', flex: 0 }}>
-                       <Trash2 size={16} />
-                    </button>
+                     <button 
+                        onClick={() => {
+                          if(confirm(isAr ? 'هل أنت متأكد من حذف هذا العقد؟' : 'Are you sure you want to delete this contract?')) {
+                            onDelete(c.id);
+                          }
+                        }}
+                        className="btn-action-small" 
+                        style={{ color: 'var(--error)', width: 'auto', padding: '0.5rem', flex: 0 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                     </button>
                   </div>
               </div>
           ))}
@@ -1856,77 +1858,66 @@ function ContractsSubView({ contracts, isAr, setShowContractModal, onSign, onDow
 
 function SummaryRow({ label, value, isBold, currency }: SummaryRowProps) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: '0.95rem', fontWeight: 750 }}>{label}</span>
-      <span style={{ fontWeight: isBold ? 950 : 800, fontSize: isBold ? '1.8rem' : '1.1rem', color: isBold ? 'var(--secondary)' : 'var(--on-surface)' }}>{value} <small style={{ fontWeight: 700 }}>{currency || 'SAR'}</small></span>
+    <div className="summary-row-executive">
+      <span className="summary-label">{label}</span>
+      <span className={`summary-value ${isBold ? 'bold' : ''}`}>
+        {value} <small className="currency">{currency || 'SAR'}</small>
+      </span>
     </div>
   );
 }
 
 function RecentTrx({ id, client, amount, onShare, onCertify, isCertified }: RecentTrxProps) {
   return (
-    <div className="recent-trx-row" style={{ borderInlineStart: `4px solid ${isCertified ? 'var(--success)' : 'transparent'}` }}>
-       <div style={{ flex: 1 }} onClick={onShare}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-             <p style={{ fontSize: '0.9rem', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{id}</p>
-             {isCertified && <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>verified_user</span>}
+    <div className={`recent-trx-card ${isCertified ? 'certified' : ''}`}>
+       <div className="trx-info" onClick={onShare}>
+          <div className="trx-header">
+             <p className="trx-id">{id}</p>
+             {isCertified && <span className="material-symbols-outlined verified-icon">verified</span>}
           </div>
-          <p style={{ fontSize: '0.75rem', margin: '0.2rem 0', fontWeight: 800, color: 'var(--on-surface-variant)' }}>{client}</p>
+          <p className="trx-client">{client}</p>
        </div>
-       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ textAlign: 'end' }}>
-             <span style={{ fontWeight: 1000, fontSize: '1rem', color: 'var(--primary)' }}>{amount} <small>SAR</small></span>
-             {isCertified && <p style={{ fontSize: '0.6rem', color: 'var(--success)', fontWeight: 900, margin: 0 }}>ZATCA CERTIFIED</p>}
+       <div className="trx-financials">
+          <div className="amount-box">
+             <span className="amount">{amount} <small>SAR</small></span>
+             {isCertified && <p className="certified-tag">ZATCA COMPLIANT</p>}
           </div>
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <div className="action-group">
              {!isCertified && (
-               <button onClick={onCertify} className="btn-action-small" title="Certify with ZATCA">
-                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>verified_user</span>
+               <button onClick={onCertify} className="btn-action-mini" title="Certify with ZATCA">
+                 <span className="material-symbols-outlined">verified_user</span>
                </button>
              )}
-             <button onClick={onShare} className="btn-action-small">
-               <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>share</span>
+             <button onClick={onShare} className="btn-action-mini">
+               <span className="material-symbols-outlined">share</span>
              </button>
           </div>
        </div>
-     </div>
-  );
-}
-
-
-function ReportMetric({ label, value, icon, isSuccess }: ReportMetricProps) {
-  return (
-    <div className="report-metric-card">
-      <div className={`icon-box ${isSuccess ? 'success' : ''}`}>
-        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{icon}</span>
-      </div>
-      <div>
-        <p className="label sharp-text" style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '0.25rem' }}>{label}</p>
-        <h4 className="value sharp-gold" style={{ fontSize: '1.6rem', margin: 0 }}>{value} <small>SAR</small></h4>
-      </div>
     </div>
   );
 }
 
-function SummaryMetric({ label, value, icon, primary }: SummaryMetricProps) {
+function SummaryMetric({ label, value, icon, variant, showCurrency }: { label: string, value: string, icon: string, variant?: string, showCurrency?: boolean }) {
   return (
-    <div className={`summ-met ${primary ? 'prim' : ''}`}>
-       <div className="icon">
-         <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{icon}</span>
+    <div className={`card-executive ${variant || ''}`} style={{ minHeight: '140px' }}>
+       <div className="card-executive-icon">
+         <span className="material-symbols-outlined">{icon}</span>
        </div>
-       <div>
-          <label>{label}</label>
-          <span>{value}</span>
+       <p className="card-executive-title">{label}</p>
+       <div className="card-executive-value-group">
+          <span className="card-executive-value" style={{ fontSize: '2rem' }}>{value}</span>
+          {showCurrency && <span className="card-executive-unit">SAR</span>}
        </div>
     </div>
   );
 }
+
 function StatementRow({ label, value, isTotal, isHighlight }: any) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0' }}>
-        <span style={{ fontSize: isHighlight ? '1.4rem' : '1rem', fontWeight: isTotal || isHighlight ? 1000 : 800 }}>{label}</span>
-        <span style={{ fontSize: isHighlight ? '1.8rem' : '1.1rem', fontWeight: 1000, color: value < 0 ? 'var(--error)' : isHighlight ? 'var(--primary)' : 'var(--on-surface)' }}>
-          {value.toLocaleString()} <small style={{ fontSize: '0.7em', fontWeight: 700 }}>SAR</small>
+    <div className={`statement-row-executive ${isTotal ? 'total' : ''} ${isHighlight ? 'highlight' : ''}`}>
+        <span className="label">{label}</span>
+        <span className={`value ${value < 0 ? 'negative' : ''}`}>
+          {value.toLocaleString()} <small className="currency">SAR</small>
         </span>
     </div>
   );
@@ -1934,15 +1925,15 @@ function StatementRow({ label, value, isTotal, isHighlight }: any) {
 
 function QuickActionCard({ title, desc, onClick, icon }: QuickActionCardProps) {
   return (
-    <button className="quick-action-card glass-premium" onClick={onClick}>
-      <div className="icon-box">
-        <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{icon}</span>
+    <button className="card-executive interactive accent-gold" onClick={onClick} style={{ minHeight: '140px' }}>
+      <div className="card-executive-icon">
+        <span className="material-symbols-outlined">{icon}</span>
       </div>
       <div style={{ textAlign: 'start' }}>
-        <h4 style={{ margin: 0, fontWeight: 1000 }}>{title}</h4>
+        <h4 className="card-executive-title" style={{ textAlign: 'start', fontSize: '1.2rem', color: 'var(--primary)' }}>{title}</h4>
         <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>{desc}</p>
       </div>
-      <span className="material-symbols-outlined plus-icon" style={{ fontSize: '18px' }}>add</span>
+      <span className="material-symbols-outlined" style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', color: 'var(--accent-color)' }}>arrow_forward</span>
     </button>
   );
 }
@@ -1953,7 +1944,7 @@ function ContractModal({ contractType, newContract, setNewContract, onClose, onS
             <div className="modal-card shadow-elite slide-up">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
                     <h3 style={{ margin: 0, fontWeight: 1000 }}>{isAr ? `توثيق عقد ${contractType === 'client' ? 'عميل' : 'ناقل'}` : `Certify ${contractType} Contract`}</h3>
-                    <button onClick={onClose} className="btn-close-elite"><Plus size={24} style={{ transform: 'rotate(45deg)' }} /></button>
+                    <button onClick={onClose} className="btn-close-elite"><span className="material-symbols-outlined" style={{ transform: 'rotate(45deg)', fontSize: '24px' }}>add</span></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                     <div className="form-group-premium">
@@ -1999,9 +1990,9 @@ function InvoicePreviewModal({
     return (
         <div className="modal-overlay-premium" style={{ overflowY: 'auto', display: 'block', padding: '2rem 0' }}>
             <div className="no-print" style={{ position: 'sticky', top: '2rem', zIndex: 100, display: 'flex', justifyContent: 'center', gap: '1rem', width: 'fit-content', margin: '0 auto 2rem', background: 'var(--primary)', padding: '0.8rem 2rem', borderRadius: '50px', boxShadow: 'var(--shadow-lg)' }}>
-                <button onClick={onPrint} className="btn-print-premium"><Printer size={18} /> {isAr ? 'طباعة PDF' : 'Print PDF'}</button>
-                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: 'var(--success)' }}><ShieldCheck size={18} /> WhatsApp</button>
-                <button onClick={onDismiss} className="btn-print-premium" style={{ background: 'var(--error)' }}><X size={18} /> {isAr ? 'إغلاق' : 'Close'}</button>
+                <button onClick={onPrint} className="btn-print-premium"><span className="material-symbols-outlined">print</span> {isAr ? 'طباعة PDF' : 'Print PDF'}</button>
+                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: 'var(--success)' }}><span className="material-symbols-outlined">verified</span> WhatsApp</button>
+                <button onClick={onDismiss} className="btn-print-premium" style={{ background: 'var(--error)' }}><span className="material-symbols-outlined">close</span> {isAr ? 'إغلاق' : 'Close'}</button>
             </div>
             
             <div className="print-canvas" style={{ background: 'white', width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '2cm', color: 'black', direction: 'rtl', fontFamily: 'Tajawal', boxShadow: '0 0 50px rgba(0,0,0,0.2)', borderRadius: '4px' }}>
@@ -2111,14 +2102,34 @@ function SumRow({ label, value }: any) {
 }function AssetsView({ assets, isAr, setShowAssetModal, onRunDepreciation }: AssetsViewProps) {
   return (
     <div className="fade-in">
+      <div className="metrics-grid-stable" style={{ marginBottom: '2.5rem' }}>
+          <SummaryMetric 
+            label={isAr ? 'إجمالي قيمة الأصول' : 'Total Asset Value'} 
+            value={assets.reduce((sum, a) => sum + (a.purchase_value || 0), 0).toLocaleString()} 
+            icon="account_balance" 
+            variant="accent-gold" 
+            showCurrency 
+          />
+          <SummaryMetric 
+            label={isAr ? 'عدد الأصول المسجلة' : 'Registered Assets'} 
+            value={assets.length.toString()} 
+            icon="inventory" 
+            variant="accent-blue" 
+          />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
             <h3 className="sovereign-header-gold sharp-text" style={{ margin: 0 }}>{isAr ? 'إدارة الأصول الثابتة' : 'Fixed Assets Management'}</h3>
             <p className="muted-text-solid" style={{ margin: 0 }}>{isAr ? 'تتبع الممتلكات والمعدات واحتساب الإهلاك' : 'Track property, equipment and calculate depreciation'}</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={onRunDepreciation} className="btn-sovereign-outline"><Activity size={18} /> {isAr ? 'تشغيل الإهلاك الشهري' : 'Run Monthly Depr'}</button>
-            <button onClick={() => setShowAssetModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'إضافة أصل' : 'Add Asset'}</button>
+            <button onClick={onRunDepreciation} className="btn-sovereign-outline">
+              <span className="material-symbols-outlined">sync</span> {isAr ? 'تشغيل الإهلاك الشهري' : 'Run Monthly Depr'}
+            </button>
+            <button onClick={() => setShowAssetModal(true)} className="btn-sovereign-primary">
+              <span className="material-symbols-outlined">add</span> {isAr ? 'إضافة أصل' : 'Add Asset'}
+            </button>
           </div>
       </div>
 
@@ -2154,7 +2165,7 @@ function AssetModal({ newAsset, setNewAsset, onClose, onSave, isAr }: AssetModal
             <div className="modal-card shadow-elite slide-up">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
                     <h3 style={{ margin: 0, fontWeight: 1000 }}>{isAr ? 'تسجيل أصل ثابت جديد' : 'Register New Fixed Asset'}</h3>
-                    <button onClick={onClose} className="btn-close-elite"><X size={24} /></button>
+                    <button onClick={onClose} className="btn-close-elite"><span className="material-symbols-outlined">close</span></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                     <div className="form-group-premium">
@@ -2188,13 +2199,37 @@ function AssetModal({ newAsset, setNewAsset, onClose, onSave, isAr }: AssetModal
 function InventoryManagement({ products, isAr, setShowProductModal, onRestock }: InventoryManagementProps) {
   return (
     <div className="fade-in">
+      <div className="metrics-grid-stable" style={{ marginBottom: '2.5rem' }}>
+          <SummaryMetric 
+            label={isAr ? 'قيمة المخزون الإجمالية' : 'Total Inventory Value'} 
+            value={products.reduce((sum, p) => sum + ((p.quantity_on_hand || 0) * (p.purchase_price || 0)), 0).toLocaleString()} 
+            icon="inventory_2" 
+            variant="accent-gold" 
+            showCurrency 
+          />
+          <SummaryMetric 
+            label={isAr ? 'عدد الأصناف' : 'Item Count'} 
+            value={products.length.toString()} 
+            icon="list_alt" 
+            variant="accent-blue" 
+          />
+          <SummaryMetric 
+            label={isAr ? 'تنبيهات نقص المخزون' : 'Low Stock Alerts'} 
+            value={products.filter(p => (p.quantity_on_hand || 0) <= (p.min_stock_level || 0)).length.toString()} 
+            icon="warning" 
+            variant="accent-red" 
+          />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
             <h3 className="sovereign-header-gold sharp-text" style={{ margin: 0 }}>{isAr ? 'إدارة المستودعات والمخزون' : 'Inventory & Warehouse Management'}</h3>
             <p className="muted-text-solid" style={{ margin: 0 }}>{isAr ? 'تتبع الكميات وطلبات إعادة التموين' : 'Track quantities and replenishment requests'}</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={() => setShowProductModal(true)} className="btn-sovereign-primary"><Plus size={18} /> {isAr ? 'إضافة صنف' : 'Add Item'}</button>
+            <button onClick={() => setShowProductModal(true)} className="btn-sovereign-primary">
+              <span className="material-symbols-outlined">add</span> {isAr ? 'إضافة صنف' : 'Add Item'}
+            </button>
           </div>
       </div>
 
@@ -2205,7 +2240,7 @@ function InventoryManagement({ products, isAr, setShowProductModal, onRestock }:
               <div key={p.id} className="card-contract-elite" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{ padding: '1rem', background: lowStock ? 'rgba(var(--error-rgb), 0.1)' : 'rgba(var(--secondary-rgb), 0.1)', borderRadius: '15px' }}>
-                      <Package size={24} style={{ color: lowStock ? 'var(--error)' : 'var(--primary)' }} />
+                      <span className="material-symbols-outlined" style={{ fontSize: '24px', color: lowStock ? 'var(--error)' : 'var(--primary)' }}>inventory_2</span>
                     </div>
                     <div>
                       <h4 style={{ margin: 0, color: 'var(--primary)', fontWeight: 1000, fontSize: '1.1rem' }}>{isAr ? p.name_ar : p.name_en}</h4>
@@ -2227,7 +2262,7 @@ function InventoryManagement({ products, isAr, setShowProductModal, onRestock }:
                     <div>
                       {lowStock && (
                         <button onClick={() => onRestock(p.id)} className="btn-action-small" style={{ color: 'var(--error)', borderColor: 'var(--error)', background: 'rgba(var(--error-rgb), 0.05)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <AlertTriangle size={16} /> <span style={{ fontWeight: 900 }}>{isAr ? 'إعادة طلب' : 'Restock'}</span>
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>warning</span> <span style={{ fontWeight: 900 }}>{isAr ? 'إعادة طلب' : 'Restock'}</span>
                         </button>
                       )}
                     </div>
@@ -2237,7 +2272,7 @@ function InventoryManagement({ products, isAr, setShowProductModal, onRestock }:
           })}
           {products.length === 0 && (
             <div className="card glass-premium" style={{ textAlign: 'center', padding: '5rem' }}>
-              <Package size={60} style={{ opacity: 0.2, marginBottom: '1.5rem' }} />
+              <span className="material-symbols-outlined" style={{ fontSize: '64px', opacity: 0.2, marginBottom: '1.5rem' }}>inventory_2</span>
               <p className="empty-state-text" style={{ fontSize: '1.2rem' }}>{isAr ? 'المخزن فارغ حالياً' : 'Warehouse is empty'}</p>
               <button onClick={() => setShowProductModal(true)} className="btn-sovereign-outline" style={{ marginTop: '1rem' }}>{isAr ? 'إضافة أول منتج' : 'Add First Product'}</button>
             </div>
@@ -2253,7 +2288,7 @@ function ProductModal({ newProduct, setNewProduct, onClose, onSave, isAr }: Prod
             <div className="modal-card shadow-elite slide-up" style={{ maxWidth: '600px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
                     <h3 style={{ margin: 0, fontWeight: 1000 }}>{isAr ? 'إضافة صنف جديد' : 'Add New Product'}</h3>
-                    <button onClick={onClose} className="btn-close-elite"><X size={24} /></button>
+                    <button onClick={onClose} className="btn-close-elite"><span className="material-symbols-outlined">close</span></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>

@@ -120,6 +120,29 @@ export interface InventoryMovement {
   notes?: string;
 }
 
+export interface AffiliatePartner {
+  id: string;
+  name: string;
+  email: string;
+  commission: number;
+  status: 'active' | 'inactive';
+  total_sales: number;
+  total_payout: number;
+  conversions: number;
+  created_at: string;
+}
+
+export interface AffiliatePayout {
+  id: string;
+  partner_id: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  date: string;
+  method: string;
+  reference?: string;
+}
+
+
 interface DBSchema {
   version: number;
   customers: any[];
@@ -151,6 +174,8 @@ interface DBSchema {
   audit_logs?: any[];
   products: Product[];
   inventory_movements: InventoryMovement[];
+  affiliate_partners: AffiliatePartner[];
+  affiliate_payouts: AffiliatePayout[];
 }
 
 const DEFAULT_DB: DBSchema = {
@@ -199,7 +224,9 @@ const DEFAULT_DB: DBSchema = {
     auto_sync: false
   },
   products: [],
-  inventory_movements: []
+  inventory_movements: [],
+  affiliate_partners: [],
+  affiliate_payouts: []
 };
 
 // Paths for Electron fs access

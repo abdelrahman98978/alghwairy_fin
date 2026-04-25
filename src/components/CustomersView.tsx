@@ -1,29 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Search, 
-  Plus, 
-  X,
-  Building2,
-  AlertCircle,
-  CreditCard,
-  History,
-  ShieldCheck,
-  Printer,
-  Download,
-  MessageCircle,
-  CheckCircle2,
-  Trash2,
-  Edit3,
-  Eye,
-  ArrowRight,
-  FileText,
-  Paperclip,
-  Image as ImageIcon,
-  Upload,
-  File as FileIcon,
-  ZoomIn,
-  Receipt
-} from 'lucide-react';
+// Lucide imports removed - transitioning to Material Symbols
 import { localDB } from '../lib/localDB';
 import { fmtDate, fmtNumber } from '../lib/dateUtils';
 
@@ -257,22 +233,22 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
             <button onClick={handlePrint} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-               <Printer size={16} /> {t.print}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {t.print}
             </button>
             <button onClick={handleExportCSV} className="btn-executive" style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none' }}>
-               <Download size={16} /> {t.export}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> {t.export}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-executive" style={{ border: 'none' }}>
-                <Plus size={18} /> {t.add_customer}
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> {t.add_customer}
              </button>
         </div>
       </div>
 
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <KPIBox title={t.total_credit} value={customers.reduce((acc, c) => acc + (c.credit_limit || 0), 0).toLocaleString()} unit="SAR" icon={<CreditCard size={20} />} />
-        <KPIBox title={t.partners_count} value={customers.length || '0'} unit="Biz" icon={<Building2 size={20} />} />
-        <KPIBox title={t.pending_reviews} value="8" unit="Req" color="var(--secondary)" icon={<AlertCircle size={20} />} />
-        <KPIBox title={t.expired_contracts} value="3" unit="Cont" color="var(--error)" icon={<History size={20} />} />
+        <SummaryMetric title={t.total_credit} value={customers.reduce((acc, c) => acc + (c.credit_limit || 0), 0).toLocaleString()} unit="SAR" icon="credit_card" accent="blue" />
+        <SummaryMetric title={t.partners_count} value={String(customers.length || '0')} unit="Biz" icon="corporate_fare" accent="gold" />
+        <SummaryMetric title={t.pending_reviews} value="8" unit="Req" icon="warning" accent="red" />
+        <SummaryMetric title={t.expired_contracts} value="3" unit="Cont" icon="history" accent="success" />
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }} className="no-print">
@@ -306,7 +282,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, maxWidth: '500px', background: 'var(--surface-container-low)', padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
-                <Search size={18} color="var(--outline)" />
+                <span className="material-symbols-outlined" style={{ color: 'var(--outline)', fontSize: '20px' }}>search</span>
                 <input 
                   type="text" 
                   placeholder={t.search_placeholder} 
@@ -369,17 +345,17 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                         <td style={{ fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }} dir="ltr">{cust.lastOperation}</td>
                         <td style={{ textAlign: 'center' }}>
                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                              <button onClick={() => handleViewProfile(cust)} title="عرض الملف والشراكة" style={{ background: '#d4a76a', color: '#001a33', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-                                 <Eye size={18} />
+                              <button onClick={() => handleViewProfile(cust)} title="عرض الملف والشراكة" style={{ background: '#d4a76a', color: '#001a33', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
                               </button>
-                              <button onClick={() => openEditModal(cust)} style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-                                 <Edit3 size={18} />
+                              <button onClick={() => openEditModal(cust)} style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                               </button>
-                              <button onClick={() => handleWhatsAppShare(cust)} style={{ background: 'var(--surface-container-high)', color: '#25D366', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-                                 <MessageCircle size={18} />
+                              <button onClick={() => handleWhatsAppShare(cust)} style={{ background: 'var(--surface-container-high)', color: '#25D366', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
                               </button>
-                              <button onClick={() => handleDelete(cust.id)} style={{ background: 'var(--surface-container-high)', color: 'var(--error)', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-                                 <Trash2 size={18} />
+                              <button onClick={() => handleDelete(cust.id)} style={{ background: 'var(--surface-container-high)', color: 'var(--error)', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                               </button>
                            </div>
                         </td>
@@ -411,7 +387,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
            <div className="card" style={{ background: 'var(--primary)', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.2rem' }}>
-                    <ShieldCheck size={28} color="var(--secondary)" />
+                    <span className="material-symbols-outlined" style={{ color: 'var(--secondary)', fontSize: '28px' }}>verified_user</span>
                     <h4 style={{ fontFamily: 'Tajawal', color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>مؤسسة الغويري - مركز البيانات</h4>
                  </div>
                  <p style={{ fontSize: '0.9rem', opacity: 0.9, color: 'white', lineHeight: '1.6', fontWeight: 500 }}>
@@ -419,7 +395,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
                     النسخ الاحتياطي والتشفير يعملان محلياً بالكامل.
                  </p>
                  <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem' }}>
-                    <CheckCircle2 size={16} /> نظام معتمد بالكامل (2026)
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span> نظام معتمد بالكامل (2026)
                  </div>
               </div>
               {/* Decorative Circle */}
@@ -432,7 +408,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', position: 'relative' }}>
-             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.modal.title}</h3>
              <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -470,7 +446,7 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
       {showEditModal && (
         <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
           <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
-             <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+             <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
              <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.lang === 'ar' ? 'تعديل بيانات العميل' : 'Edit Customer'}</h3>
              <form onSubmit={handleUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -616,47 +592,35 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
         {/* Back Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem' }}>
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button onClick={onBack} className="btn-executive" style={{ padding: '0.6rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
-                 <ArrowRight size={20} />
+              <button onClick={onBack} className="btn-executive" style={{ padding: '0.6rem', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', transform: 'scaleX(-1)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
               <h2 className="view-title" style={{ margin: 0 }}>ملف العميل/الشريك: {customer.name}</h2>
            </div>
            <div style={{ display: 'flex', gap: '0.8rem' }}>
               <button onClick={handleWhatsApp} className="btn-executive" style={{ background: '#25D366', color: '#fff', border: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                 <MessageCircle size={16} /> واتساب
+                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chat</span> واتساب
               </button>
-              <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                 <FileText size={16} /> بريد إلكتروني
-              </button>
+               <button onClick={handleEmail} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span> بريد إلكتروني
+               </button>
            </div>
         </div>
 
         {/* Financial Summary KPIs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
-           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--primary)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>إجمالي الإيرادات</p>
-              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{totalRevenue.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></h3>
-           </div>
-           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--success)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>صافي الأرباح</p>
-              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--success)', fontFamily: 'Tajawal', fontWeight: 900 }}>{totalProfit.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>SAR</span></h3>
-           </div>
-           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--secondary)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>عدد الفواتير</p>
-              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{invoices.length} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>فاتورة</span></h3>
-           </div>
-           <div className="card" style={{ padding: '1.5rem', borderInlineStart: '5px solid var(--error)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 800, margin: '0 0 0.4rem' }}>حجم المستندات</p>
-              <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)', fontFamily: 'Tajawal', fontWeight: 900 }}>{documents.length} <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>ملف</span></h3>
-           </div>
+           <SummaryMetric title="إجمالي الإيرادات" value={totalRevenue.toLocaleString()} unit="SAR" icon="payments" accent="blue" />
+           <SummaryMetric title="صافي الأرباح" value={totalProfit.toLocaleString()} unit="SAR" icon="trending_up" accent="success" />
+           <SummaryMetric title="عدد الفواتير" value={invoices.length.toString()} unit="فاتورة" icon="receipt_long" accent="gold" />
+           <SummaryMetric title="حجم المستندات" value={documents.length.toString()} unit="ملف" icon="folder_open" accent="red" />
         </div>
 
         {/* Tab Navigation */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'var(--surface-container-low)', padding: '0.4rem', borderRadius: '14px', width: 'fit-content', border: '1px solid var(--surface-container-high)' }}>
           {[
-            { key: 'invoices', label: 'الفواتير والعمليات', icon: <Receipt size={16} /> },
-            { key: 'docs',     label: `المستندات والملفات (${documents.length})`, icon: <Paperclip size={16} /> },
-            { key: 'info',     label: 'البيانات الأساسية', icon: <ShieldCheck size={16} /> },
+            { key: 'invoices', label: 'الفواتير والعمليات', icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>receipt_long</span> },
+            { key: 'docs',     label: `المستندات والملفات (${documents.length})`, icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>attachment</span> },
+            { key: 'info',     label: 'البيانات الأساسية', icon: <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified_user</span> },
           ].map(tab => (
             <button
               key={tab.key}
@@ -700,7 +664,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
                            <tr key={inv.id}>
                               <td style={{ paddingInlineStart: '1.5rem' }}>
                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                    <div style={{ padding: '0.5rem', background: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--primary)' }}><Receipt size={14} /></div>
+                                    <div style={{ padding: '0.5rem', background: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--primary)', display: 'flex', alignItems: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>receipt_long</span></div>
                                     <div>
                                        <span style={{ fontWeight: 900, fontSize: '0.9rem', display: 'block', color: 'var(--primary)' }}>{inv.operation_number || inv.reference_number}</span>
                                        <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>BOL: {inv.bol_number || 'N/A'}</span>
@@ -718,9 +682,9 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
                                  }}>{inv.status === 'paid' ? 'مدفوعة' : 'قيد المعالجة'}</span>
                               </td>
                               <td style={{ textAlign: 'center', paddingInlineEnd: '1.5rem' }}>
-                                 <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                                    <button onClick={() => handlePrintInvoice(inv)} title="طباعة" style={{ background: 'var(--surface-container-high)', border: 'none', padding: '0.4rem', borderRadius: '6px', color: 'var(--primary)', cursor: 'pointer' }}><Printer size={14} /></button>
-                                    <button onClick={() => handleShareInvoiceWhatsApp(inv)} title="واتساب" style={{ background: 'var(--surface-container-high)', border: 'none', padding: '0.4rem', borderRadius: '6px', color: '#25D366', cursor: 'pointer' }}><MessageCircle size={14} /></button>
+                                  <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => handlePrintInvoice(inv)} title="طباعة" style={{ background: 'var(--surface-container-high)', border: 'none', padding: '0.4rem', borderRadius: '6px', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span></button>
+                                    <button onClick={() => handleShareInvoiceWhatsApp(inv)} title="واتساب" style={{ background: 'var(--surface-container-high)', border: 'none', padding: '0.4rem', borderRadius: '6px', color: '#25D366', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chat</span></button>
                                  </div>
                               </td>
                            </tr>
@@ -750,7 +714,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
               }}
             >
               <div style={{ width: 64, height: 64, background: 'var(--primary)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {uploading ? <div className="spin"><Upload size={28} color="var(--secondary)" /></div> : <Upload size={28} color="var(--secondary)" />}
+                <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--secondary)' }}>{uploading ? 'sync' : 'upload'}</span>
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 900, fontSize: '1.1rem', color: 'var(--primary)' }}>
@@ -762,10 +726,10 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
               </div>
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, color: 'var(--on-surface-variant)', background: 'var(--surface-container-high)', padding: '0.4rem 1rem', borderRadius: '8px' }}>
-                  <FileIcon size={14} /> PDF
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span> PDF
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, color: 'var(--on-surface-variant)', background: 'var(--surface-container-high)', padding: '0.4rem 1rem', borderRadius: '8px' }}>
-                  <ImageIcon size={14} /> {t.profile.images || 'Images'}
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>image</span> {t.profile.images || 'Images'}
                 </span>
               </div>
               <input ref={fileInputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" multiple style={{ display: 'none' }} onChange={handleFileInput} />
@@ -774,7 +738,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
             {/* Documents Grid */}
             {documents.length === 0 ? (
               <div className="card" style={{ padding: '4rem', textAlign: 'center', border: '1px dashed var(--surface-container-high)' }}>
-                <Paperclip size={40} style={{ margin: '0 auto 1rem', color: 'var(--on-surface-variant)', display: 'block', opacity: 0.4 }} />
+                <span className="material-symbols-outlined" style={{ fontSize: '40px', margin: '0 auto 1rem', color: 'var(--on-surface-variant)', display: 'block', opacity: 0.4 }}>attachment</span>
                 <p style={{ fontWeight: 800, color: 'var(--on-surface-variant)', margin: 0 }}>{t.profile.no_docs}</p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--outline)', margin: '0.5rem 0 0', fontWeight: 600 }}>{t.profile.upload_first}</p>
               </div>
@@ -791,7 +755,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
                         <img src={doc.base64_data} alt={doc.file_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                          <FileIcon size={40} color="var(--primary)" style={{ opacity: 0.7 }} />
+                          <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--primary)', opacity: 0.7 }}>description</span>
                           <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>PDF</span>
                         </div>
                       )}
@@ -800,33 +764,22 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
                         onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                         onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
                       >
-                        <ZoomIn size={28} color="#fff" />
+                        <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#fff' }}>zoom_in</span>
                       </div>
                     </div>
 
-                    {/* File Info */}
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={doc.file_name}>
-                        {doc.file_name}
-                      </p>
-                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>
-                        {formatFileSize(doc.file_size)} · {new Date(doc.uploaded_at).toLocaleDateString('ar-SA')}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
                     <div style={{ display: 'flex', gap: '0.6rem' }}>
                       <button onClick={() => setPreviewDoc(doc)}
                         style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--surface-container-high)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.78rem', fontFamily: 'Cairo' }}>
-                        <Eye size={14} /> {t.profile.preview || 'Preview'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>visibility</span> {t.profile.preview || 'Preview'}
                       </button>
                       <button onClick={() => handleDownloadDoc(doc)}
                         style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--secondary)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.78rem', fontFamily: 'Cairo' }}>
-                        <Download size={14} /> {t.profile.download || 'Download'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> {t.profile.download || 'Download'}
                       </button>
                       <button onClick={() => handleDeleteDoc(doc.id)}
                         style={{ padding: '0.5rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(211,47,47,0.3)', background: 'rgba(211,47,47,0.08)', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cairo' }}>
-                        <Trash2 size={14} />
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                       </button>
                     </div>
                   </div>
@@ -869,7 +822,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
             </div>
             <div className="card" style={{ padding: '2rem', border: '1px solid var(--surface-container-high)', alignSelf: 'start' }}>
               <h4 style={{ margin: '0 0 1.5rem', fontWeight: 900, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <ShieldCheck size={18} color="var(--success)" /> {t.profile?.status_credit_title || 'Status & Credit'}
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--success)' }}>verified_user</span> {t.profile?.status_credit_title || 'Status & Credit'}
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <ProfileField label={t.profile?.account_type || 'Account Type'} value={customer.type || t.partner} />
@@ -891,7 +844,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
             <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '1rem' }}>
               <button onClick={(e) => { e.stopPropagation(); handleDownloadDoc(previewDoc); }}
                 style={{ padding: '0.7rem 1.4rem', background: 'var(--secondary)', color: 'var(--primary)', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 900, fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Download size={16} /> {t.profile?.download || 'Download'}
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> {t.profile?.download || 'Download'}
               </button>
               <button onClick={() => setPreviewDoc(null)}
                 style={{ padding: '0.7rem', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
@@ -925,14 +878,19 @@ function ProfileField({ label, value, highlight }: { label: string, value: strin
    );
 }
 
-function KPIBox({ title, value, unit, icon, color }: any) {
+function SummaryMetric({ title, value, unit, icon, accent = 'blue' }: { title: string; value: string; unit: string; icon: string; accent?: 'blue' | 'red' | 'gold' | 'success' }) {
   return (
-    <div className="card" style={{ padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderInlineStart: `5px solid ${color || 'var(--primary)'}` }}>
-       <div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 700, marginBottom: '0.4rem' }}>{title}</p>
-          <h3 style={{ fontSize: '1.6rem', color: 'var(--primary)', margin: 0, fontFamily: 'Tajawal', fontWeight: 900 }}>{value} <span style={{ fontSize: '0.9rem', opacity: 0.6, fontWeight: 700 }}>{unit}</span></h3>
-       </div>
-       <div style={{ padding: '1rem', borderRadius: '14px', background: 'var(--surface-container-high)', color: color || 'var(--primary)' }}>{icon}</div>
+    <div className={`card-executive accent-${accent}`}>
+      <div className="card-executive-icon">
+        <span className="material-symbols-outlined">{icon}</span>
+      </div>
+      <div className="card-executive-content">
+        <div className="card-executive-title">{title}</div>
+        <div className="card-executive-value-group">
+          <span className="card-executive-value">{value}</span>
+          <span className="card-executive-unit">{unit}</span>
+        </div>
+      </div>
     </div>
   );
 }

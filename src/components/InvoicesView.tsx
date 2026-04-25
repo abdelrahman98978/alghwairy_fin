@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
-import {
-  Package, Download, ShieldCheck, CheckCircle2, MessageCircle, Mail, Plus, DollarSign, TrendingUp, FileText, X, Edit, Trash2, Search, FileSpreadsheet
-} from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Invoice } from '../lib/localDB';
 import { QRCodeSVG } from 'qrcode.react';
@@ -57,7 +54,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
     }));
     setInvoices(joined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     setCustomers(custs);
-  }, [settings]);
+  }, []);
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter(inv => {
@@ -156,7 +153,6 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
     const transport = parseFloat(formData.transportFees) || 0;
     const expenses = parseFloat(formData.transportExpenses) || 0;
     
-    // Amount is the sum of items (the service fees)
     const amount = itemTotal;
     const vat = amount * (formData.vatRate / 100);
     const total = amount + vat + customs + port + transport + expenses;
@@ -243,83 +239,77 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
     loadData();
   };
 
-  // KPI Calculations
   const totalRevenue = useMemo(() => invoices.reduce((sum, i) => sum + i.total, 0), [invoices]);
   const totalProfit = useMemo(() => invoices.reduce((sum, i) => sum + (i.profit || 0), 0), [invoices]);
   const totalCargo = useMemo(() => invoices.reduce((sum, i) => sum + (i.cargo_value || 0), 0), [invoices]);
   const totalFees = useMemo(() => invoices.reduce((sum, i) => sum + ((i.customs_fees || 0) + (i.port_fees || 0)), 0), [invoices]);
 
   return (
-    <div className="slide-in" dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="accounting-view-container" dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="view-header" style={{ marginBottom: '2.5rem' }}>
         <div>
-          <h2 className="view-title" style={{ margin: 0 }}>{t.invoices.title}</h2>
-          <p className="view-subtitle" style={{ margin: 0 }}>{t.invoices.subtitle}</p>
+          <h2 className="view-title">{t.invoices.title}</h2>
+          <p className="view-subtitle">{t.invoices.subtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--surface-container-low)', padding: '0.4rem', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
-            <input 
-              type="date" 
-              className="input-executive" 
-              style={{ width: '130px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: 'none', background: 'transparent' }}
-              value={dateFilter.start}
-              onChange={e => setDateFilter({...dateFilter, start: e.target.value})}
-            />
-            <span style={{ alignSelf: 'center', opacity: 0.5 }}>-</span>
-            <input 
-              type="date" 
-              className="input-executive" 
-              style={{ width: '130px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: 'none', background: 'transparent' }}
-              value={dateFilter.end}
-              onChange={e => setDateFilter({...dateFilter, end: e.target.value})}
-            />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="payroll-period-selector">
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>calendar_month</span>
+            <input type="date" value={dateFilter.start} onChange={e => setDateFilter({...dateFilter, start: e.target.value})} />
+            <span style={{ opacity: 0.3 }}>-</span>
+            <input type="date" value={dateFilter.end} onChange={e => setDateFilter({...dateFilter, end: e.target.value})} />
           </div>
-          <div style={{ position: 'relative' }}>
-            <Search style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--on-surface-variant)', opacity: 0.5 }} size={16} />
+          <div className="search-box-executive" style={{ background: 'var(--surface-container-low)', padding: '0.6rem 1.2rem', borderRadius: '14px', border: '1px solid var(--surface-container-high)', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', opacity: 0.5 }}>search</span>
             <input 
               type="text" 
               placeholder={t.invoices.search_placeholder || 'Search...'} 
-              className="input-executive" 
-              style={{ paddingRight: '2.8rem', width: '200px', background: 'var(--surface-container-low)' }}
+              className="input-clean"
+              style={{ width: '180px', background: 'transparent', border: 'none', outline: 'none', fontWeight: 700 }}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <button onClick={() => setShowSummaryModal(true)} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
-            <FileSpreadsheet size={16} /> {t.invoices.summary_report}
+          <button onClick={() => setShowSummaryModal(true)} className="btn-sovereign-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>table_view</span> {t.invoices.summary_report}
           </button>
-          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="btn-executive" style={{ border: 'none' }}>
-            <Plus size={18} /> {t.invoices.new_invoice}
+          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="btn-sovereign-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>add</span> {t.invoices.new_invoice}
           </button>
         </div>
       </header>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <KPICard title={t.invoices.stats.total_due} value={totalRevenue} icon={<DollarSign size={22} />} color="var(--primary)" t={t} />
-        <KPICard title={t.invoices.profit_label} value={totalProfit} icon={<TrendingUp size={22} />} color="var(--success)" t={t} />
-        <KPICard title={t.invoices.inventory_total} value={totalCargo} icon={<Package size={22} />} color="var(--secondary)" t={t} />
-        <KPICard title={t.invoices.stats.zatca_certified} value={totalFees} icon={<ShieldCheck size={22} />} color="var(--error)" t={t} />
+      <div className="metrics-grid-stable">
+        <SummaryMetric title={t.invoices.stats.total_due} value={totalRevenue.toLocaleString()} unit="SAR" icon="payments" accent="blue" />
+        <SummaryMetric title={t.invoices.profit_label} value={totalProfit.toLocaleString()} unit="SAR" icon="trending_up" accent="success" />
+        <SummaryMetric title={t.invoices.inventory_total} value={totalCargo.toLocaleString()} unit="SAR" icon="inventory_2" accent="gold" />
+        <SummaryMetric title={t.invoices.stats.zatca_certified} value={totalFees.toLocaleString()} unit="SAR" icon="verified_user" accent="red" />
       </div>
 
       {/* Table Section */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', fontWeight: 900, margin: 0, color: 'var(--primary)' }}>{t.invoices.active_title}</h3>
-          <span style={{ fontSize: '0.7rem', fontWeight: 900, background: 'var(--secondary)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>{t.invoices.zatca_ready}</span>
+      <div className="card shadow-elite" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="payroll-table-header">
+          <div>
+            <h3 className="section-title-premium" style={{ margin: 0 }}>{t.invoices.active_title}</h3>
+            <p className="section-subtitle-premium" style={{ margin: 0 }}>{t.invoices.zatca_ready}</p>
+          </div>
+          <div className="sovereign-status-badge">
+            <div className="sovereign-status-dot"></div>
+            {t.invoices.zatca_ready}
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table className="sovereign-table">
             <thead>
               <tr>
-                <th style={{ paddingInlineStart: '2rem' }}>{t.invoices.table.number}</th>
+                <th style={{ paddingInlineStart: '2.5rem' }}>{t.invoices.table.number}</th>
                 <th>{t.invoices.table.client}</th>
                 <th style={{ textAlign: 'center' }}>{t.invoices.profit_label || 'Profit'}</th>
                 <th style={{ textAlign: 'center' }}>{t.invoices.table.total}</th>
                 <th style={{ textAlign: 'center' }}>{t.invoices.table.status}</th>
-                <th style={{ textAlign: 'center', paddingInlineEnd: '2rem' }}>{t.customers.table.options}</th>
+                <th style={{ textAlign: 'center', paddingInlineEnd: '2.5rem' }}>{t.customers.table.options}</th>
               </tr>
             </thead>
             <tbody>
@@ -328,34 +318,34 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
               ) : (
                 filteredInvoices.map(inv => (
                   <tr key={inv.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedInvoice(inv); setShowPreviewModal(true); }}>
-                    <td style={{ paddingInlineStart: '2rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                        <div style={{ padding: '0.6rem', background: 'var(--surface-container-high)', borderRadius: '10px', color: 'var(--primary)' }}><FileText size={16} /></div>
+                    <td style={{ paddingInlineStart: '2.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="icon-box" style={{ background: 'var(--surface-container-high)', padding: '0.6rem', borderRadius: '12px', color: 'var(--primary)', display: 'flex' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>description</span>
+                        </div>
                         <div>
-                          <span style={{ fontWeight: 900, fontSize: '0.95rem', display: 'block' }}>{inv.operation_number || inv.reference_number}</span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>BOL: {inv.bol_number || 'N/A'}</span>
+                          <span className="item-amount" style={{ fontSize: '0.95rem', display: 'block' }}>{inv.operation_number || inv.reference_number}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>BOL: {inv.bol_number || 'N/A'}</span>
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--on-surface-variant)' }}>{inv.customers?.name || 'Client'}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 900, color: 'var(--success)' }}>{(inv.profit || 0).toLocaleString()}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 900, color: 'var(--primary)' }}>{inv.total.toLocaleString()} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>SAR</span></td>
+                    <td style={{ fontWeight: 800, color: 'var(--on-surface)' }}>{inv.customers?.name || 'Client'}</td>
+                    <td style={{ textAlign: 'center' }}><span className="item-amount" style={{ color: 'var(--success)' }}>{(inv.profit || 0).toLocaleString()}</span></td>
                     <td style={{ textAlign: 'center' }}>
-                      <span style={{
-                        fontSize: '0.7rem', padding: '0.4rem 1rem', borderRadius: '20px', fontWeight: 900,
-                        background: inv.status === 'paid' ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--secondary-rgb), 0.1)',
-                        color: inv.status === 'paid' ? 'var(--success)' : 'var(--secondary)'
-                      }}>
+                      <span className="item-amount">{(inv.total || 0).toLocaleString()}</span> <span style={{ fontSize: '0.7rem', opacity: 0.6, fontWeight: 900 }}>SAR</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge-sovereign ${inv.status === 'paid' ? 'status-active' : 'status-pending'}`}>
                         {inv.status === 'paid' ? t.invoices.status_paid : t.invoices.status_pending}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'center', paddingInlineEnd: '2rem' }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                        <button onClick={() => handleEdit(inv)} className="btn-icon" style={{ padding: '0.4rem', color: 'var(--primary)' }}>
-                          <Edit size={16} />
+                    <td style={{ textAlign: 'center', paddingInlineEnd: '2.5rem' }} onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center' }}>
+                        <button onClick={() => handleEdit(inv)} className="btn-action-small">
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                         </button>
-                        <button onClick={() => handleDelete(inv.id)} className="btn-icon" style={{ padding: '0.4rem', color: 'var(--error)' }}>
-                          <Trash2 size={16} />
+                        <button onClick={() => handleDelete(inv.id)} className="btn-delete-small">
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                         </button>
                       </div>
                     </td>
@@ -364,12 +354,14 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
               )}
             </tbody>
             {filteredInvoices.length > 0 && (
-              <tfoot style={{ position: 'sticky', bottom: 0, background: 'var(--surface-container-low)', zIndex: 1, borderTop: '2px solid var(--surface-container-high)' }}>
-                <tr style={{ fontWeight: 950, color: 'var(--primary)' }}>
-                  <td style={{ paddingInlineStart: '2rem' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
+              <tfoot style={{ background: 'var(--surface-container-low)', borderTop: '2px solid var(--outline-variant)' }}>
+                <tr style={{ fontWeight: 1000, color: 'var(--primary)' }}>
+                  <td style={{ paddingInlineStart: '2.5rem', paddingBlock: '1.2rem' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
                   <td></td>
-                  <td style={{ textAlign: 'center', color: 'var(--success)' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</td>
-                  <td style={{ textAlign: 'center' }}>{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()} <span style={{ fontSize: '0.7rem' }}>SAR</span></td>
+                  <td style={{ textAlign: 'center' }}><span className="item-amount" style={{ color: 'var(--success)' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</span></td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="item-amount">{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()}</span> <span style={{ fontSize: '0.7rem' }}>SAR</span>
+                  </td>
                   <td></td>
                   <td></td>
                 </tr>
@@ -381,111 +373,122 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '850px', padding: 0 }}>
-            <div style={{ padding: '2rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-container-low)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ background: 'var(--primary)', padding: '0.8rem', borderRadius: '14px', color: 'var(--secondary)' }}>{isEditing ? <Edit size={22} /> : <Plus size={22} />}</div>
-                <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '900px', padding: 0 }}>
+            <div className="modal-header-premium" style={{ background: 'var(--surface-container-low)', padding: '2rem 2.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+                <div className="icon-container-gold" style={{ width: '45px', height: '45px', background: 'var(--primary)', color: 'var(--secondary)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{isEditing ? 'edit' : 'add'}</span>
+                </div>
+                <h3 className="section-title-premium" style={{ margin: 0, fontSize: '1.5rem' }}>
                   {isEditing ? (t.invoices.edit_invoice || 'تعديل الفاتورة') : (t.invoices.add_title || 'إصدار فاتورة جديدة')}
                 </h3>
               </div>
-              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><X size={24} /></button>
+              <button onClick={() => setShowAddModal(false)} className="btn-icon"><span className="material-symbols-outlined" style={{ fontSize: '28px' }}>close</span></button>
             </div>
 
-            <form onSubmit={handleCreate} style={{ padding: '2.5rem', maxHeight: '75vh', overflowY: 'auto' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem', marginBottom: '1.5rem' }}>
+            <form onSubmit={handleCreate} className="modal-body-premium" style={{ padding: '2.5rem' }}>
+              <div className="bento-grid-form" style={{ marginBottom: '2rem' }}>
                 <FormField label={t.invoices.client_label}>
-                  <select className="input-executive" value={formData.customerId} onChange={e => setFormData({...formData, customerId: e.target.value})} style={{ fontWeight: 700 }} required>
+                  <select className="input-premium" value={formData.customerId} onChange={e => setFormData({...formData, customerId: e.target.value})} required>
                     <option value="">{t.invoices.modal.client_label}</option>
                     {customers.filter(c => c.type === 'customer' || !c.type).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </FormField>
                 <FormField label={t.invoices.carrier_label}>
-                  <select className="input-executive" value={formData.carrierId} onChange={e => setFormData({...formData, carrierId: e.target.value})} style={{ fontWeight: 700 }}>
+                  <select className="input-premium" value={formData.carrierId} onChange={e => setFormData({...formData, carrierId: e.target.value})}>
                     <option value="">{t.invoices.carrier_label}</option>
                     {customers.filter(c => c.type === 'carrier').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </FormField>
                 <FormField label={t.invoices.modal.type || 'Type'}>
-                  <select className="input-executive" value={formData.invoiceType} onChange={e => setFormData({...formData, invoiceType: e.target.value})} style={{ fontWeight: 700 }}>
+                  <select className="input-premium" value={formData.invoiceType} onChange={e => setFormData({...formData, invoiceType: e.target.value})}>
                     <option value="final">{t.invoices.final_invoice}</option>
                     <option value="internal">{t.invoices.internal_invoice}</option>
                   </select>
                 </FormField>
                 <FormField label={t.invoices.table.date || 'Date'}>
-                  <input type="date" className="input-executive" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} style={{ fontWeight: 700 }} required />
+                  <input type="date" className="input-premium" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
                 </FormField>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px', border: '1px solid var(--surface-container-high)' }}>
-                <FormField label={t.invoices.operation_number}><input type="text" className="input-executive" value={formData.operationNumber} onChange={e => setFormData({...formData, operationNumber: e.target.value})} placeholder="OP-0000" /></FormField>
-                <FormField label={t.invoices.statement_number}><input type="text" className="input-executive" value={formData.statementNumber} onChange={e => setFormData({...formData, statementNumber: e.target.value})} placeholder="STAT-00" /></FormField>
-                <FormField label={t.invoices.bol_number}><input type="text" className="input-executive" value={formData.bolNumber} onChange={e => setFormData({...formData, bolNumber: e.target.value})} placeholder="BOL-00" /></FormField>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', padding: '1.8rem', background: 'var(--surface-container-low)', borderRadius: '20px', border: '1px solid var(--surface-container-high)', marginBottom: '2rem' }}>
+                <FormField label={t.invoices.operation_number}><input type="text" className="input-premium" value={formData.operationNumber} onChange={e => setFormData({...formData, operationNumber: e.target.value})} placeholder="OP-0000" /></FormField>
+                <FormField label={t.invoices.statement_number}><input type="text" className="input-premium" value={formData.statementNumber} onChange={e => setFormData({...formData, statementNumber: e.target.value})} placeholder="STAT-00" /></FormField>
+                <FormField label={t.invoices.bol_number}><input type="text" className="input-premium" value={formData.bolNumber} onChange={e => setFormData({...formData, bolNumber: e.target.value})} placeholder="BOL-00" /></FormField>
               </div>
 
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h4 style={{ margin: 0, fontWeight: 900, fontSize: '1rem', color: 'var(--primary)' }}>{t.lang === 'ar' ? 'بنود التكاليف والخدمات' : 'Service & Cost Items'}</h4>
-                  <button type="button" onClick={() => setItems([...items, { id: Date.now().toString(), description: '', amount: 0 }])} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 900, cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Plus size={14} /> {t.lang === 'ar' ? 'إضافة بند' : 'Add Item'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                  <h4 style={{ margin: 0, fontWeight: 1000, fontSize: '1.1rem', color: 'var(--primary)' }}>{t.lang === 'ar' ? 'بنود التكاليف والخدمات' : 'Service & Cost Items'}</h4>
+                  <button type="button" onClick={() => setItems([...items, { id: Date.now().toString(), description: '', amount: 0 }])} className="btn-action-small" style={{ gap: '0.4rem' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> {t.lang === 'ar' ? 'إضافة بند' : 'Add Item'}
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                   {items.map((item, index) => (
-                    <div key={item.id} style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 3 }}><input type="text" className="input-executive" placeholder={t.lang === 'ar' ? 'وصف البند' : 'Description'} value={item.description} onChange={e => {
-                        const newItems = [...items]; newItems[index].description = e.target.value; setItems(newItems);
-                      }} required /></div>
-                      <div style={{ flex: 1.5 }}><input type="number" className="input-executive" placeholder="0.00" value={item.amount || ''} onChange={e => {
-                        const newItems = [...items]; newItems[index].amount = parseFloat(e.target.value) || 0; setItems(newItems);
-                      }} required /></div>
-                      {items.length > 1 && <button type="button" onClick={() => setItems(items.filter((_, i) => i !== index))} style={{ padding: '0.8rem', color: 'var(--error)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>}
+                    <div key={item.id} className="item-row-premium" style={{ margin: 0, padding: '0.5rem 1rem' }}>
+                      <div style={{ flex: 3 }}>
+                        <input type="text" className="input-clean" style={{ fontWeight: 700 }} placeholder={t.lang === 'ar' ? 'وصف البند' : 'Description'} value={item.description} onChange={e => {
+                          const newItems = [...items]; newItems[index].description = e.target.value; setItems(newItems);
+                        }} required />
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'center' }}>
+                        <input type="number" className="input-clean" style={{ textAlign: 'center', fontWeight: 1000, fontSize: '1.1rem' }} placeholder="0.00" value={item.amount || ''} onChange={e => {
+                          const newItems = [...items]; newItems[index].amount = parseFloat(e.target.value) || 0; setItems(newItems);
+                        }} required />
+                      </div>
+                      {items.length > 1 && (
+                        <button type="button" onClick={() => setItems(items.filter((_, i) => i !== index))} className="btn-delete-small">
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <FormField label={t.invoices.customs_fees}><input type="number" className="input-executive" value={formData.customsFees} onChange={e => setFormData({...formData, customsFees: e.target.value})} /></FormField>
-                  <FormField label={t.invoices.port_fees}><input type="number" className="input-executive" value={formData.portFees} onChange={e => setFormData({...formData, portFees: e.target.value})} /></FormField>
-                  <FormField label={t.invoices.transport_fees_label || 'Transport'}><input type="number" className="input-executive" value={formData.transportFees} onChange={e => setFormData({...formData, transportFees: e.target.value})} /></FormField>
-                  <FormField label={t.invoices.other_fees_label || 'Expenses'}><input type="number" className="input-executive" value={formData.transportExpenses} onChange={e => setFormData({...formData, transportExpenses: e.target.value})} /></FormField>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <FormField label={t.lang === 'ar' ? 'ملاحظات / شروط' : 'Notes / Terms'}>
-                      <textarea className="input-executive" rows={2} value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} style={{ resize: 'none' }} placeholder={t.lang === 'ar' ? 'اكتب ملاحظات إضافية...' : 'Add notes...'} />
-                    </FormField>
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+                  <FormField label={t.invoices.customs_fees}><input type="number" className="input-premium" value={formData.customsFees} onChange={e => setFormData({...formData, customsFees: e.target.value})} /></FormField>
+                  <FormField label={t.invoices.port_fees}><input type="number" className="input-premium" value={formData.portFees} onChange={e => setFormData({...formData, portFees: e.target.value})} /></FormField>
+                  <FormField label={t.invoices.transport_fees_label || 'Transport'}><input type="number" className="input-premium" value={formData.transportFees} onChange={e => setFormData({...formData, transportFees: e.target.value})} /></FormField>
+                  <FormField label={t.invoices.other_fees_label || 'Expenses'}><input type="number" className="input-premium" value={formData.transportExpenses} onChange={e => setFormData({...formData, transportExpenses: e.target.value})} /></FormField>
                 </div>
 
-                <div style={{ padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', border: '1px solid var(--surface-container-high)' }}>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                        <span>{t.lang === 'ar' ? 'المجموع' : 'Subtotal'}:</span>
-                        <span style={{ fontWeight: 900 }}>{items.reduce((s, i) => s + i.amount, 0).toLocaleString()}</span>
+                <div className="glass-card" style={{ padding: '1.8rem', borderRadius: '24px', background: 'var(--surface-container-high)' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.7, fontSize: '0.9rem', fontWeight: 700 }}>
+                        <span>{t.lang === 'ar' ? 'المجموع' : 'Subtotal'}</span>
+                        <span className="item-amount">{items.reduce((s, i) => s + i.amount, 0).toLocaleString()}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                        <select value={formData.vatRate} onChange={e => setFormData({...formData, vatRate: parseInt(e.target.value)})} style={{ background: 'none', border: 'none', fontWeight: 900, cursor: 'pointer', outline: 'none' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 700 }}>
+                        <select value={formData.vatRate} onChange={e => setFormData({...formData, vatRate: parseInt(e.target.value)})} style={{ background: 'none', border: 'none', color: 'inherit', fontWeight: 900, cursor: 'pointer', outline: 'none', padding: 0 }}>
                           <option value="15">VAT 15%</option>
                           <option value="5">VAT 5%</option>
                           <option value="0">VAT 0%</option>
                         </select>
-                        <span style={{ fontWeight: 900 }}>{(items.reduce((s, i) => s + i.amount, 0) * (formData.vatRate/100)).toLocaleString()}</span>
+                        <span className="item-amount">{(items.reduce((s, i) => s + i.amount, 0) * (formData.vatRate/100)).toLocaleString()}</span>
                       </div>
-                      <div style={{ height: '1px', background: 'var(--outline-variant)', margin: '8px 0' }}></div>
+                      <div style={{ height: '2px', background: 'var(--outline-variant)', margin: '5px 0' }}></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--primary)' }}>
-                        <span style={{ fontWeight: 950 }}>{t.lang === 'ar' ? 'الإجمالي النهائي' : 'Grand Total'}:</span>
-                        <span style={{ fontWeight: 950, fontSize: '1.2rem' }}>{(items.reduce((s, i) => s + i.amount, 0) * (1 + formData.vatRate/100) + (parseFloat(formData.customsFees)||0) + (parseFloat(formData.portFees)||0) + (parseFloat(formData.transportFees)||0) + (parseFloat(formData.transportExpenses)||0)).toLocaleString()}</span>
+                        <span style={{ fontWeight: 1000, fontSize: '1rem' }}>{t.lang === 'ar' ? 'الإجمالي النهائي' : 'Grand Total'}</span>
+                        <div style={{ textAlign: 'end' }}>
+                          <span className="item-amount" style={{ fontSize: '1.6rem' }}>
+                            {(items.reduce((s, i) => s + i.amount, 0) * (1 + formData.vatRate/100) + (parseFloat(formData.customsFees)||0) + (parseFloat(formData.portFees)||0) + (parseFloat(formData.transportFees)||0) + (parseFloat(formData.transportExpenses)||0)).toLocaleString()}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 900, display: 'block', opacity: 0.6 }}>SAR</span>
+                        </div>
                       </div>
                    </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn-executive" style={{ flex: 1, background: 'var(--surface-container-high)', color: 'var(--on-surface)', border: 'none', fontWeight: 800 }}>{t.invoices.modal.cancel}</button>
-                <button type="submit" className="btn-executive" style={{ flex: 2, border: 'none', padding: '1rem', fontSize: '1.05rem' }}>
-                  <CheckCircle2 size={20} /> {isEditing ? t.invoices.save_changes : t.invoices.modal.submit}
+              <div style={{ display: 'flex', gap: '1.2rem' }}>
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn-sovereign-outline" style={{ flex: 1, padding: '1.2rem' }}>{t.invoices.modal.cancel}</button>
+                <button type="submit" className="btn-sovereign-primary" style={{ flex: 2, padding: '1.2rem', gap: '0.8rem' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>check_circle</span> 
+                  {isEditing ? t.invoices.save_changes : t.invoices.modal.submit}
                 </button>
               </div>
             </form>
@@ -498,11 +501,11 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
       )}
 
       {showSummaryModal && (
-        <div className="modal-overlay" style={{ zIndex: 6000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '40px' }}>
-          <div className="card" style={{ maxWidth: '1000px', margin: '0 auto', background: 'var(--surface)', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--outline-variant)' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid var(--outline-variant)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10 }}>
-                <h3 style={{ margin: 0, fontWeight: 950, color: 'var(--primary)' }}>{t.invoices.summary_title}</h3>
-                <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="modal-overlay" style={{ zIndex: 6000 }}>
+          <div className="modal-card" style={{ maxWidth: '1000px', padding: 0 }}>
+             <div className="modal-header-premium" style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--surface)', padding: '1.5rem 2.5rem', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 className="section-title-premium" style={{ margin: 0 }}>{t.invoices.summary_title}</h3>
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <button onClick={() => {
                     const csvRows = [
                       ['Reference', 'Client', 'Carrier', 'BOL', 'Date', 'Amount', 'VAT', 'Customs/Fees', 'Total', 'Profit', 'Status'].join(','),
@@ -523,57 +526,60 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.setAttribute('hidden', '');
-                    a.setAttribute('href', url);
-                    a.setAttribute('download', `Invoices_Summary_${new Date().toISOString().split('T')[0]}.csv`);
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }} className="btn-executive" style={{ background: 'var(--success)', color: 'var(--on-primary)', border: 'none' }}>
-                    <Download size={16} /> CSV
+                    a.setAttribute('hidden', ''); a.setAttribute('href', url); a.setAttribute('download', `Invoices_Summary_${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                  }} className="btn-action-small" style={{ background: 'var(--success-container)', color: 'var(--success)', border: 'none', padding: '0.8rem 1.2rem' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span> CSV
                   </button>
-                  <button onClick={() => setShowSummaryModal(false)} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}><X size={16} /></button>
+                  <button onClick={() => setShowSummaryModal(false)} className="btn-icon"><span className="material-symbols-outlined">close</span></button>
                 </div>
              </div>
-             <div className="print-content" style={{ padding: '40px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                  <h1 style={{ color: 'var(--primary)', margin: 0 }}>{settings.companyName}</h1>
-                  <p style={{ color: 'var(--secondary)', fontWeight: 700 }}>{t.invoices.summary_subtitle}</p>
-                  <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                    {dateFilter.start && `From: ${dateFilter.start}`} {dateFilter.end && `To: ${dateFilter.end}`}
-                  </p>
+             <div className="modal-body-premium" style={{ padding: '3rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                  <h1 className="headline-sovereign" style={{ fontSize: '2.4rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>{settings.companyName}</h1>
+                  <p className="label-sovereign" style={{ color: 'var(--secondary)', fontSize: '1.1rem' }}>{t.invoices.summary_subtitle}</p>
+                  <div style={{ display: 'inline-flex', gap: '1rem', marginTop: '1rem', padding: '0.5rem 1.5rem', background: 'var(--surface-container-low)', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 800, opacity: 0.7 }}>
+                    <span>{dateFilter.start ? `From: ${dateFilter.start}` : 'Start of time'}</span>
+                    <span style={{ opacity: 0.3 }}>|</span>
+                    <span>{dateFilter.end ? `To: ${dateFilter.end}` : 'Today'}</span>
+                  </div>
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--primary)', color: 'var(--on-primary)' }}>
-                      <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.table.number}</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.table.client}</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t.invoices.carrier_label}</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'center' }}>{t.lang === 'ar' ? 'تاريخ' : 'Date'}</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'center' }}>{t.invoices.profit_label}</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'center' }}>{t.invoices.table.total}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredInvoices.map(inv => (
-                      <tr key={inv.id} style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                        <td style={{ padding: '12px 10px', fontWeight: 800 }}>{inv.operation_number || inv.reference_number}</td>
-                        <td style={{ padding: '12px 10px' }}>{inv.customers?.name}</td>
-                        <td style={{ padding: '12px 10px' }}>{inv.carrier?.name || '-'}</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center', color: 'var(--success)', fontWeight: 700 }}>{inv.profit?.toLocaleString()}</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 900 }}>{inv.total?.toLocaleString()}</td>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="sovereign-table">
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'right' }}>{t.invoices.table.number}</th>
+                        <th style={{ textAlign: 'right' }}>{t.invoices.table.client}</th>
+                        <th style={{ textAlign: 'right' }}>{t.invoices.carrier_label}</th>
+                        <th style={{ textAlign: 'center' }}>{t.lang === 'ar' ? 'تاريخ' : 'Date'}</th>
+                        <th style={{ textAlign: 'center' }}>{t.invoices.profit_label}</th>
+                        <th style={{ textAlign: 'center' }}>{t.invoices.table.total}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr style={{ background: 'var(--surface-container-low)', fontWeight: 950 }}>
-                      <td colSpan={4} style={{ padding: '15px 10px', textAlign: 'right' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
-                      <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--success)' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</td>
-                      <td style={{ padding: '15px 10px', textAlign: 'center', color: 'var(--primary)' }}>{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()} <span style={{fontSize: '0.8rem', opacity: 0.6}}>{t.lang === 'ar' ? 'ر.س' : 'SAR'}</span></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredInvoices.map(inv => (
+                        <tr key={inv.id}>
+                          <td style={{ fontWeight: 1000 }}>{inv.operation_number || inv.reference_number}</td>
+                          <td style={{ fontWeight: 800 }}>{inv.customers?.name}</td>
+                          <td>{inv.carrier?.name || '-'}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 700 }}>{new Date(inv.created_at).toLocaleDateString()}</td>
+                          <td style={{ textAlign: 'center' }}><span className="item-amount" style={{ color: 'var(--success)' }}>{inv.profit?.toLocaleString()}</span></td>
+                          <td style={{ textAlign: 'center' }}><span className="item-amount">{(inv.total || 0).toLocaleString()}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ background: 'var(--surface-container-low)', fontWeight: 1000 }}>
+                        <td colSpan={4} style={{ padding: '1.8rem', textAlign: 'right', fontSize: '1.1rem' }}>{t.lang === 'ar' ? 'الإجمالي العام' : 'GRAND TOTAL'}</td>
+                        <td style={{ textAlign: 'center', color: 'var(--success)', fontSize: '1.2rem' }}>{filteredInvoices.reduce((s, i) => s + (i.profit || 0), 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'center', color: 'var(--primary)', fontSize: '1.3rem' }}>
+                          <span className="item-amount">{filteredInvoices.reduce((s, i) => s + i.total, 0).toLocaleString()}</span> 
+                          <span style={{ fontSize: '0.8rem', marginInlineStart: '0.4rem' }}>SAR</span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
              </div>
           </div>
         </div>
@@ -586,23 +592,28 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-      <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--on-surface)' }}>{label}</label>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <label style={{ fontSize: '0.9rem', fontWeight: 1000, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-function KPICard({ title, value, icon, color, t }: { title: string; value: number; icon: React.ReactNode; color: string; t: any }) {
+function SummaryMetric({ title, value, unit, icon, accent = 'blue' }: { title: string; value: string; unit: string; icon: string; accent?: 'blue' | 'red' | 'gold' | 'success' }) {
   return (
-    <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderInlineStart: `5px solid ${color}` }}>
-      <div>
-        <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 800, marginBottom: '0.4rem' }}>{title}</p>
-        <h3 style={{ fontSize: '1.6rem', color: 'var(--primary)', margin: 0, fontFamily: 'Tajawal', fontWeight: 900 }}>
-          {value.toLocaleString()} <span style={{ fontSize: '0.8rem', opacity: 0.5, fontWeight: 700 }}>{t.lang === 'ar' ? 'ر.س' : 'SAR'}</span>
-        </h3>
+    <div className={`card-executive accent-${accent}`}>
+      <div className="card-executive-icon">
+        <span className="material-symbols-outlined">{icon}</span>
       </div>
-      <div style={{ padding: '1rem', borderRadius: '14px', background: 'var(--surface-container-high)', color }}>{icon}</div>
+      <div className="card-executive-content">
+        <div className="card-executive-title">{title}</div>
+        <div className="card-executive-value-group">
+          <span className="card-executive-value">{value}</span>
+          <span className="card-executive-unit">{unit}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -667,32 +678,40 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
   };
 
   return (
-    <div className="modal-overlay printable-area" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)' }} dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="modal-overlay printable-area" style={{ zIndex: 5000, overflow: 'auto', padding: '20px', background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }} dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* Toolbar */}
-      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)', gap: '5px' }}>
+      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.2rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.08)', padding: '8px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.15)', gap: '8px' }}>
           {['ar', 'en', 'both'].map(l => (
-            <button key={l} onClick={() => setPrintLang(l as any)} style={{ padding: '8px 20px', borderRadius: '12px', border: 'none', background: printLang === l ? 'var(--primary)' : 'transparent', color: printLang === l ? 'var(--secondary)' : '#fff', fontWeight: 900, cursor: 'pointer' }}>
+            <button key={l} onClick={() => setPrintLang(l as any)} style={{ padding: '10px 24px', borderRadius: '12px', border: 'none', background: printLang === l ? 'var(--primary)' : 'transparent', color: printLang === l ? 'var(--secondary)' : '#fff', fontWeight: 1000, cursor: 'pointer', transition: '0.3s' }}>
                {l === 'ar' ? 'العربية' : l === 'en' ? 'English' : t.invoices.bilingual}
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <button onClick={handleDownloadPDF} className="btn-executive" style={{ background: '#fff', color: '#001a33' }}><FileText size={20} /> PDF</button>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button onClick={handleDownloadPDF} className="btn-sovereign-primary" style={{ background: '#fff', color: '#001a33', padding: '1rem 1.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>description</span> PDF
+          </button>
           
           <a href={`https://wa.me/?text=${encodeURIComponent(`${getLabel('عزيزي العميل، فاتورتكم جاهزة. المبلغ:', 'Dear Customer, your invoice is ready. Amount:')} ${invoice.total} SAR`)}`} 
-             target="_blank" rel="noreferrer" className="btn-executive" style={{ background: '#25D366', color: '#fff' }}>
-            <MessageCircle size={20} /> {t.invoices.preview.whatsapp}
+             target="_blank" rel="noreferrer" className="btn-sovereign-primary" style={{ background: '#25D366', color: '#fff', border: 'none', padding: '1rem 1.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chat</span> {t.invoices.preview.whatsapp}
           </a>
 
           <a href={`mailto:?subject=${encodeURIComponent(`Invoice ${invoice.reference_number}`)}&body=${encodeURIComponent(`Invoice Details: ${invoice.total} SAR`)}`}
-             className="btn-executive" style={{ background: '#0D6EFD', color: '#fff' }}>
-            <Mail size={20} /> {t.invoices.preview.email}
+             className="btn-sovereign-primary" style={{ background: '#0D6EFD', color: '#fff', border: 'none', padding: '1rem 1.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>mail</span> {t.invoices.preview.email}
           </a>
 
-          {invoice.status !== 'paid' && onMarkPaid && <button onClick={() => onMarkPaid(invoice.id)} className="btn-executive" style={{ background: 'var(--success)', color: '#fff' }}><CheckCircle2 size={20} /> {t.invoices.table.status_paid}</button>}
-          <button onClick={onClose} className="btn-executive" style={{ background: 'var(--error)', color: '#fff' }}><X size={20} /></button>
+          {invoice.status !== 'paid' && onMarkPaid && (
+            <button onClick={() => onMarkPaid(invoice.id)} className="btn-sovereign-primary" style={{ background: 'var(--success)', color: '#fff', border: 'none', padding: '1rem 1.5rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span> {t.invoices.table.status_paid}
+            </button>
+          )}
+          <button onClick={onClose} className="btn-sovereign-primary" style={{ background: 'var(--error)', color: '#fff', border: 'none', padding: '1rem 1.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+          </button>
         </div>
       </div>
 
@@ -702,48 +721,45 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
         color: 'black', direction: printLang === 'en' ? 'ltr' : 'rtl', fontFamily: 'Tajawal',
         boxSizing: 'border-box', position: 'relative', display: 'flex', flexDirection: 'column'
       }}>
-        {/* Decorative Top */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '8px', background: 'linear-gradient(90deg, #001a33 0%, #d4a76a 50%, #001a33 100%)' }}></div>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '10px', background: 'linear-gradient(90deg, #001a33 0%, #d4a76a 50%, #001a33 100%)' }}></div>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #001a33', paddingBottom: '20px', marginBottom: '25px', marginTop: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ width: 120, height: 120, borderRadius: '15px', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src="./logo.png" alt="Logo" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '4px solid #001a33', paddingBottom: '25px', marginBottom: '30px', marginTop: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
+            <div style={{ width: 130, height: 130, borderRadius: '20px', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fcfcfc' }}>
+              <img src="./logo.png" alt="Logo" style={{ maxWidth: '85%', maxHeight: '85%', objectFit: 'contain' }} />
             </div>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 950, color: '#001a33' }}>{settings.companyName}</h1>
-              <p style={{ margin: '2px 0', fontSize: '1rem', fontWeight: 800, color: '#d4a76a' }}>{getLabel('تخليص جمركي ولوجستيات', 'Customs & Logistics')}</p>
-              <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>
-                <p style={{ margin: '2px 0' }}>{settings.address}</p>
-                <p style={{ margin: '2px 0' }}>{settings.phone} / {settings.email}</p>
-                <p style={{ margin: '2px 0' }}>{getLabel('الرقم الضريبي', 'VAT No')}: {settings.taxNumber}</p>
+              <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 1000, color: '#001a33' }}>{settings.companyName}</h1>
+              <p style={{ margin: '4px 0', fontSize: '1.1rem', fontWeight: 900, color: '#d4a76a' }}>{getLabel('تخليص جمركي ولوجستيات', 'Customs & Logistics')}</p>
+              <div style={{ fontSize: '0.9rem', opacity: 0.8, fontWeight: 700 }}>
+                <p style={{ margin: '3px 0' }}>{settings.address}</p>
+                <p style={{ margin: '3px 0' }}>{settings.phone} / {settings.email}</p>
+                <p style={{ margin: '3px 0' }}>{getLabel('الرقم الضريبي', 'VAT No')}: {settings.taxNumber}</p>
               </div>
             </div>
           </div>
           <div style={{ textAlign: printLang === 'en' ? 'right' : 'left' }}>
-             <div style={{ background: '#001a33', color: '#fff', padding: '12px 20px', borderRadius: '10px', fontSize: '1.2rem', fontWeight: 950, marginBottom: '10px' }}>
+             <div style={{ background: '#001a33', color: '#fff', padding: '15px 25px', borderRadius: '14px', fontSize: '1.3rem', fontWeight: 1000, marginBottom: '15px', boxShadow: '0 5px 15px rgba(0,26,51,0.1)' }}>
                 {getLabel(invoice.invoice_type === 'final' ? 'فاتورة ضريبية' : 'فاتورة داخلية', invoice.invoice_type === 'final' ? 'TAX INVOICE' : 'INTERNAL')}
              </div>
-             <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 950 }}>{invoice.operation_number || invoice.id.substring(0,8)}</p>
-             <p style={{ margin: '5px 0', opacity: 0.7, fontWeight: 800 }}>{getLabel('التاريخ', 'Date')}: {new Date(invoice.created_at).toLocaleDateString()}</p>
-             <p style={{ margin: '5px 0', color: invoice.status === 'paid' ? '#2e7d32' : '#ed6c02', fontWeight: 950 }}>
+             <p style={{ margin: 0, fontSize: '1.6rem', fontWeight: 1000, color: '#001a33' }}>{invoice.operation_number || invoice.id.substring(0,8)}</p>
+             <p style={{ margin: '6px 0', opacity: 0.7, fontWeight: 900 }}>{getLabel('التاريخ', 'Date')}: {new Date(invoice.created_at).toLocaleDateString()}</p>
+             <p style={{ margin: '6px 0', color: invoice.status === 'paid' ? '#2e7d32' : '#ed6c02', fontWeight: 1000, fontSize: '1.1rem' }}>
                 {invoice.status === 'paid' ? getLabel('مـدفوعة', 'PAID') : getLabel('بانتظار السداد', 'PENDING')}
              </p>
           </div>
         </div>
 
-        {/* Customer & Shipment Boxes */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '25px' }}>
-          <div style={{ padding: '15px', background: '#fcfcfc', border: '1px solid #f0f0f0', borderRadius: '12px' }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '0.85rem', color: '#d4a76a', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>{getLabel('بيانات العميل', 'Customer Details')}</h3>
-            <p style={{ margin: '4px 0', fontWeight: 900, fontSize: '1.1rem' }}>{invoice.customers?.name}</p>
-            <p style={{ margin: '2px 0', fontSize: '0.85rem' }}>{getLabel('هاتف', 'Phone')}: {invoice.customers?.phone || '-'}</p>
-            <p style={{ margin: '2px 0', fontSize: '0.85rem' }}>{getLabel('الضريبي', 'VAT')}: {invoice.customers?.tax_number || '-'}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '35px' }}>
+          <div style={{ padding: '20px', background: '#fcfcfc', border: '1px solid #eee', borderRadius: '16px' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: '0.9rem', color: '#d4a76a', borderBottom: '2px solid #f0f0f0', paddingBottom: '8px', fontWeight: 1000 }}>{getLabel('بيانات العميل', 'Customer Details')}</h3>
+            <p style={{ margin: '6px 0', fontWeight: 1000, fontSize: '1.2rem', color: '#001a33' }}>{invoice.customers?.name}</p>
+            <p style={{ margin: '4px 0', fontSize: '0.9rem', fontWeight: 700 }}>{getLabel('هاتف', 'Phone')}: {invoice.customers?.phone || '-'}</p>
+            <p style={{ margin: '4px 0', fontSize: '0.9rem', fontWeight: 700 }}>{getLabel('الضريبي', 'VAT')}: {invoice.customers?.tax_number || '-'}</p>
           </div>
-          <div style={{ padding: '15px', background: '#fcfcfc', border: '1px solid #f0f0f0', borderRadius: '12px' }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '0.85rem', color: '#d4a76a', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>{getLabel('تفاصيل الشحنة', 'Shipment Details')}</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
+          <div style={{ padding: '20px', background: '#fcfcfc', border: '1px solid #eee', borderRadius: '16px' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: '0.9rem', color: '#d4a76a', borderBottom: '2px solid #f0f0f0', paddingBottom: '8px', fontWeight: 1000 }}>{getLabel('تفاصيل الشحنة', 'Shipment Details')}</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem', fontWeight: 700 }}>
                <p style={{ margin: 0 }}><strong>{getLabel('البيان', 'STAT')}:</strong> {invoice.statement_number || '-'}</p>
                <p style={{ margin: 0 }}><strong>{getLabel('البوليصة', 'BOL')}:</strong> {invoice.bol_number || '-'}</p>
                <p style={{ margin: 0 }}><strong>{getLabel('الناقل', 'Carrier')}:</strong> {invoice.carrier?.name || '-'}</p>
@@ -752,64 +768,49 @@ function InvoicePreview({ invoice, settings, onClose, onMarkPaid, t }: { invoice
           </div>
         </div>
 
-        {/* Table */}
-        <table style={{ width: '100%', marginBottom: '30px', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', marginBottom: '40px', borderCollapse: 'collapse' }}>
           <thead style={{ background: '#001a33', color: '#fff' }}>
             <tr>
-              <th style={{ padding: '12px 15px', textAlign: printLang === 'en' ? 'left' : 'right', border: '1px solid #001a33' }}>{getLabel('الوصف والبيان', 'Description')}</th>
-              <th style={{ padding: '12px 15px', textAlign: 'center', width: '150px', border: '1px solid #001a33' }}>{getLabel('المبلغ', 'Amount')}</th>
+              <th style={{ padding: '15px 20px', textAlign: printLang === 'en' ? 'left' : 'right', border: '1px solid #001a33', fontSize: '1rem', fontWeight: 1000 }}>{getLabel('الوصف والبيان', 'Description')}</th>
+              <th style={{ padding: '15px 20px', textAlign: 'center', width: '180px', border: '1px solid #001a33', fontSize: '1rem', fontWeight: 1000 }}>{getLabel('المبلغ', 'Amount')}</th>
             </tr>
           </thead>
           <tbody>
             {(invoice.items || []).map((it, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px 15px', fontWeight: 700 }}>{it.description}</td>
-                <td style={{ padding: '12px 15px', textAlign: 'center', fontWeight: 900 }}>{it.amount.toLocaleString()}</td>
+              <tr key={idx} style={{ borderBottom: '1.5px solid #eee' }}>
+                <td style={{ padding: '15px 20px', fontWeight: 800, fontSize: '1rem' }}>{it.description}</td>
+                <td style={{ padding: '15px 20px', textAlign: 'center', fontWeight: 1000, fontSize: '1.1rem' }}>{it.amount.toLocaleString()}</td>
               </tr>
             ))}
-            {invoice.customs_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم جمركية', 'Customs Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.customs_fees.toLocaleString()}</td></tr> : null}
-            {invoice.port_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('رسوم الميناء', 'Port Fees')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.port_fees.toLocaleString()}</td></tr> : null}
-            {invoice.transport_fees ? <tr style={{ background: 'var(--surface-container-low)' }}><td style={{ padding: '8px 15px' }}>{getLabel('أجور النقل', 'Transport')}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{invoice.transport_fees.toLocaleString()}</td></tr> : null}
+            {invoice.customs_fees ? <tr style={{ background: '#f8f8f8' }}><td style={{ padding: '12px 20px', fontWeight: 700 }}>{getLabel('رسوم جمركية', 'Customs Fees')}</td><td style={{ textAlign: 'center', fontWeight: 1000 }}>{invoice.customs_fees.toLocaleString()}</td></tr> : null}
+            {invoice.port_fees ? <tr style={{ background: '#f8f8f8' }}><td style={{ padding: '12px 20px', fontWeight: 700 }}>{getLabel('رسوم الميناء', 'Port Fees')}</td><td style={{ textAlign: 'center', fontWeight: 1000 }}>{invoice.port_fees.toLocaleString()}</td></tr> : null}
+            {invoice.transport_fees ? <tr style={{ background: '#f8f8f8' }}><td style={{ padding: '12px 20px', fontWeight: 700 }}>{getLabel('أجور النقل', 'Transport')}</td><td style={{ textAlign: 'center', fontWeight: 1000 }}>{invoice.transport_fees.toLocaleString()}</td></tr> : null}
           </tbody>
         </table>
 
-        {/* Summary Sections */}
-        <div className="print-summary-box" style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', borderTop: '2px solid var(--primary)', paddingTop: '20px' }}>
+        <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '35px', borderTop: '3px solid #001a33', paddingTop: '25px' }}>
           <div>
-             <div style={{ padding: '15px', background: 'var(--surface-container-low)', borderRadius: '10px', border: '1px dashed var(--secondary)', marginBottom: '15px' }}>
-                <h4 style={{ margin: '0 0 5px', fontSize: '0.85rem', color: 'var(--primary)' }}>{getLabel('بيانات السداد', 'Payment Details')}</h4>
-                <p style={{ margin: 0, fontSize: '0.8rem' }}>{settings.bankName}</p>
-                <p style={{ margin: 0, fontSize: '0.8rem', fontFamily: 'monospace' }}>{settings.iban}</p>
+             <div style={{ padding: '18px', background: '#f8f8f8', borderRadius: '12px', border: '1px dashed #d4a76a', marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: '0.95rem', color: '#001a33', fontWeight: 1000 }}>{getLabel('بيانات السداد', 'Payment Details')}</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{settings.bankName}</p>
+                <p style={{ margin: 0, fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 1000 }}>{settings.iban}</p>
              </div>
              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px' }}>
-                <div style={{ textAlign: 'center' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('التدقيق', 'Audit')}</p><div style={{ width: '80px', borderBottom: '1px solid var(--outline)', marginTop: '30px' }}></div></div>
-                <div style={{ textAlign: 'center', position: 'relative' }}><p style={{ fontSize: '0.7rem', fontWeight: 800 }}>{getLabel('الختم', 'Stamp')}</p><div style={{ width: '60px', height: '60px', border: '2px double var(--outline-variant)', borderRadius: '50%', marginTop: '5px' }}></div></div>
+                <div style={{ textAlign: 'center' }}><p style={{ fontSize: '0.8rem', fontWeight: 900 }}>{getLabel('التدقيق', 'Audit')}</p><div style={{ width: '100px', borderBottom: '2px solid #000', marginTop: '40px' }}></div></div>
+                <div style={{ textAlign: 'center', position: 'relative' }}><p style={{ fontSize: '0.8rem', fontWeight: 900 }}>{getLabel('الختم', 'Stamp')}</p><div style={{ width: '80px', height: '80px', border: '3px double #001a33', borderRadius: '50%', marginTop: '8px' }}></div></div>
              </div>
           </div>
-          <div style={{ background: 'var(--primary)', color: 'var(--on-primary)', padding: '20px', borderRadius: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{getLabel('الإجمالي الفرعي', 'Subtotal')}</span><span style={{ fontWeight: 900 }}>{invoice.amount.toLocaleString()}</span></div>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{getLabel('الضريبة', 'VAT')}</span><span style={{ fontWeight: 900 }}>{invoice.vat.toLocaleString()}</span></div>
-             <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
-             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.3rem' }}><strong>{getLabel('الإجمالي', 'Grand Total')}</strong><strong>{invoice.total.toLocaleString()}</strong></div>
-             <div style={{ marginTop: '15px', alignSelf: 'center', background: 'white', padding: '10px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-                <QRCodeSVG value={generateZatcaQR(invoice)} size={110} />
+          <div style={{ background: '#001a33', color: '#fff', padding: '25px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 30px rgba(0,26,51,0.15)' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}><span>{getLabel('الإجمالي الفرعي', 'Subtotal')}</span><span style={{ fontWeight: 1000 }}>{invoice.amount.toLocaleString()}</span></div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}><span>{getLabel('الضريبة', 'VAT')}</span><span style={{ fontWeight: 1000 }}>{invoice.vat.toLocaleString()}</span></div>
+             <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)' }}></div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem' }}><strong>{getLabel('الإجمالي', 'Grand Total')}</strong><strong>{invoice.total.toLocaleString()}</strong></div>
+             <div style={{ marginTop: '20px', alignSelf: 'center', background: 'white', padding: '12px', borderRadius: '15px', boxShadow: '0 8px 25px rgba(0,0,0,0.2)' }}>
+                <QRCodeSVG value={generateZatcaQR(invoice)} size={130} />
              </div>
           </div>
-        </div>
-
-        {/* Notes (Conditional) */}
-        {invoice.notes && (
-          <div style={{ marginTop: '20px', padding: '10px', borderTop: '1px solid var(--outline-variant)' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: 0 }}><strong>{getLabel('ملاحظات:', 'Notes:')}</strong> {invoice.notes}</p>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="invoice-footer" style={{ marginTop: 'auto', textAlign: 'center', borderTop: '1px solid var(--outline-variant)', paddingTop: '20px' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', opacity: 0.7, margin: 0 }}>{getLabel('صدرت هذه الفاتورة إلكترونياً وهي خاضعة لأنظمة هيئة الزكاة والضريبة والجمارك', 'This invoice is electronically generated and subject to ZATCA regulations')}</p>
         </div>
       </div>
     </div>
   );
 }
-

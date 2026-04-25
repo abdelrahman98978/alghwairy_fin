@@ -26,6 +26,7 @@ import PublicInvoiceView from './components/PublicInvoiceView';
 import CommunicationsView from './components/CommunicationsView';
 import { cloudSyncEngine } from './lib/cloudSyncEngine';
 import ContractsView from './components/ContractsView';
+import AffiliateView from './components/AffiliateView';
 import LandingView from './components/LandingView';
 
 
@@ -1850,6 +1851,7 @@ export default function App() {
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
       case 'contracts': return <ContractsView showToast={showToast} logActivity={logActivity} t={{...t.contracts, lang}} />;
+      case 'affiliate': return <AffiliateView showToast={showToast} lang={lang} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1929,15 +1931,27 @@ export default function App() {
               {hasPermission(userRole, 'payroll') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'reports') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'statements') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_chart</span>} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
-              <NavItem 
-                 icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share</span>} 
-                 label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} 
-                 active={activeTab === 'communications'} 
-                 onClick={() => setActiveTab('communications')} 
-                 lang={lang} 
-                 isCollapsed={isCollapsed} 
-                 badge={unreadMsgCount > 0 ? unreadMsgCount : undefined}
-               />
+              {hasPermission(userRole, 'affiliate') && (
+                <NavItem 
+                  icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share</span>} 
+                  label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} 
+                  active={activeTab === 'affiliate'} 
+                  onClick={() => setActiveTab('affiliate')} 
+                  lang={lang} 
+                  isCollapsed={isCollapsed} 
+                />
+              )}
+              {hasPermission(userRole, 'communications') && (
+                <NavItem 
+                   icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>} 
+                   label={lang === 'ar' ? 'الاتصالات السيادية' : 'Sovereign Comms'} 
+                   active={activeTab === 'communications'} 
+                   onClick={() => setActiveTab('communications')} 
+                   lang={lang} 
+                   isCollapsed={isCollapsed} 
+                   badge={unreadMsgCount > 0 ? unreadMsgCount : undefined}
+                />
+              )}
             </>
           )}
 

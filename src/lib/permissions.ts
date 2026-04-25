@@ -24,7 +24,9 @@ export type AppModule =
   | 'settings' 
   | 'trash'
   | 'contracts'
-  | 'quotes';
+  | 'quotes'
+  | 'affiliate'
+  | 'communications';
 
 /**
  * Checks if a specific role has access to a module based on the dynamic matrix in localDB.
@@ -45,6 +47,7 @@ export function hasPermission(role: string, module: AppModule): boolean {
       return rName === 'Admin';
     }
     
+    if (roleConfig.permissions.includes('*')) return true;
     return roleConfig.permissions.includes(module);
   } catch (e) {
     console.error('[Permissions] Check failed', e);
@@ -74,6 +77,8 @@ export const ALL_MODULES: AppModule[] = [
   'settings', 
   'trash',
   'contracts',
-  'quotes'
+  'quotes',
+  'affiliate',
+  'communications'
 ];
 

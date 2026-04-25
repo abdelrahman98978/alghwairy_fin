@@ -1,18 +1,6 @@
 import { useState, useRef } from 'react';
 import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
-import { 
-  Upload, 
-  FileSpreadsheet, 
-  CheckCircle2, 
-  AlertCircle,
-  Database,
-  RefreshCw,
-  Trash2,
-  Zap,
-  Download,
-  Settings2
-} from 'lucide-react';
 
 interface DataImportProps {
   showToast: (msg: string, type?: string) => void;
@@ -223,14 +211,14 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
               className="btn-executive" 
               style={{ background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)', border: '1px solid var(--error)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}
             >
-               <Trash2 size={18} /> {t.clear_all}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span> {t.clear_all}
             </button>
             <button 
               onClick={handleSeedProduction}
               className="btn-executive" 
               style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem' }}
             >
-               <Zap size={18} /> {t.seed_samples}
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bolt</span> {t.seed_samples}
             </button>
         </div>
       </header>
@@ -245,7 +233,9 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: step > s ? 'var(--success)' : (step === s ? 'var(--secondary)' : 'var(--primary)'), color: step === s ? 'var(--primary)' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.9rem' }}>
-                {step > s ? <CheckCircle2 size={18} /> : s}
+                {step > s ? (
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                ) : s}
               </div>
               <h3 style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)', fontFamily: 'Tajawal', margin: 0 }}>
                 {s === 1 ? t.steps.upload : s === 2 ? t.steps.alignment : t.steps.archive}
@@ -264,17 +254,17 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
             </div>
 
             <div style={{ width: 100, height: 100, borderRadius: '25px', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: 'var(--primary)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-               <FileSpreadsheet size={50} />
+               <span className="material-symbols-outlined" style={{ fontSize: '50px' }}>description</span>
             </div>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1rem', fontFamily: 'Tajawal' }}>{t.upload_center_title}</h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--on-surface-variant)', marginBottom: '2.5rem', fontWeight: 700 }}>{t.upload_center_desc}</p>
             
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                 <button onClick={downloadTemplate} className="btn-executive btn-outline" style={{ flex: 1, padding: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
-                   <Download size={20} /> {lang === 'ar' ? 'تحميل النموذج' : 'Template'}
+                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span> {lang === 'ar' ? 'تحميل النموذج' : 'Template'}
                 </button>
                 <label className="btn-executive" style={{ flex: 2, cursor: 'pointer', padding: '1.2rem', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}>
-                   <Upload size={20} /> {t.select_file}
+                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>upload</span> {t.select_file}
                    <input type="file" hidden accept=".csv" onChange={handleFileChange} ref={fileInputRef} />
                 </label>
             </div>
@@ -284,7 +274,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
         {step === 2 && (
           <div style={{ width: '100%', maxWidth: '850px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
-               <Settings2 size={24} color="var(--primary)" />
+               <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>tune</span>
                <h2 style={{ fontSize: '1.6rem', fontWeight: 950, color: 'var(--primary)', margin: 0, fontFamily: 'Tajawal' }}>{t.alignment_title}</h2>
             </div>
             
@@ -315,7 +305,11 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
                  className="btn-executive" 
                  style={{ flex: 2, padding: '1.2rem' }}
                >
-                  {importing ? <RefreshCw size={22} className="spin" /> : <Database size={22} />}
+                  {importing ? (
+                    <span className="material-symbols-outlined spin" style={{ fontSize: '22px' }}>sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>database</span>
+                  )}
                   {t.execute_import} ( {csvRows.length} )
                </button>
             </div>
@@ -325,7 +319,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
         {step === 3 && (
           <div style={{ maxWidth: '520px' }}>
             <div style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(27, 94, 32, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: 'var(--success)' }}>
-               <CheckCircle2 size={60} />
+               <span className="material-symbols-outlined" style={{ fontSize: '60px' }}>check_circle</span>
             </div>
             <h2 style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)', marginBottom: '1rem', fontFamily: 'Tajawal' }}>{t.success_title}</h2>
             <p style={{ fontSize: '1.1rem', color: 'var(--on-surface-variant)', marginBottom: '3rem', fontWeight: 800 }}>{recordCount.toLocaleString()} {t.success_desc}</p>
@@ -336,7 +330,9 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
 
       <div style={{ marginTop: '2.5rem', padding: '2rem', borderRadius: '24px', background: 'var(--primary)', color: 'white' }}>
          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <div style={{ padding: '0.8rem', borderRadius: '14px', background: 'rgba(212, 167, 106, 0.2)', color: 'var(--secondary)' }}><AlertCircle size={28} /></div>
+            <div style={{ padding: '0.8rem', borderRadius: '14px', background: 'rgba(212, 167, 106, 0.2)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>warning</span>
+            </div>
             <div>
                <h4 style={{ color: 'var(--secondary)', fontWeight: 950, fontSize: '1.1rem', margin: 0 }}>بروتوكول أمن البيانات المحلي</h4>
                <p style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 600, margin: '0.4rem 0 0' }}>{t.security_protocol_notice}</p>

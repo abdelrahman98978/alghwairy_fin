@@ -27,6 +27,23 @@ interface ReportsProps {
   t: Translations['reports'];
 }
 
+function SummaryMetric({ title, value, unit, icon, accent = 'blue' }: { title: string; value: string; unit: string; icon: string; accent?: 'blue' | 'red' | 'gold' | 'success' }) {
+  return (
+    <div className={`card-executive accent-${accent}`}>
+      <div className="card-executive-icon">
+        <span className="material-symbols-outlined">{icon}</span>
+      </div>
+      <div className="card-executive-content">
+        <div className="card-executive-title">{title}</div>
+        <div className="card-executive-value-group">
+          <span className="card-executive-value on-color">{value}</span>
+          <span className="card-executive-unit on-color">{unit}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ReportsView({ showToast, t }: ReportsProps) {
   const [revenue, setRevenue] = useState(0);
   const [expenses, setExpenses] = useState(0);
@@ -282,14 +299,14 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
         </div>
       </header>
 
-      <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-        <MetricBox title={t.revenue} value={fmtNumber(revenue, t.lang)} sub={t.historical_high} positive icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>trending_up</span>} highlight />
-        <MetricBox title={t.expenses} value={fmtNumber(expenses, t.lang)} sub={t.operating_costs} icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>trending_down</span>} />
-        <MetricBox title={t.net_income} value={fmtNumber(netProfit, t.lang)} sub={t.quarterly_target} positive icon={<span className="material-symbols-outlined" style={{ fontSize: '24px' }}>calculate</span>} />
+      <div className="metric-grid" style={{ marginBottom: '2.5rem' }}>
+        <SummaryMetric title={t.revenue} value={fmtNumber(revenue, t.lang)} unit="SAR" icon="trending_up" accent="blue" />
+        <SummaryMetric title={t.expenses} value={fmtNumber(expenses, t.lang)} unit="SAR" icon="trending_down" accent="red" />
+        <SummaryMetric title={t.net_income} value={fmtNumber(netProfit, t.lang)} unit="SAR" icon="calculate" accent="gold" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 2.6fr', gap: '2rem' }}>
-         <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
+      <div className="grid-executive" style={{ gap: '2rem' }}>
+         <div className="card shadow-elite" style={{ padding: '2.5rem' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--surface-container-high)', paddingBottom: '1.5rem' }}>
                 <div style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '16px', color: 'var(--secondary)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>account_balance_wallet</span></div>
                 <h3 style={{ fontSize: '1.4rem', fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>{t.summary_ledger || 'الميزان العمومي'}</h3>
@@ -309,8 +326,8 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
              </table>
          </div>
 
-         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div className="card" style={{ padding: '2.5rem', flex: 1, border: '1px solid var(--surface-container-high)' }}>
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0 }}>
+            <div className="card shadow-elite" style={{ padding: '2.5rem', flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                   <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', fontWeight: 900, margin: 0 }}>
                     {t.growth_chart || 'تحليل الأداء المالي'}
@@ -340,7 +357,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
                 </ResponsiveContainer>
             </div>
 
-            <div className="card" style={{ background: 'var(--surface-container-low)', border: 'none', padding: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="card shadow-elite" style={{ background: 'var(--surface-container-low)', border: 'none', padding: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
              <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)', boxShadow: 'var(--shadow-sm)' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>check_circle</span>
                </div>
@@ -358,7 +375,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
       {showAddModal && (
         <div className="modal-overlay" style={{ background: 'var(--header-bg)', zIndex: 3000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-lg)' }}>
+          <div className="card-executive slide-in" style={{ width: '100%', maxWidth: '500px', padding: '3rem', position: 'relative', border: 'none', boxShadow: 'var(--shadow-lg)' }}>
             <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, textAlign: 'center', color: 'var(--primary)' }}>{t.manual_trx || 'تسجيل قيد مالي'}</h3>
             
@@ -420,6 +437,16 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
   );
 }
 
+function ReportRow({ label, current, down }: any) {
+  return (
+    <tr style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
+       <td style={{ fontWeight: 800, padding: '1.5rem 0', fontSize: '1rem' }}>{label}</td>
+       <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 900, color: down ? 'var(--error)' : 'var(--success)', fontSize: '1.1rem' }}>{current}</td>
+       <td style={{ color: down ? 'var(--error)' : 'var(--success)', fontWeight: 900, fontSize: '0.8rem', textAlign: 'right', letterSpacing: '1px' }}>{down ? 'DR' : 'CR'}</td>
+    </tr>
+  );
+}
+
 /**
  * Premium Financial Statement Modal with Statement-Type Switching
  */
@@ -450,8 +477,8 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
                    <td style={{ border: '1px solid #ddd', padding: '5mm', textAlign: 'center', fontWeight: 900, color: '#ba1a1a' }}>({fmtNumber(expenses, t.lang)})</td>
                 </tr>
                 <tr style={{ background: '#001a33', color: 'white' }}>
-                   <td style={{ border: '1px solid #001a33', padding: '6mm', fontWeight: 900, fontSize: '13pt' }}>صافي الربح للفترة</td>
-                   <td style={{ border: '1px solid #001a33', padding: '6mm', textAlign: 'center', fontWeight: 950, fontSize: '15pt' }}>{fmtNumber(netProfit, t.lang)}</td>
+                   <td className="on-color" style={{ border: '1px solid #001a33', padding: '6mm', fontWeight: 900, fontSize: '13pt' }}>صافي الربح للفترة</td>
+                   <td className="on-color" style={{ border: '1px solid #001a33', padding: '6mm', textAlign: 'center', fontWeight: 950, fontSize: '15pt' }}>{fmtNumber(netProfit, t.lang)}</td>
                 </tr>
               </tbody>
             </table>
@@ -606,28 +633,3 @@ function FinancialStatementModal({ settings, revenue, expenses, netProfit, perio
   );
 }
 
-function MetricBox({ title, value, sub, positive, icon, highlight }: any) {
-  return (
-    <div className="card" style={highlight ? { background: 'var(--primary)', color: 'var(--on-primary)', padding: '2.5rem', border: 'none' } : { padding: '2.5rem', borderInlineStart: `6px solid ${positive ? 'var(--success)' : 'var(--error)'}` }}>
-       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ padding: '1rem', borderRadius: '16px', background: highlight ? 'rgba(255,255,255,0.1)' : 'var(--surface-container-high)', color: highlight ? 'var(--secondary)' : 'var(--primary)' }}>{icon}</div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 950, padding: '0.4rem 1rem', borderRadius: '10px', background: highlight ? 'rgba(136, 217, 130, 0.2)' : (positive ? 'rgba(27, 94, 32, 0.1)' : 'rgba(211, 47, 47, 0.1)'), color: highlight ? '#88d982' : (positive ? 'var(--success)' : 'var(--error)'), textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-             {positive ? 'Positive' : 'Stability'}
-          </span>
-       </div>
-       <p style={{ fontSize: '1rem', fontWeight: 700, opacity: highlight ? 0.8 : 1, color: highlight ? 'var(--on-primary)' : 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>{title}</p>
-       <h3 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: highlight ? 'var(--secondary)' : 'var(--primary)' }}>{value} <span style={{ fontSize: '0.9rem', opacity: 0.6, color: highlight ? 'var(--on-primary)' : 'inherit' }}>SAR</span></h3>
-       <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.8rem', fontWeight: 600 }}>{sub}</p>
-    </div>
-  );
-}
-
-function ReportRow({ label, current, down }: any) {
-  return (
-    <tr style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
-       <td style={{ fontWeight: 800, padding: '1.5rem 0', fontSize: '1rem' }}>{label}</td>
-       <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 900, color: down ? 'var(--error)' : 'var(--success)', fontSize: '1.1rem' }}>{current}</td>
-       <td style={{ color: down ? 'var(--error)' : 'var(--success)', fontWeight: 900, fontSize: '0.8rem', textAlign: 'right', letterSpacing: '1px' }}>{down ? 'DR' : 'CR'}</td>
-    </tr>
-  );
-}

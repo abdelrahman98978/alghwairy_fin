@@ -1,10 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  CreditCard,
-  Building,
-  Plus,
-  X
-} from 'lucide-react';
 import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
@@ -96,14 +90,16 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
            className="btn-executive" 
            style={{ border: 'none' }}
         >
-           <Plus size={18} /> {t.add_title}
+           <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>add</span> {t.add_title}
         </button>
       </header>
 
       {/* Stats Summary */}
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.8rem', marginBottom: '3rem' }}>
          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', padding: '2rem' }}>
-            <div style={{ padding: '1rem', background: 'var(--surface-container-high)', borderRadius: '16px', color: 'var(--primary)' }}><CreditCard size={24} /></div>
+            <div style={{ padding: '1rem', background: 'var(--surface-container-high)', borderRadius: '16px', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>credit_card</span>
+            </div>
             <div>
                <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 800, marginBottom: '0.4rem' }}>{t.active_count}</p>
                <h3 style={{ fontSize: '1.8rem', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{prepayments.filter(p => p.status === 'نشط').length}</h3>
@@ -137,10 +133,12 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
                        {prepayments.map((prep) => (
                           <tr key={prep.id}>
                              <td style={{ paddingInlineStart: '2.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                   <div style={{ padding: '0.6rem', background: 'var(--surface-container-high)', borderRadius: '10px', color: 'var(--primary)' }}><Building size={16} /></div>
-                                   <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>{prep.title}</span>
-                                </div>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                    <div style={{ padding: '0.6rem', background: 'var(--surface-container-high)', borderRadius: '10px', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>corporate_fare</span>
+                                    </div>
+                                    <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>{prep.title}</span>
+                                 </div>
                              </td>
                              <td style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>{prep.company}</td>
                              <td style={{ fontSize: '0.85rem', textAlign: 'center', fontWeight: 800 }}>{prep.start_date || 'N/A'}</td>
@@ -172,9 +170,9 @@ export default function PrepaymentsView({ showToast, logActivity, t }: Prepaymen
           <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
             <button 
               onClick={() => setShowAddModal(false)}
-              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <X size={24} />
+              <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
             </button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>{t.add_title}</h3>
             
