@@ -26,7 +26,6 @@ import PublicInvoiceView from './components/PublicInvoiceView';
 import CommunicationsView from './components/CommunicationsView';
 import { cloudSyncEngine } from './lib/cloudSyncEngine';
 import ContractsView from './components/ContractsView';
-import AffiliateView from './components/AffiliateView';
 import LandingView from './components/LandingView';
 
 
@@ -1851,7 +1850,6 @@ export default function App() {
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
       case 'contracts': return <ContractsView showToast={showToast} logActivity={logActivity} t={{...t.contracts, lang}} />;
-      case 'affiliate': return <AffiliateView showToast={showToast} lang={lang} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1931,16 +1929,6 @@ export default function App() {
               {hasPermission(userRole, 'payroll') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'reports') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
               {hasPermission(userRole, 'statements') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_chart</span>} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
-              {hasPermission(userRole, 'affiliate') && (
-                <NavItem 
-                  icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>campaign</span>} 
-                  label={lang === 'ar' ? 'نظام التسويق' : 'Affiliate Marketing'} 
-                  active={activeTab === 'affiliate'} 
-                  onClick={() => setActiveTab('affiliate')} 
-                  lang={lang} 
-                  isCollapsed={isCollapsed} 
-                />
-              )}
               {hasPermission(userRole, 'communications') && (
                 <NavItem 
                    icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>device_hub</span>} 
