@@ -10,11 +10,12 @@ import { localDB } from '../lib/localDB';
 interface StatementsProps {
   transactions: Transaction[];
   t: Translations['statements'];
+  showToast?: (msg: string, type?: string) => void;
 }
 
 type StatementTab = 'pnl' | 'balance' | 'trial';
 
-export default function StatementsView({ transactions, t }: StatementsProps) {
+export default function StatementsView({ transactions, t, showToast }: StatementsProps) {
   const [activeTab, setActiveTab] = useState<StatementTab>('pnl');
   const [loading, setLoading] = useState(true);
   
@@ -133,12 +134,17 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
       filename = 'trial_balance.csv';
     }
 
-    const csvContent = data.map(row => row.join(',')).join('\n');
+    const csvContent = "\uFEFF" + data.map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.download = filename;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    if (showToast) showToast(t.lang === 'ar' ? 'تم تصدير السجل المالي بنجاح' : 'Financial record exported successfully', 'success');
   };
 
   const handleShareWhatsApp = () => {
@@ -207,6 +213,23 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
         </div>
       </header>
 
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{t.title} - {activeTab === 'pnl' ? 'قائمة الدخل' : activeTab === 'balance' ? 'الميزانية العمومية' : 'ميزان المراجعة'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الفترة: {startDate} إلى {endDate}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Fin Management</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Statements Report</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>{new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+      </div>
+
       {/* Modern Tabs */}
       <div style={{ display: 'flex', gap: '2rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--surface-container-high)' }} className="no-print">
         <button 
@@ -247,22 +270,24 @@ export default function StatementsView({ transactions, t }: StatementsProps) {
         </button>
       </div>
 
-      {/* Analytical Charts Section */}
-      <div className="no-print" style={{ marginBottom: '2.5rem' }}>
+      {/* Analytical Charts Section - Now Printable */}
+      <div style={{ marginBottom: '2.5rem' }}>
          <AnalyticalCharts transactions={transactions} stats={stats} />
       </div>
 
-      {activeTab === 'pnl' && (
-        <IncomeStatement revenue={totalRevenue} cogs={stats.cogs} expenses={totalExpenses} salaries={stats.salaries} endDate={endDate} />
-      )}
-      {activeTab === 'balance' && (
-        <BalanceSheet assets={stats.assets} liabilities={stats.liabilities} equity={netIncome + 1000000} endDate={endDate} />
-      )}
-      {activeTab === 'trial' && (
-        <TrialBalance transactions={transactions} stats={stats} endDate={endDate} />
-      )}
+      <div className="print-content">
+        {activeTab === 'pnl' && (
+          <IncomeStatement revenue={totalRevenue} cogs={stats.cogs} expenses={totalExpenses} salaries={stats.salaries} endDate={endDate} />
+        )}
+        {activeTab === 'balance' && (
+          <BalanceSheet assets={stats.assets} liabilities={stats.liabilities} equity={netIncome + 1000000} endDate={endDate} />
+        )}
+        {activeTab === 'trial' && (
+          <TrialBalance transactions={transactions} stats={stats} endDate={endDate} />
+        )}
+      </div>
       
-      <footer style={{ marginTop: '4rem', padding: '2rem', borderTop: '1px solid var(--surface-container-high)', textAlign: 'center', opacity: 0.6 }}>
+      <footer className="no-print" style={{ marginTop: '4rem', padding: '2rem', borderTop: '1px solid var(--surface-container-high)', textAlign: 'center', opacity: 0.6 }}>
         <p style={{ fontWeight: 800, margin: 0 }}>نظام الإدارة المالية السيادي — دقة . شفافية . امتثال</p>
       </footer>
     </div>

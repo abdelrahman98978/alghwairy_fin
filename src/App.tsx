@@ -63,7 +63,8 @@ const translations = {
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
       biometrics: 'الأمان والبصمات',
-      affiliate: 'التسويق بالعمولة'
+      affiliate: 'التسويق بالعمولة',
+      communications: 'الرابط السيادي'
     },
     landing: {
       lang: 'ar',
@@ -517,12 +518,8 @@ const translations = {
       title: 'استيراد البيانات الخارجية',
       subtitle: 'رفع ملفات Excel أو CSV لدمجها في السجل الموحد.',
       clear_all: 'مسح كافة السجلات',
-      seed_samples: 'توليد بيانات تجريبية',
       confirm_clear_data: 'هل أنت متأكد من مسح كافة البيانات؟',
       clear_success: 'تم مسح البيانات بنجاح',
-      seeding_info: 'تحميل بيانات تجريبية للتدريب',
-      seed_success: 'تم تحميل العينات بنجاح',
-      seed_error: 'خطأ في تحميل العينات',
       import_success_prefix: 'تم استيراد',
       import_success_suffix: 'سجل بنجاح',
       encryption_msg: 'التشفير السيادي نشط (AES-256)',
@@ -766,7 +763,8 @@ const translations = {
       trash: 'Trash bin',
       biometrics: 'Security & Biometrics',
       contracts: 'Contracts Management',
-      affiliate: 'Affiliate Marketing'
+      affiliate: 'Affiliate Marketing',
+      communications: 'Sovereign Link'
     },
     notifications: {
       success: 'Sovereign transaction recorded successfully!',
@@ -1238,12 +1236,8 @@ const translations = {
       title: 'External Data Integration',
       subtitle: 'Uploading Excel or CSV files to the sovereign ledger.',
       clear_all: 'Clear All Records',
-      seed_samples: 'Generate Sample Data',
       confirm_clear_data: 'Are you sure to clear all data?',
       clear_success: 'Data cleared successfully',
-      seeding_info: 'Loading sample data for training',
-      seed_success: 'Samples loaded successfully',
-      seed_error: 'Error loading samples',
       import_success_prefix: 'Imported',
       import_success_suffix: 'records successfully',
       encryption_msg: 'Sovereign Encryption Active (AES-256)',
@@ -1592,7 +1586,8 @@ export default function App() {
     const settings = localDB.get('sync_settings');
     const myId = settings?.device_id;
     if (myId) {
-      const unread = localDB.getAll('sovereign_messages').filter(m => m.recipient === myId && !m.read).length;
+      const messages = localDB.getAll('sovereign_messages');
+      const unread = Array.isArray(messages) ? messages.filter((m: any) => m.recipient === myId && !m.read).length : 0;
       setUnreadMsgCount(unread);
     }
   }, []);
@@ -1842,11 +1837,11 @@ export default function App() {
       case 'reports': return <ReportsView showToast={showToast} t={{...reportsT, lang}} />;
       case 'security': return <SecurityView showToast={showToast} t={{...t.security, lang}} />;
       case 'data_import': return <DataImportView showToast={showToast} logActivity={logActivity} t={{...t.data_import, lang}} lang={lang} />;
-      case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} />;
+      case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} showToast={showToast} />;
       case 'petty_cash': return <PettyCashView t={{...t.petty_cash, lang}} lang={lang} showToast={showToast} />;
       case 'audit_logs': return <AuditLogsView showToast={showToast} t={{...t.audit_logs, lang}} />;
       case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} t={{...t.settings, lang}} userName={userName} />;
-      case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
+      case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} nav={t.nav} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
       case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
       case 'contracts': return <ContractsView showToast={showToast} logActivity={logActivity} t={{...t.contracts, lang}} />;
@@ -1923,7 +1918,7 @@ export default function App() {
             </>
           )}
 
-          {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements')) && (
+          {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements') || hasPermission(userRole, 'communications')) && (
             <>
               {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
               {hasPermission(userRole, 'payroll') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
@@ -1932,7 +1927,7 @@ export default function App() {
               {hasPermission(userRole, 'communications') && (
                 <NavItem 
                    icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>device_hub</span>} 
-                   label={lang === 'ar' ? 'الرابط السيادي' : 'Sovereign Link'} 
+                   label={t.nav.communications} 
                    active={activeTab === 'communications'} 
                    onClick={() => setActiveTab('communications')} 
                    lang={lang} 
@@ -2051,15 +2046,15 @@ export default function App() {
                  </div>
               </button>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button title="Toggle Theme" onClick={toggleTheme} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  {isDark ? <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>light_mode</span> : <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>dark_mode</span>}
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                <button title="Toggle Theme" onClick={toggleTheme} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  {isDark ? <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>light_mode</span> : <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>dark_mode</span>}
                 </button>
-                <button title="Change Language" onClick={toggleLang} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>language</span>
+                <button title="Change Language" onClick={toggleLang} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>language</span>
                 </button>
-                <button title="Direct Print" onClick={handlePrint} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>print</span>
+                <button title="Direct Print" onClick={handlePrint} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span>
                 </button>
               </div>
             </div>

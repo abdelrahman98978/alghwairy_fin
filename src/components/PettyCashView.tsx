@@ -176,6 +176,44 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
      (new Date(r.created_at).getFullYear() === currentYear)
   );
 
+  const handleExportCSV = () => {
+    const headers = [
+      lang === 'ar' ? 'المرجع' : 'Reference',
+      lang === 'ar' ? 'الموظف' : 'Employee',
+      lang === 'ar' ? 'الغرض / الوصف' : 'Purpose/Description',
+      lang === 'ar' ? 'التخصيص' : 'Allocation',
+      lang === 'ar' ? 'المبلغ' : 'Amount',
+      lang === 'ar' ? 'الحالة' : 'Status',
+      lang === 'ar' ? 'تاريخ الطلب' : 'Request Date'
+    ];
+    const rows = filteredRecords.map(r => [
+      r.reference_number,
+      r.requester,
+      r.title,
+      r.allocation,
+      r.amount,
+      r.status,
+      new Date(r.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-GB')
+    ]);
+    
+    let csvContent = "\uFEFF"; // UTF-8 BOM for Arabic support
+    csvContent += headers.join(",") + "\n";
+    rows.forEach(row => { 
+      const escapedRow = row.map(val => `"${String(val).replace(/"/g, '""')}"`);
+      csvContent += escapedRow.join(",") + "\n"; 
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `alghwairy_pettycash_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(lang === 'ar' ? 'تم تصدير سجل العهد بنجاح (CSV)' : 'Cash ledger exported successfully (CSV)', 'success');
+  };
+
   const totalAmount = filteredRecords.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const pendingCount = filteredRecords.filter(r => r.status === 'pending').length;
   const settledTotal = filteredRecords.filter(r => r.status === 'settled').reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -195,15 +233,35 @@ export default function PettyCashView({ t, lang, showToast }: PettyCashProps) {
           <h1 className="view-title" style={{ margin: 0 }}>{t.title}</h1>
           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.8rem' }}>
-            <button className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+        <div style={{ display: 'flex', gap: '0.8rem' }} className="no-print">
+            <button onClick={handleExportCSV} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> {lang === 'ar' ? 'تصدير السجل المالي' : 'Export Financial Log'}
+            </button>
+            <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {lang === 'ar' ? 'طباعة' : 'Print'}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-executive">
                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> {t.add_request}
             </button>
         </div>
       </header>
+
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>سجل العهد النقدية والمسحوبات</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Petty Cash Ledger</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
          <div className="card" style={{ borderInlineStart: '5px solid var(--secondary)' }}>

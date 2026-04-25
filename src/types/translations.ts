@@ -551,12 +551,8 @@ export interface Translations {
     title: string;
     subtitle: string;
     clear_all: string;
-    seed_samples: string;
     confirm_clear_data: string;
     clear_success: string;
-    seeding_info: string;
-    seed_success: string;
-    seed_error: string;
     import_success_prefix: string;
     import_success_suffix: string;
     encryption_msg: string;

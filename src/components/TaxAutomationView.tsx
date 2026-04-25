@@ -140,13 +140,65 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
     }, 3500);
   };
 
+  const handleExportLedger = () => {
+    const data = [
+      ['Tax & Customs Automation Ledger', 'سجل الأتمتة الضريبية والجمركية'],
+      ['Period Start', startDate],
+      ['Period End', endDate],
+      [''],
+      ['VAT Summary', 'ملخص ضريبة القيمة المضافة'],
+      ['Total VAT (Income)', vatSummary.totalVat],
+      ['Purchases VAT (Expense)', vatSummary.purchasesVat],
+      ['Net VAT', vatSummary.netVat],
+      ['Transaction Count', vatSummary.count],
+      [''],
+      ['Customs Summary', 'ملخص الجمارك'],
+      ['Customs Duties', customsSummary.duties],
+      ['Municipal Fees', customsSummary.municipal],
+      ['Platform/Fasah Fees', customsSummary.platform],
+      ['Total Clearance Value', customsSummary.totalValue],
+      ['Declarations Count', customsSummary.declarations]
+    ];
+
+    const csvContent = "\uFEFF" + data.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tax_customs_ledger_${startDate}_${endDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(t.lang === 'ar' ? 'تم تصدير السجل بنجاح' : 'Ledger exported successfully', 'success');
+  };
+
   return (
     <div className="slide-in">
-      <header className="view-header" style={{ marginBottom: '2.5rem' }}>
-        <div>
-           <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
-           <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
-        </div>
+       {/* Sovereign Print Header */}
+       <div className="print-only" style={{ marginBottom: '2rem', borderBottom: '2px solid #000', paddingBottom: '1rem', direction: 'rtl' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <div style={{ textAlign: 'right' }}>
+                <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 900 }}>مؤسسة الغويري للتخليص الجمركي</h1>
+                <p style={{ margin: '5px 0', fontSize: '14px' }}>Al-Ghwairy Customs Clearance</p>
+                <p style={{ margin: 0, fontWeight: 'bold', fontSize: '14px' }}>الرقم الضريبي: 310344810200003</p>
+             </div>
+             <div style={{ textAlign: 'center' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>تقرير التحليلات والمؤشرات الضريبية</h2>
+                <p style={{ margin: '5px 0', fontSize: '14px' }}>Tax & Customs Intelligence Report</p>
+             </div>
+             <div style={{ textAlign: 'left', direction: 'ltr' }}>
+                <p style={{ margin: 0, fontSize: '12px' }}>Date: {new Date().toLocaleDateString('en-GB')}</p>
+                <p style={{ margin: 0, fontSize: '12px' }}>Period: {startDate} - {endDate}</p>
+             </div>
+          </div>
+       </div>
+
+       <header className="view-header no-print" style={{ marginBottom: '2.5rem' }}>
+         <div>
+            <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
+            <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
+         </div>
          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--surface-container)', padding: '0.4rem 1rem', borderRadius: '12px', border: '1px solid var(--outline-variant)' }}>
               <input 
@@ -165,15 +217,22 @@ export default function TaxAutomationView({ showToast, logActivity, t }: TaxProp
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', border: '1px solid var(--surface-container-high)', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'var(--surface-container-low)', color: 'var(--success)' }}>
-               <span className="material-symbols-outlined {loading ? 'spin-animation' : ''}" style={{ fontSize: '18px' }}>monitoring</span>
+                <span className={`material-symbols-outlined ${loading ? 'spin-animation' : ''}`} style={{ fontSize: '18px' }}>monitoring</span>
                <span style={{ fontSize: '0.85rem', fontWeight: 900, fontFamily: 'Tajawal' }}>{syncStatus}</span>
             </div>
              <button 
                 onClick={() => window.print()}
                 className="btn-executive" 
+                style={{ border: 'none', padding: '0.8rem 1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+             >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {t.lang === 'en' ? 'Print Analysis' : 'طباعة التحليلات'}
+             </button>
+             <button 
+                onClick={handleExportLedger}
+                className="btn-executive" 
                 style={{ border: 'none', padding: '0.8rem 1.5rem', background: 'var(--surface-container-high)', color: 'var(--primary)' }}
              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>print</span> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle', marginInlineEnd: '0.4rem' }}>download</span> {t.lang === 'en' ? 'Export Ledger' : 'تصدير السجل'}
              </button>
             <button 
                disabled={loading || vatSummary.count === 0}

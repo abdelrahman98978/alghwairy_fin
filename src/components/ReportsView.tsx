@@ -57,7 +57,7 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
 
   const [settings] = useState({
     companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
-    taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
+    taxNumber: localStorage.getItem('sov_tax_number') || '310344810200003',
     address: localStorage.getItem('sov_address') || 'King Fahd Rd, Riyadh, SA',
     logo: localStorage.getItem('sov_logo') || './logo.png'
   });
@@ -218,7 +218,14 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
   };
 
   const exportReport = () => {
-    const headers = [t.table?.id ?? '', t.table?.description ?? '', t.table?.type ?? '', t.table?.value ?? '', t.table?.status ?? '', t.table?.date ?? ''];
+    const headers = [
+      t.table?.id || (t.lang === 'ar' ? 'المعرف' : 'ID'), 
+      t.table?.description || (t.lang === 'ar' ? 'الوصف' : 'Description'), 
+      t.table?.type || (t.lang === 'ar' ? 'النوع' : 'Type'), 
+      t.table?.value || (t.lang === 'ar' ? 'القيمة' : 'Amount'), 
+      t.table?.status || (t.lang === 'ar' ? 'الحالة' : 'Status'), 
+      t.table?.date || (t.lang === 'ar' ? 'التاريخ' : 'Date')
+    ];
     const rows = transactions.map(trx => [
       trx.id,
       trx.description,
@@ -228,16 +235,18 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
       new Date(trx.created_at).toLocaleDateString(t.lang === 'ar' ? 'ar-SA' : 'en-GB')
     ]);
     
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    let csvContent = "\uFEFF";
     csvContent += headers.join(",") + "\n";
     rows.forEach(row => { csvContent += row.join(",") + "\n"; });
     
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `alghwairy_report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     showToast(t.print || 'Analytical report exported', 'success');
   };
 
@@ -287,6 +296,9 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
             )}
           </div>
           
+          <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none' }}>
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>analytics</span> {t.lang === 'ar' ? 'طباعة التحليل' : 'Print Analysis'}
+          </button>
           <button onClick={() => setShowOfficialModal(true)} className="btn-executive" style={{ background: 'var(--primary)', color: 'var(--on-primary)', border: 'none' }}>
              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> {t.lang === 'ar' ? 'القائمة الرسمية' : 'Official Print'}
           </button>
@@ -298,6 +310,23 @@ export default function ReportsView({ showToast, t }: ReportsProps) {
           </button>
         </div>
       </header>
+
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{t.title}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الفترة: {period === 'all' ? 'كافة السجلات' : period}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Analytics</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Performance Report</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>{new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+      </div>
 
       <div className="metric-grid" style={{ marginBottom: '2.5rem' }}>
         <SummaryMetric title={t.revenue} value={fmtNumber(revenue, t.lang)} unit="SAR" icon="trending_up" accent="blue" />

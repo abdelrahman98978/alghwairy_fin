@@ -225,6 +225,23 @@ export default function CustomersView({ showToast, logActivity, t }: Props) {
 
   return (
     <div className="slide-in">
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'سجل العملاء والشركاء' : 'Customers & Partners Ledger'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>تاريخ الاستخراج: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Customer Management</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="view-header" style={{ marginBottom: '2rem' }}>
         <div>
@@ -589,6 +606,24 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
 
   return (
      <div className="slide-in">
+        {/* Print Header */}
+        <div className="print-only" style={{ marginBottom: '20px', borderBottom: '2px solid var(--primary)', paddingBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ margin: 0, color: 'var(--primary)', fontSize: '24px', fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h1>
+              <p style={{ margin: '5px 0', fontSize: '14px', fontWeight: 700 }}>المملكة العربية السعودية | الرقم الضريبي: 310344810200003</p>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <h2 style={{ margin: 0, color: 'var(--secondary)', fontSize: '20px', fontFamily: 'Tajawal' }}>{t.lang === 'ar' ? 'ملف الشريك الاستراتيجي' : 'Strategic Partner Profile'}</h2>
+              <p style={{ margin: '5px 0', fontSize: '12px', fontWeight: 600 }}>{t.lang === 'ar' ? 'تاريخ الاستخراج:' : 'Generated on:'} {new Date().toLocaleDateString(t.lang === 'ar' ? 'ar-SA' : 'en-US')}</p>
+            </div>
+          </div>
+          <div style={{ marginTop: '15px', padding: '10px', background: 'var(--surface-container-low)', borderRadius: '8px' }}>
+             <p style={{ margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{t.lang === 'ar' ? 'الكيان:' : 'Entity:'} {customer.name}</p>
+             <p style={{ margin: '5px 0 0', fontSize: '12px', fontWeight: 600 }}>{t.lang === 'ar' ? 'التصنيف:' : 'Category:'} {customer.type} | {t.lang === 'ar' ? 'القطاع:' : 'Sector:'} {customer.sector}</p>
+          </div>
+        </div>
+
         {/* Back Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem' }}>
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -767,6 +802,15 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
                         <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#fff' }}>zoom_in</span>
                       </div>
                     </div>
+                    
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Cairo' }}>
+                        {doc.file_name}
+                      </h4>
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.72rem', color: 'var(--outline)', fontWeight: 600 }}>
+                        {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                      </p>
+                    </div>
 
                     <div style={{ display: 'flex', gap: '0.6rem' }}>
                       <button onClick={() => setPreviewDoc(doc)}
@@ -848,7 +892,7 @@ function CustomerProfile({ customer, invoices, onBack, t }: any) {
               </button>
               <button onClick={() => setPreviewDoc(null)}
                 style={{ padding: '0.7rem', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
-                <X size={20} />
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
             <p style={{ color: '#fff', fontWeight: 900, marginBottom: '1rem', fontSize: '1rem', opacity: 0.85 }}>{previewDoc.file_name}</p>

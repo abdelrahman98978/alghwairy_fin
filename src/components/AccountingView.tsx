@@ -905,9 +905,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                   </div>
               </div>
               <div className="form-group-premium">
-                  <label className="label-premium"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>activity_zone</span> {t.tax_id}</label>
+                  <label className="label-premium"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>badge</span> {t.tax_id}</label>
                   <div className="input-wrapper-premium">
-                    <span className="material-symbols-outlined input-icon">activity_zone</span>
+                    <span className="material-symbols-outlined input-icon">badge</span>
                     <input type="text" value={taxId} onChange={e => setTaxId(e.target.value)} className="input-premium-styled" placeholder="310XXXXXXXXXXXX" />
                   </div>
               </div>
@@ -916,7 +916,7 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
           <section className="bento-card">
             <h4 className="sovereign-header-gold sharp-text" style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-              <span className="material-symbols-outlined icon-gold-glow" style={{ fontSize: '22px' }}>package_2</span> {isAr ? 'البيانات الجمركية' : 'Customs Data'}
+              <span className="material-symbols-outlined icon-gold-glow" style={{ fontSize: '22px' }}>inventory_2</span> {isAr ? 'البيانات الجمركية' : 'Customs Data'}
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
               <div className="form-group-premium">
@@ -1046,6 +1046,22 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
   const renderJournal = () => (
     <div className="slide-in">
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'سجل اليومية العام' : 'General Journal Ledger'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>General Journal</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
       <div className="card shadow-elite overflow-hidden">
         <div className="table-header-premium">
           <div className="header-info-premium">
@@ -1074,6 +1090,9 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                  className="input-clean"
                />
             </div>
+            <button onClick={() => window.print()} className="btn-export-excel no-print" style={{ marginInlineEnd: '0.5rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span> Print
+            </button>
             <button onClick={() => downloadCSV(journalEntries, 'Journal_Sovereign')} className="btn-export-excel"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export</button>
           </div>
         </div>
@@ -1116,27 +1135,49 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
   const renderLedger = () => (
     <div className="fade-in">
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'سجل الميزان المالي السيادي' : 'Sovereign General Ledger'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>General Ledger</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
       <div className="card shadow-elite">
         <div className="table-header-premium">
           <div className="header-info-premium">
-            <div className="icon-container-gold"><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>database</span></div>
+            <div className="icon-container-gold"><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>account_balance</span></div>
             <div>
               <h3 className="section-title-premium sharp-text">{t.general_ledger}</h3>
               <p className="section-subtitle-premium">{isAr ? 'ملخص أرصدة الحسابات والأستاذ العام' : 'Summary of account balances & general ledger'}</p>
             </div>
           </div>
           <div className="header-actions-premium">
-            <div className="search-box-executive">
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>
+            <div className="search-box-executive" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px', opacity: 0.6 }}>search</span>
               <input 
                 type="text" 
                 placeholder={isAr ? 'بحث في الحسابات...' : 'Search accounts...'} 
                 value={ledgerSearch}
                 onChange={e => setLedgerSearch(e.target.value)}
                 className="input-clean"
+                style={{ outline: 'none' }}
               />
             </div>
-            <button onClick={() => downloadCSV(ledgerAccounts, 'Ledger_Sovereign')} className="btn-export-excel"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export</button>
+            <button onClick={() => window.print()} className="btn-sovereign-outline no-print" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginInlineEnd: '0.5rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> Print
+            </button>
+            <button onClick={() => downloadCSV(ledgerAccounts, 'Ledger_Sovereign')} className="btn-sovereign-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> Export
+            </button>
           </div>
         </div>
 
@@ -1176,12 +1217,21 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
 
   return (
     <div className="accounting-view-container">
-      <header className="sovereign-dual-header">
-        <div className="sovereign-top-row">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+      <header className="view-header" style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div className="icon-gold-glow" style={{ 
+            background: 'var(--primary)', 
+            color: 'var(--secondary)', 
+            padding: '1rem', 
+            borderRadius: '18px', 
+            display: 'flex',
+            boxShadow: '0 8px 25px rgba(0, 35, 75, 0.15)'
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>verified_user</span>
+          </div>
+          <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <h2 className="sovereign-title-elite sharp-gold">
-                <span className="material-symbols-outlined icon-gold-glow" style={{ marginInlineEnd: '0.75rem', fontSize: '24px' }}>verified_user</span>
+              <h2 className="view-title" style={{ margin: 0, fontSize: '1.5rem' }}>
                 {t.nav_title || (isAr ? 'نظام المحاسبة الموحد السيادي' : 'Sovereign Fiscal System')}
               </h2>
               <div className="sovereign-status-badge">
@@ -1189,55 +1239,59 @@ export default function AccountingView({ showToast, logActivity, t }: Props): JS
                 {isAr ? 'النظام نشط' : 'System Active'}
               </div>
             </div>
-            <p className="view-subtitle" style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', fontWeight: 700, margin: 0 }}>{t.invoice_desc}</p>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-             <button className="btn-compact-gold" onClick={() => {
-                try {
-                  const data = JSON.stringify({ invoices, journalEntries, ledgerAccounts, contracts, products }, null, 2);
-                  const blob = new Blob([data], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `alghwairy_fiscal_backup_${new Date().toISOString().split('T')[0]}.json`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  URL.revokeObjectURL(url);
-                  showToast(isAr ? 'تم تصدير النسخة الاحتياطية بنجاح' : 'Backup exported successfully', 'success');
-                } catch (e) {
-                  showToast(isAr ? 'فشل تصدير النسخة الاحتياطية' : 'Failed to export backup', 'error');
-                }
-             }}>
-                <span className="material-symbols-outlined">cloud_download</span> {isAr ? 'النسخ الاحتياطي' : 'Cloud Backup'}
-             </button>
-             <button className="btn-compact-outline" onClick={() => setActiveTab('invoice')}>
-                <span className="material-symbols-outlined">add</span> {isAr ? 'فاتورة جديدة' : 'New Invoice'}
-             </button>
+            <p className="view-subtitle" style={{ margin: '0.2rem 0 0', opacity: 0.8 }}>{t.invoice_desc}</p>
           </div>
         </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn-sovereign-outline" style={{ gap: '0.6rem' }} onClick={() => {
+             try {
+               const data = JSON.stringify({ invoices, journalEntries, ledgerAccounts, contracts, products }, null, 2);
+               const blob = new Blob([data], { type: 'application/json' });
+               const url = URL.createObjectURL(blob);
+               const link = document.createElement('a');
+               link.href = url;
+               link.download = `alghwairy_fiscal_backup_${new Date().toISOString().split('T')[0]}.json`;
+               document.body.appendChild(link);
+               link.click();
+               document.body.removeChild(link);
+               URL.revokeObjectURL(url);
+               showToast(isAr ? 'تم تصدير النسخة الاحتياطية بنجاح' : 'Backup exported successfully', 'success');
+             } catch (e) {
+               showToast(isAr ? 'فشل تصدير النسخة الاحتياطية' : 'Failed to export backup', 'error');
+             }
+          }}>
+             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>backup</span> {isAr ? 'النسخ الاحتياطي' : 'Cloud Backup'}
+          </button>
+          <button className="btn-sovereign-primary" style={{ gap: '0.6rem' }} onClick={() => setActiveTab('invoice')}>
+             <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>add_circle</span> {isAr ? 'فاتورة جديدة' : 'New Invoice'}
+          </button>
+        </div>
+      </header>
 
+      <div className="sovereign-nav-row" style={{ marginBottom: '2.5rem', borderBottom: '1px solid var(--outline-variant)' }}>
         <div className="sovereign-nav-container">
            {[
              { id: 'invoice', label: t.invoice_editor, icon: 'receipt' },
              { id: 'journal', label: t.journal, icon: 'menu_book' },
-             { id: 'ledger', label: t.ledger_summary, icon: 'database' },
-             { id: 'inventory', label: isAr ? 'المخزون' : 'Stock', icon: 'package' },
-             { id: 'assets', label: isAr ? 'الأصول' : 'Assets', icon: 'calculate' },
-             { id: 'reports', label: isAr ? 'التقارير' : 'Reports', icon: 'assessment' },
+             { id: 'ledger', label: t.ledger_summary, icon: 'account_balance' },
+             { id: 'inventory', label: isAr ? 'المخزون' : 'Stock', icon: 'inventory_2' },
+             { id: 'assets', label: isAr ? 'الأصول' : 'Assets', icon: 'account_balance_wallet' },
+             { id: 'contracts', label: isAr ? 'العقود' : 'Contracts', icon: 'history_edu' },
+             { id: 'reports', label: isAr ? 'التقارير' : 'Reports', icon: 'analytics' },
            ].map(tab => (
              <button
                key={tab.id}
                onClick={() => setActiveTab(tab.id as any)}
                className={`sovereign-tab ${activeTab === tab.id ? 'active' : ''}`}
+               style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.8rem 1.2rem' }}
              >
-               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{tab.icon}</span>
-               <span>{tab.label}</span>
+               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>{tab.icon}</span>
+               <span style={{ fontWeight: 700 }}>{tab.label}</span>
              </button>
            ))}
         </div>
-      </header>
+      </div>
 
       {activeTab === 'invoice' && renderInvoiceEditor()}
       {activeTab === 'journal' && renderJournal()}
@@ -1361,6 +1415,23 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
 
   return (
     <div className="fade-in">
+       {/* Standardized Sovereign Print Header */}
+       <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+         <div style={{ textAlign: 'right' }}>
+           <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+           <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+         </div>
+         <div style={{ textAlign: 'center' }}>
+           <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'التقارير والتحليلات السيادية' : 'Sovereign Fiscal Reports'}</h1>
+           <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+         </div>
+         <div style={{ textAlign: 'left' }}>
+           <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+           <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Fiscal Analytics</p>
+           <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+         </div>
+       </div>
+
        <div className="card shadow-elite padding-2">
           <div className="report-header-premium">
             <h3 className="sovereign-header-gold sharp-text" style={{ border: 'none', padding: 0, marginBottom: 0 }}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>bar_chart</span> {isAr ? 'التحليل المالي السيادي' : 'Sovereign Financial Analysis'}</h3>
@@ -1370,7 +1441,10 @@ function ReportsView({ isAr, invoices, journalEntries, ledgerAccounts, downloadC
                <button onClick={() => setActiveReportTab('balance_sheet')} className={`tab-btn-small ${activeReportTab === 'balance_sheet' ? 'active' : ''}`}>{isAr ? 'الميزانية العمومية' : 'Balance Sheet'}</button>
                <button onClick={() => setActiveReportTab('vat')} className={`tab-btn-small ${activeReportTab === 'vat' ? 'active' : ''}`}>{isAr ? 'تحليل الضريبة' : 'VAT Analysis'}</button>
             </div>
-            <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> Export CSV</button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => window.print()} className="btn-sovereign-outline no-print"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span> {isAr ? 'طباعة' : 'Print'}</button>
+              <button onClick={() => downloadCSV(journalEntries, 'Fiscal_Report')} className="btn-sovereign-outline no-print"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> {isAr ? 'تصدير' : 'Export'}</button>
+            </div>
           </div>
 
           {activeReportTab === 'profit' && (
@@ -1476,6 +1550,22 @@ function VATAnalysisView({ invoices, isAr }: any) {
 
     return (
         <div className="fade-in">
+            {/* Standardized Sovereign Print Header */}
+            <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+              <div style={{ textAlign: 'right' }}>
+                <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'تقرير التحليل الضريبي السيادي' : 'Sovereign VAT Analysis Report'}</h1>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+                <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>VAT Analysis</p>
+              </div>
+            </div>
+
             <div className="vat-grid-premium">
                 <div className="vat-info-premium">
                     <div className="card glass-premium vat-card-primary">
@@ -1544,6 +1634,23 @@ function TrialBalanceView({ ledgerAccounts, isAr }: any) {
 
   return (
     <div className="slide-in">
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'سجل الميزان المالي السيادي (ميزان المراجعة)' : 'Sovereign Trial Balance'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Trial Balance Report</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
+
        <table className="sovereign-table-premium">
           <thead>
             <tr className="table-header-row-premium">
@@ -1586,7 +1693,24 @@ function BalanceSheetView({ ledgerAccounts, isAr }: any) {
   const totalEquity = equity.reduce((s: number, a: any) => s + a.balance, 0);
 
   return (
-    <div className="slide-in balance-sheet-grid">
+    <div className="slide-in">
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>مؤسسة الغويري للتخليص الجمركي</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>الرقم الضريبي: 310344810200003</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{isAr ? 'بيان المركز المالي السيادي (الميزانية)' : 'Sovereign Balance Sheet'}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>التاريخ: {new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Balance Sheet Statement</p>
+        </div>
+      </div>
+      <div className="balance-sheet-grid">
+
        <div>
           <h4 className="sovereign-header-gold sharp-text" style={{ borderColor: 'var(--success)', marginBottom: '1rem' }}>{isAr ? 'الأصول' : 'ASSETS'}</h4>
           {assets.map((a: any) => (
@@ -1622,6 +1746,7 @@ function BalanceSheetView({ ledgerAccounts, isAr }: any) {
           </div>
        </div>
     </div>
+  </div>
   );
 }
 
@@ -1991,7 +2116,7 @@ function InvoicePreviewModal({
         <div className="modal-overlay-premium" style={{ overflowY: 'auto', display: 'block', padding: '2rem 0' }}>
             <div className="no-print" style={{ position: 'sticky', top: '2rem', zIndex: 100, display: 'flex', justifyContent: 'center', gap: '1rem', width: 'fit-content', margin: '0 auto 2rem', background: 'var(--primary)', padding: '0.8rem 2rem', borderRadius: '50px', boxShadow: 'var(--shadow-lg)' }}>
                 <button onClick={onPrint} className="btn-print-premium"><span className="material-symbols-outlined">print</span> {isAr ? 'طباعة PDF' : 'Print PDF'}</button>
-                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: 'var(--success)' }}><span className="material-symbols-outlined">verified</span> WhatsApp</button>
+                <button onClick={onWhatsApp} className="btn-print-premium" style={{ background: 'var(--success)' }}><span className="material-symbols-outlined">share</span> WhatsApp</button>
                 <button onClick={onDismiss} className="btn-print-premium" style={{ background: 'var(--error)' }}><span className="material-symbols-outlined">close</span> {isAr ? 'إغلاق' : 'Close'}</button>
             </div>
             

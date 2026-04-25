@@ -1,4 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+}
 
 .spin {
   animation: spin 1s linear infinite;
@@ -2435,11 +2453,94 @@ h1, h2, h3, h4 {
   font-family: 'Tajawal';
 }
 
+@media screen {
+  .print-only { display: none !important; }
+}
+
 @media print {
-  body * { visibility: hidden; }
-  #salary-slip-content, #salary-slip-content *, .print-content, .print-content * { visibility: visible; }
-  #salary-slip-content, .print-content { position: absolute; left: 0; top: 0; width: 100%; }
-  .no-print { display: none !important; }
+  /* Hide all UI navigation and background elements */
+  .sidebar, 
+  .view-header:not(.print-header), 
+  .no-print, 
+  .navbar,
+  .tabs-container,
+  .btn-executive,
+  button,
+  .modal-overlay:not(.invoice-print-overlay) { 
+    display: none !important; 
+  }
+
+  /* Reset body and container for printing */
+  body, html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .main-stage, .view-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Optimize print content */
+  .print-content {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    background: white !important;
+    box-shadow: none !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure tables look good in print */
+  .sovereign-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .sovereign-table th, .sovereign-table td {
+    border: 1px solid #ddd !important;
+    padding: 8pt !important;
+    color: black !important;
+  }
+
+  /* Card styling for print */
+  .card {
+    border: 1px solid #eee !important;
+    box-shadow: none !important;
+    margin-bottom: 2rem !important;
+    break-inside: avoid;
+  }
+
+  /* Forces colors to print (modern browsers) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Specific modal overlay print fix */
+  .invoice-print-overlay {
+    position: static !important;
+    background: white !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .invoice-print-overlay .print-content {
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
 }
 
 /* Accounting & Invoices Consolidated Styles */

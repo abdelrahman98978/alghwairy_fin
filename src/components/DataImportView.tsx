@@ -138,51 +138,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
     }
   };
 
-  const handleSeedProduction = async () => {
-    setImporting(true);
-    showToast(lang === 'ar' ? 'جاري تهيئة البيانات المؤسسية...' : 'Seeding Institutional Data...', 'info');
 
-    // 1. Core Customers
-    const customers = [
-      { name: 'شركة أرامكو السعودية', vat_number: '300123456700003', cr_number: '1010000001', phone: '0138720111' },
-      { name: 'SABIC - سابك', vat_number: '310987654300003', cr_number: '1010012345', phone: '0112251000' },
-      { name: 'STC - الاتصالات السعودية', vat_number: '320000000100003', cr_number: '1010150269', phone: '0114527000' },
-      { name: 'مصرف الراجحي', vat_number: '330004561200003', cr_number: '1010000079', phone: '0112116000' },
-      { name: 'نيوم للاستثمار', vat_number: '390909090900003', cr_number: '1010600021', phone: '0118340000' }
-    ];
-
-    const invoices = [];
-    for(let i=0; i<25; i++) {
-       invoices.push({
-          reference_number: `INV-2026-${1000 + i}`,
-          amount: Math.floor(Math.random() * 50000) + 10000,
-          status: Math.random() > 0.3 ? 'paid' : 'pending',
-          created_at: new Date(2026, 0, Math.floor(Math.random() * 90) + 1).toISOString()
-       });
-    }
-
-    try {
-      localDB.clearAll();
-      const savedCustomers: any[] = [];
-      customers.forEach(c => { savedCustomers.push(localDB.insert('customers', c)); });
-      invoices.forEach(inv => {
-         const cust = savedCustomers[Math.floor(Math.random() * savedCustomers.length)];
-         const tax = inv.amount * 0.15;
-         localDB.insert('invoices', { ...inv, customer_id: cust.id, vat: tax, total: inv.amount + tax });
-      });
-
-      setRecordCount(customers.length + invoices.length);
-      setTimeout(async () => {
-        setImporting(false);
-        setStep(3);
-        await logActivity('Executed Local System Seed', 'database');
-        showToast(lang === 'ar' ? 'اكتملت تهيئة البيانات المحلية بنجاح' : 'Local data seeding complete', 'success');
-      }, 2000);
-    } catch {
-      setImporting(false);
-      showToast('Error seeding local database', 'error');
-    }
-  };
 
   const targetFields = importType === 'invoices' 
     ? [
@@ -213,13 +169,7 @@ export default function DataImportView({ showToast, t, lang, logActivity }: Data
             >
                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span> {t.clear_all}
             </button>
-            <button 
-              onClick={handleSeedProduction}
-              className="btn-executive" 
-              style={{ background: 'var(--secondary)', color: 'var(--primary)', border: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem' }}
-            >
-               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bolt</span> {t.seed_samples}
-            </button>
+
         </div>
       </header>
 

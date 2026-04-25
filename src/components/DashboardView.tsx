@@ -78,7 +78,23 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
   const isArabic = t.lang === 'ar';
 
   return (
-    <div className="slide-in no-print">
+    <div className="slide-in">
+      {/* Print-Only Header for Dashboard */}
+      <div className="print-only print-header" dir={isArabic ? 'rtl' : 'ltr'} style={{ marginBottom: '2rem', borderBottom: '2px solid var(--primary)', paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', background: 'var(--primary)', borderRadius: '8px' }}></div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: 'var(--primary)' }}>{isArabic ? 'لوحة التحكم التنفيذية' : 'Executive Dashboard'}</h1>
+              <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>{isArabic ? 'مؤسسة الغويري للتخليص الجمركي' : 'Alghwairy Customs Clearance'}</p>
+            </div>
+          </div>
+          <div style={{ textAlign: isArabic ? 'left' : 'right' }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800 }}>تاريخ التقرير: {new Date().toLocaleDateString(isArabic ? 'ar-SA' : 'en-GB')}</p>
+            <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>حالة النظام: {isArabic ? 'امتثال كامل' : 'Full Compliance'}</p>
+          </div>
+        </div>
+      </div>
       {/* Institution Snapshot - Tonal Editorial Layer */}
       <div className="card-layer-2" style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', padding: '1.25rem 2.5rem', borderRadius: '100px', alignItems: 'center', overflowX: 'auto', border: '1px solid var(--outline-variant)' }}>
          <SnapshotItem label={isArabic ? 'قوة الامتثال' : 'Compliance'} value="100%" color="var(--success)" />
@@ -127,6 +143,9 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button onClick={exportToExcel} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.65rem 1.5rem', fontSize: '0.85rem', borderRadius: '100px' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span> {t.export_report}
+              </button>
+              <button onClick={() => window.print()} className="btn-executive" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', padding: '0.65rem 1.5rem', fontSize: '0.85rem', borderRadius: '100px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span> {isArabic ? 'طباعة' : 'Print'}
               </button>
               <button 
                 onClick={() => { fetchData(); showToast(t.syncing, 'success'); }} 
@@ -190,9 +209,20 @@ export default function DashboardView({ transactions, fetchData, showToast, t }:
             />
             <AuditAlert 
               type="warning" 
+              title={t.alerts.pending_settlement} 
+              desc={isArabic ? 'يوجد 3 تسويات معلقة تتطلب التدقيق السيادي.' : '3 pending settlements require sovereign audit.'} 
+            />
+            <AuditAlert 
+              type="success" 
+              title={t.alerts.bank_reconciliation} 
+              desc={isArabic ? 'مطابقة الحسابات البنكية مكتملة بنسبة 98%.' : 'Bank reconciliation is 98% complete.'} 
+            />
+            <AuditAlert 
+              type="warning" 
               title={isArabic ? 'تنبيه العهد النقدية' : 'Sovereign Petty Cash'} 
               desc={isArabic ? 'يتم مراقبة كافة العهود البنكية المصروفة لحظياً.' : 'Monitoring real-time bank petty cash draws.'} 
             />
+
             <div style={{ padding: '1.5rem', background: 'var(--primary)', color: 'var(--on-primary)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
                <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary)', fontWeight: 950 }}>LOCAL-FIRST STORAGE</h4>
                <p style={{ margin: '0.5rem 0', fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>بياناتك محفوظة محلياً على جهازك في مجلد المستندات. خصوصية كاملة وتحكم تام.</p>

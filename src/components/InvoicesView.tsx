@@ -21,7 +21,7 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 
   const settings = {
     companyName: 'مؤسسة الغويري للتخليص الجمركي',
-    taxNumber: '310294857200003',
+    taxNumber: '310344810200003',
     address: 'الرياض - المملكة العربية السعودية',
     phone: '+966 11 234 5678',
     email: 'info@alghwairy-customs.sa',
@@ -246,6 +246,23 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
 
   return (
     <div className="accounting-view-container" dir={t.lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Standardized Sovereign Print Header */}
+      <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+        <div style={{ textAlign: 'right' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>{settings.companyName}</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'الرقم الضريبي' : 'VAT No'}: {settings.taxNumber}</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{t.invoices.title}</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'التاريخ' : 'Date'}: {new Date().toLocaleDateString(t.lang === 'ar' ? 'ar-SA' : 'en-GB')}</p>
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Invoices & Operations Ledger</p>
+          <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Sovereign Dashboard</p>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="view-header" style={{ marginBottom: '2.5rem' }}>
         <div>
@@ -506,6 +523,9 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
              <div className="modal-header-premium" style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--surface)', padding: '1.5rem 2.5rem', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 className="section-title-premium" style={{ margin: 0 }}>{t.invoices.summary_title}</h3>
                 <div style={{ display: 'flex', gap: '12px' }}>
+                  <button onClick={() => window.print()} className="btn-action-small no-print" style={{ background: 'var(--surface-container-high)', color: 'var(--primary)', border: 'none', padding: '0.8rem 1.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span> {t.lang === 'ar' ? 'طباعة' : 'Print'}
+                  </button>
                   <button onClick={() => {
                     const csvRows = [
                       ['Reference', 'Client', 'Carrier', 'BOL', 'Date', 'Amount', 'VAT', 'Customs/Fees', 'Total', 'Profit', 'Status'].join(','),
@@ -535,6 +555,22 @@ export default function InvoicesView({ showToast, logActivity, t }: InvoicesView
                 </div>
              </div>
              <div className="modal-body-premium" style={{ padding: '3rem' }}>
+                {/* Standardized Sovereign Print Header */}
+                <div className="print-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--primary)', direction: 'rtl' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 900, fontFamily: 'Tajawal' }}>{settings.companyName}</h2>
+                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'الرقم الضريبي' : 'VAT No'}: {settings.taxNumber}</p>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <h1 style={{ margin: 0, fontWeight: 950, fontFamily: 'Tajawal' }}>{t.invoices.summary_title}</h1>
+                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t.lang === 'ar' ? 'التاريخ' : 'Date'}: {new Date().toLocaleDateString(t.lang === 'ar' ? 'ar-SA' : 'en-GB')}</p>
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>Alghwairy Institution</p>
+                    <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.6 }}>Associated Operations Summary</p>
+                  </div>
+                </div>
+
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                   <h1 className="headline-sovereign" style={{ fontSize: '2.4rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>{settings.companyName}</h1>
                   <p className="label-sovereign" style={{ color: 'var(--secondary)', fontSize: '1.1rem' }}>{t.invoices.summary_subtitle}</p>

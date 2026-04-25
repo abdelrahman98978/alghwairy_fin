@@ -56,8 +56,11 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
     reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
     reportFooter: localStorage.getItem('sov_report_footer') || 'جميع الحقوق محفوظة © مؤسسة الغويري 2026',
     syncFrequency: localStorage.getItem('sov_sync_frequency') || 'daily',
-    notifSounds: localStorage.getItem('sov_notif_sounds') === 'true',
+    notifSounds: localStorage.getItem('sov_notif_sounds') !== 'false',
     notifDesktop: localStorage.getItem('sov_notif_desktop') === 'true',
+    sovMonitoring: localStorage.getItem('sov_monitoring') !== 'false',
+    aiAlerts: localStorage.getItem('sov_ai_alerts') !== 'false',
+
     supabaseUrl: localStorage.getItem('sov_supabase_url') || '',
     supabaseKey: localStorage.getItem('sov_supabase_key') || '',
     cloudSync: localStorage.getItem('sov_cloud_sync') === 'true'
@@ -414,6 +417,23 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>shield</span>
+                         <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'Sovereign Live Monitoring' : 'الرقابة السيادية اللحظية'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 900 }}>{t.lang === 'en' ? 'ACTIVE' : 'نشط'}</span>
+                        <input type="checkbox" checked={settings.sovMonitoring} onChange={e => setSettings({...settings, sovMonitoring: e.target.checked})} />
+                      </div>
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>auto_awesome</span>
+                         <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'AI Audit Alerts' : 'تنبيهات التدقيق الذكي'}</span>
+                      </div>
+                      <input type="checkbox" checked={settings.aiAlerts} onChange={e => setSettings({...settings, aiAlerts: e.target.checked})} />
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: 'var(--surface-container-low)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>volume_up</span>
                          <span style={{ fontWeight: 800 }}>{t.lang === 'en' ? 'System Notification Sounds' : 'أصوات تنبيهات النظام'}</span>
                       </div>
@@ -427,6 +447,7 @@ export default function SettingsView({ showToast, logActivity, t, userName }: Se
                       <input type="checkbox" checked={settings.notifDesktop} onChange={e => setSettings({...settings, notifDesktop: e.target.checked})} />
                    </div>
                 </div>
+
              </div>
            )}
 

@@ -8,7 +8,9 @@ import type { Translations } from '../types/translations';
 interface RolesProps {
   showToast: (msg: string, type?: string) => void;
   t: Translations['roles'];
+  nav: any;
 }
+
 
 interface UserRole {
   id: string;
@@ -26,7 +28,7 @@ interface RolePermission {
   permissions: string[];
 }
 
-export default function RolesView({ showToast, t }: RolesProps) {
+export default function RolesView({ showToast, t, nav }: RolesProps) {
   const [employees, setEmployees] = useState<UserRole[]>([]);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export default function RolesView({ showToast, t }: RolesProps) {
                    {ALL_MODULES.map(module => (
                      <tr key={module} style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
                         <td style={{ fontWeight: 800, padding: '1.2rem', color: 'var(--primary)', fontSize: '0.9rem' }}>
-                           {module.toUpperCase().replace('_', ' ')}
+                           {nav && nav[module] ? nav[module] : module.toUpperCase().replace('_', ' ')}
                         </td>
                         {rolePermissions.map(rp => (
                           <td key={rp.id} style={{ textAlign: 'center', padding: '1rem' }}>

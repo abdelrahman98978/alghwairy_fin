@@ -210,7 +210,12 @@ const DEFAULT_DB: DBSchema = {
   shipments: [],
   tax_returns: [],
   petty_cash: [],
-  role_permissions: [],
+  role_permissions: [
+    { id: 'rp-admin', role: 'Admin', permissions: ['*'] },
+    { id: 'rp-cfo', role: 'CFO', permissions: ['dashboard', 'customers', 'accounting', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'tax', 'payroll', 'reports', 'statements', 'communications', 'contracts', 'quotes', 'affiliate', 'audit_logs', 'settings'] },
+    { id: 'rp-accountant', role: 'Accountant', permissions: ['dashboard', 'customers', 'accounting', 'invoices', 'prepayments', 'expenses', 'petty_cash', 'tax', 'reports', 'statements', 'communications', 'contracts'] },
+    { id: 'rp-auditor', role: 'Auditor', permissions: ['dashboard', 'reports', 'statements', 'audit_logs', 'tax', 'communications'] }
+  ],
   fixed_assets: [],
   scheduled_reports: [
     { id: '1', name: 'تقرير الأرباح اليومي', type: 'Profit', frequency: 'Daily (11 PM)', nextRun: '2024-05-20', status: 'Active' },
@@ -248,20 +253,60 @@ function getDbPath(): string | null {
 
 function readFromDisk(): DBSchema {
   const dbPath = getDbPath();
+  let data: DBSchema;
   if (dbPath) {
     try {
       const fs = (window as any).require('fs');
       if (fs.existsSync(dbPath)) {
         const raw = fs.readFileSync(dbPath, 'utf-8');
-        return { ...DEFAULT_DB, ...JSON.parse(raw) };
+        data = { ...DEFAULT_DB, ...JSON.parse(raw) };
+      } else {
+        data = DEFAULT_DB;
       }
     } catch (e) {
       console.error('[localDB] Failed to read from disk:', e);
+      data = DEFAULT_DB;
     }
+  } else {
+    const saved = localStorage.getItem('alghwairy_db');
+    data = saved ? { ...DEFAULT_DB, ...JSON.parse(saved) } : DEFAULT_DB;
   }
   
-  const saved = localStorage.getItem('alghwairy_db');
-  return saved ? { ...DEFAULT_DB, ...JSON.parse(saved) } : DEFAULT_DB;
+  // Migration: Ensure role_permissions is up to date and contains new modules
+  const defaultRoles = DEFAULT_DB.role_permissions || [];
+  if (!data.role_permissions || data.role_permissions.length === 0) {
+    data.role_permissions = defaultRoles;
+    writeToDisk(data);
+  } else {
+    // Migration: Ensure role_permissions is up to date and contains all necessary permissions
+    let migrationNeeded = false;
+    data.role_permissions = data.role_permissions.map((existingRole: any) => {
+      const defaultRole = defaultRoles.find((dr: any) => dr.role === existingRole.role);
+      if (defaultRole) {
+        const missing = defaultRole.permissions.filter((p: string) => !existingRole.permissions.includes(p) && !existingRole.permissions.includes('*'));
+        if (missing.length > 0) {
+          migrationNeeded = true;
+          return { ...existingRole, permissions: [...existingRole.permissions, ...missing] };
+        }
+      }
+      return existingRole;
+    });
+    
+    // Also add any missing default roles
+    defaultRoles.forEach((dr: any) => {
+      if (!data.role_permissions.find((r: any) => r.role === dr.role)) {
+        data.role_permissions.push(dr);
+        migrationNeeded = true;
+      }
+    });
+    
+    if (migrationNeeded) {
+      writeToDisk(data);
+    }
+
+  }
+  
+  return data;
 }
 
 function writeToDisk(data: DBSchema) {

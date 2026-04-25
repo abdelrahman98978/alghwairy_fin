@@ -104,166 +104,217 @@ export default function ContractsView({ showToast, logActivity, t }: ContractsVi
         <title>عقد لوجستي سيادي #${contract.id}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+          :root {
+            --primary: #004d40;
+            --secondary: #ffc107;
+            --on-surface: #1a1c1e;
+            --on-surface-variant: #43474e;
+            --surface-container-low: #f0f4f8;
+            --surface-container-lowest: #ffffff;
+            --outline: #73777f;
+          }
           body { 
             font-family: 'Tajawal', sans-serif; 
-            padding: 40px; 
+            padding: 50px; 
             color: var(--on-surface); 
-            line-height: 1.8;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
           }
-          .header {
-            text-align: center;
+          .sovereign-print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
             border-bottom: 3px solid var(--primary);
-            padding-bottom: 20px;
-            margin-bottom: 40px;
+            direction: rtl;
           }
-          .header h1 { margin: 0; color: var(--primary); font-weight: 900; }
-          .header p { margin: 5px 0 0; color: var(--on-surface-variant); font-weight: 600; }
-          .section { margin-bottom: 30px; }
+          .header-right { text-align: right; }
+          .header-center { text-align: center; }
+          .header-left { text-align: left; }
+          
+          .header-right h2 { margin: 0; color: var(--primary); font-weight: 900; font-size: 1.4rem; }
+          .header-right p { margin: 0; font-size: 0.9rem; fontWeight: 700; }
+          
+          .header-center h1 { margin: 0; font-weight: 950; font-size: 1.6rem; color: var(--on-surface); }
+          .header-center p { margin: 0; font-size: 0.9rem; fontWeight: 700; }
+          
+          .header-left p { margin: 0; font-size: 0.9rem; font-weight: 800; }
+          .header-left .sub { margin: 0; font-size: 0.75rem; opacity: 0.7; }
+
+          .section { margin-bottom: 35px; }
           .section-title {
             background: var(--surface-container-low);
-            padding: 10px 15px;
-            font-weight: 800;
+            padding: 12px 20px;
+            font-weight: 900;
             color: var(--primary);
-            border-right: 4px solid var(--primary);
-            border-radius: 4px;
+            border-right: 5px solid var(--primary);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
           }
           .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 25px;
             margin-top: 15px;
           }
-          .field { margin-bottom: 15px; }
-          .label { font-size: 0.9em; color: var(--on-surface-variant); font-weight: 700; display: block; }
-          .value { font-size: 1.1em; font-weight: 800; color: var(--on-surface); }
-          .terms {
-            background: var(--surface-container-lowest);
-            padding: 20px;
-            border: 1px solid var(--outline);
-            border-radius: 8px;
+          .field { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+          .label { font-size: 0.85em; color: var(--on-surface-variant); font-weight: 700; display: block; margin-bottom: 4px; }
+          .value { font-size: 1.05em; font-weight: 800; color: var(--on-surface); }
+          
+          .terms-container {
+            background: #fdfdfd;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
             white-space: pre-wrap;
-            margin-top: 10px;
+            margin-top: 15px;
             font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
           }
           .signatures {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-top: 80px;
+            gap: 60px;
+            margin-top: 100px;
             text-align: center;
           }
           .sig-box {
             border-top: 2px dashed var(--outline);
-            padding-top: 15px;
+            padding-top: 20px;
           }
-          .e-sign {
-            color: var(--success);
+          .e-sign-badge {
+            color: #2e7d32;
             font-weight: 900;
-            border: 2px solid var(--success);
-            padding: 10px;
-            border-radius: 8px;
+            border: 2px solid #2e7d32;
+            padding: 12px;
+            border-radius: 10px;
             display: inline-block;
-            margin-top: -40px;
-            background: var(--surface);
-            font-size: 0.9rem;
+            margin-bottom: 20px;
+            background: #f1f8e9;
+            font-size: 0.85rem;
+            line-height: 1.4;
+          }
+          .footer-note {
+            text-align: center;
+            margin-top: 80px;
+            font-size: 0.75rem;
+            color: var(--on-surface-variant);
+            border-top: 1px solid #eee;
+            padding-top: 20px;
           }
           @media print {
-            body { -webkit-print-color-adjust: exact; padding: 0; }
+            body { padding: 0; margin: 0; }
+            .no-print { display: none; }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <img src="${window.location.origin}/logo.png" alt="Logo" style="height: 80px; object-fit: contain; margin-bottom: 15px;" onerror="this.style.display='none'" />
-          <h1>مؤسسة الغويري للتخليص الجمركي</h1>
-          <p>Alghwairy Customs Clearance Institution</p>
-          <h2 style="margin-top: 30px; color: var(--on-surface);">${contract.type === 'client' ? 'عقد تقديم خدمات تخليص جمركي ولوجستية' : 'عقد اتفاقية نقل ومساندة لوجستية'}</h2>
+        <div class="sovereign-print-header">
+          <div class="header-right">
+            <h2>مؤسسة الغويري للتخليص الجمركي</h2>
+            <p>الرقم الضريبي: 310344810200003</p>
+          </div>
+          <div class="header-center">
+            <h1>${contract.type === 'client' ? 'عقد تقديم خدمات لوجستية' : 'اتفاقية توريد خدمات نقل'}</h1>
+            <p>نسخة رسمية معتمدة</p>
+          </div>
+          <div class="header-left">
+            <p>Alghwairy Institution</p>
+            <p class="sub">Sovereign Logistics Hub</p>
+          </div>
         </div>
 
         <div class="section">
-          <div class="section-title">البيانات الأساسية للمتعاقد</div>
+          <div class="section-title">أولاً: بيانات التعاقد المرجعية</div>
           <div class="grid">
             <div class="field">
-              <span class="label">رقم العقد المرجعي</span>
-              <span class="value">#${contract.id}</span>
+              <span class="label">رقم العقد الموحد</span>
+              <span class="value">CTR-${contract.id?.slice(0, 8).toUpperCase()}</span>
             </div>
             <div class="field">
-              <span class="label">تاريخ تحرير العقد</span>
+              <span class="label">تاريخ إبرام العقد</span>
               <span class="value">${contract.contract_date}</span>
             </div>
             <div class="field">
               <span class="label">تاريخ انتهاء الصلاحية</span>
-              <span class="value">${contract.expiry_date || 'غير محدد'}</span>
+              <span class="value">${contract.expiry_date || 'ساري المفعول حتى إشعار آخر'}</span>
             </div>
             <div class="field">
-              <span class="label">حالة العقد</span>
-              <span class="value">${contract.status === 'active' ? 'نشط وساري المفعول' : 'منتهي / ملغى'}</span>
+              <span class="label">تصنيف العقد</span>
+              <span class="value">${contract.type === 'client' ? 'عقد عميل (إيرادات)' : 'عقد مزود خدمة (تكاليف)'}</span>
             </div>
           </div>
         </div>
 
         <div class="section">
-          <div class="section-title">بيانات الطرف الثاني (العميل/الناقل)</div>
-          <div class="field" style="margin-top: 15px;">
-            <span class="label">اسم الجهة المتعاقدة</span>
-            <span class="value" style="font-size: 1.3rem;">${contract.entity_name}</span>
+          <div class="section-title">ثانياً: بيانات الطرف الثاني</div>
+          <div class="field" style="margin-top: 15px; border: none;">
+            <span class="label">الاسم الرسمي للجهة المتعاقدة</span>
+            <span class="value" style="font-size: 1.4rem; color: var(--primary);">${contract.entity_name}</span>
           </div>
         </div>
 
         <div class="section">
-          <div class="section-title">التفاصيل المالية المتفق عليها</div>
+          <div class="section-title">ثالثاً: المقابل المالي والرسوم</div>
           <div class="grid">
             <div class="field">
-              <span class="label">القيمة الإجمالية للعقد</span>
-              <span class="value">${Number(contract.value).toLocaleString()} SAR</span>
+              <span class="label">القيمة الإجمالية للعقد (سنوي/دوري)</span>
+              <span class="value" style="font-size: 1.2rem;">${Number(contract.value).toLocaleString()} SAR</span>
             </div>
             ${contract.type === 'transporter' ? `
             <div class="field">
-              <span class="label">عائد التشغيل المتفق عليه</span>
-              <span class="value">${Number(contract.transport_expenses || 0).toLocaleString()} SAR</span>
+              <span class="label">عائد التشغيل المباشر</span>
+              <span class="value" style="color: #c62828;">${Number(contract.transport_expenses || 0).toLocaleString()} SAR</span>
             </div>` : ''}
           </div>
         </div>
 
         <div class="section">
-          <div class="section-title">البنود والشروط السيادية</div>
-          <div class="terms">${contract.terms || 'تخضع هذه الاتفاقية للشروط والأحكام القياسية المعتمدة لدى مؤسسة الغويري للتخليص الجمركي، وحسب المواصفات المحددة من السلطات المختصة والأنظمة الأمنية واللوجستية.'}</div>
+          <div class="section-title">رابعاً: بنود الاتفاقية والشروط السيادية</div>
+          <div class="terms-container">${contract.terms || 'تخضع هذه الاتفاقية للأنظمة والقوانين السارية في المملكة العربية السعودية، وتعتبر شروط مؤسسة الغويري الملحقة جزءاً لا يتجزأ من هذا العقد.'}</div>
         </div>
 
         <div class="signatures">
           <div class="sig-box">
-            <strong style="font-size: 1.1em;">الطرف الأول (مؤسسة الغويري)</strong>
-            <br/><br/>
+            <strong style="display: block; margin-bottom: 20px;">الطرف الأول (مؤسسة الغويري)</strong>
             ${contract.signed ? `
-              <div class="e-sign">
-                ✓ معتمد وموقع إلكترونياً
-                <br/><small>${contract.signature_date}</small>
+              <div class="e-sign-badge">
+                موقع إلكترونياً وصادر عن<br/>
+                نظام الغويري السيادي المعتمد<br/>
+                بتاريخ: ${contract.signature_date}
               </div>
             ` : `
-              <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+              <div style="height: 80px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #aaa; border-radius: 8px;">(ختم المؤسسة والتوقيع)</div>
             `}
           </div>
           <div class="sig-box">
-            <strong style="font-size: 1.1em;">الطرف الثاني (${contract.entity_name})</strong>
-            <br/><br/>
-            <div style="height: 60px; color: #999;">(التوقيع / الختم اليدوي)</div>
+            <strong style="display: block; margin-bottom: 20px;">الطرف الثاني (${contract.entity_name})</strong>
+            <div style="height: 80px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #aaa; border-radius: 8px;">(توقيع الطرف الثاني)</div>
           </div>
         </div>
 
-          <div style={{ textAlign: 'center', margin: '70px auto 0', fontSize: '0.8em', color: 'var(--on-surface-variant)', borderTop: '1px solid var(--outline-variant)', paddingTop: '15px', maxWidth: '600px' }}>
-          هذه الوثيقة مستخرجة من المنظومة السيادية للغويري للعمليات المالية واللوجستية - ${new Date().toLocaleString('ar-SA')}
+        <div class="footer-note">
+          هذه الوثيقة رسمية ومعتمدة ومستخرجة آلياً من نظام مؤسسة الغويري للتخليص الجمركي (الإصدار السيادي).
+          <br/>تاريخ الاستخراج: ${new Date().toLocaleString('ar-SA')} | مرجع رقم: ${contract.id}
         </div>
         
         <script>
           window.onload = function() { 
             setTimeout(() => {
               window.print(); 
+              // window.close(); // Uncomment if you want window to close after printing
             }, 500); 
           }
         </script>
       </body>
       </html>
     `;
+
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
