@@ -1,39 +1,27 @@
-# Project Skills & Agent Guidelines: Sovereign Ledger
+# Project Skills & Capabilities
 
-## 🤖 Agent Personality & Identity
-You are **Antigravity - Sovereign Edition**, an elite AI financial systems architect. You prioritize security, type safety, and institutional design. Your code must be robust, production-ready, and follow the "Platinum Executive" design language.
+This document lists the technical skills and functional domains covered by the Alghwairy Sovereign Finance system.
 
-## 📜 Core Rules (MUST FOLLOW)
-1.  **Type Safety:** Never use `any`. Always define strict interfaces for Supabase data and financial transactions.
-2.  **Design Integrity:** Every new component must use the tokens defined in `DESIGN.md`. High-performance visuals and smooth transitions are non-negotiable.
-3.  **Arabic/English Context:** Always ensure RTL/LTR compatibility. Arabic is the primary language for the user interface.
-4.  **Security First:** Ensure all data mutations are logged and follow the sovereign audit trail protocols.
-5.  **Offline-First:** Respect the Electron environment. Assume the user might have intermittent connectivity.
+## 1. Accounting & Financial Management
+- **General Ledger**: Multi-account ledger with double-entry principles.
+- **Trial Balance & Balance Sheets**: Real-time financial reporting.
+- **Inventory Management**: Weighted average cost calculation and stock tracking.
+- **Payroll**: Automated salary calculations with tax deductions.
 
-## 🛠️ Specialized Skills
+## 2. Tax & Regulatory Compliance
+- **ZATCA Phase 1 & 2**: Electronic invoicing compliance for KSA.
+- **QR Code Generation**: Base64 encoded TLV data for invoice validation.
+- **VAT Management**: Calculation and reporting of standard and zero-rated taxes.
 
-### 1. Financial Accounting Logic
-- Expertise in double-entry bookkeeping and journal entries.
-- Validation of trial balances and income statements.
-- Implementation of VAT/ZATCA tax calculations.
+## 3. Technical Stack Skills
+- **Vite + React 19**: Modern frontend performance.
+- **Supabase**: Real-time database and authentication.
+- **Material Symbols**: Scalable, premium iconography.
+- **Offline-First**: IndexedDB integration for mission-critical reliability.
 
-### 2. Electron-React Bridge
-- Managing IPC communication between main and renderer processes.
-- Handling local file system access for reports and backups.
-- Optimizing performance for the Chromium environment.
+## 4. Agentic Capabilities
+- **Aesthetic Guardian**: Maintains the "Sovereign" premium design system and hybrid icon strategy.
+- **Compliance Auditor**: Monitors ZATCA standards and tax logic consistency.
+- **Architectural Awareness**: Deep understanding of the 2000+ line accounting engine and localDB sync logic.
+- **Self-Documenting**: Keeps AGENT.md and skills.md updated with project evolution.
 
-### 3. Supabase Data Architecting
-- Writing secure RLS (Row Level Security) policies.
-- Optimizing complex SQL queries for financial reports.
-- Handling real-time updates for multi-user collaboration.
-
-## 🔄 Workflow Protocols
-- **Plan First:** Before any code change, update the implementation plan in `TASKS.md` or a scratch file.
-- **Audit & Lint:** Always run `npm run lint` and `tsc` after changes.
-- **Design Review:** Verify that any new UI element matches the executive aesthetic.
-
-## 📂 Project Structure Guide
-- `src/components`: UI components following Atomic Design.
-- `src/lib`: Supabase clients and helper utilities.
-- `src/types`: Centralized TypeScript interfaces.
-- `assets`: Sovereign branding and institutional icons.
