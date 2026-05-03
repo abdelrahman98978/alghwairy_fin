@@ -1,13 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Wallet, 
-  Users, 
-  Plus, 
-  X,
-  CheckCircle2,
-  TrendingDown
-} from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { localDB } from '../lib/localDB';
 import type { Translations } from '../types/translations';
 
 interface ExpensesProps {
@@ -29,8 +21,15 @@ interface Expense {
 }
 
 export default function ExpensesView({ showToast, logActivity, t, lang }: ExpensesProps) {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const data = localDB.getActive('expenses').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return (data as Expense[]) || [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -41,23 +40,20 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
     date: new Date().toISOString().split('T')[0]
   });
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(() => {
     setLoading(true);
-    const { data, error } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
-    if (error) {
-      showToast('Error: ' + error.message, 'error');
-    } else {
-      setExpenses((data as Expense[]) || []);
+    try {
+        const data = localDB.getActive('expenses').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setExpenses((data as Expense[]) || []);
+    } catch (err: any) {
+        showToast('Error: ' + err.message, 'error');
     }
     setLoading(false);
   }, [showToast]);
 
   useEffect(() => {
-    const init = async () => {
-      await fetchExpenses();
-    };
-    init();
-  }, [fetchExpenses]);
+    // Initial data loaded via functional initializer
+  }, []);
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,15 +71,15 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
       date: formData.date
     };
     
-    const { error } = await supabase.from('expenses').insert([newExpense]);
-    if (error) {
-      showToast(lang === 'ar' ? 'خطأ في تسجيل المصروف' : 'Error recording expense', 'error');
-    } else {
-      await logActivity('Recorded Sovereign Expense: ' + formData.title + ' (' + formData.amount + ' SAR)', 'expenses');
-      showToast(lang === 'ar' ? 'تم تسجيل المصروف السيادي بنجاح.' : 'Sovereign expense recorded.', 'success');
-      setShowAddModal(false);
-      setFormData({ title: '', category: 'Operational', amount: '', date: new Date().toISOString().split('T')[0] });
-      fetchExpenses();
+    try {
+        const record = localDB.insert('expenses', newExpense);
+        await logActivity('Recorded Expense: ' + formData.title + ' (' + formData.amount + ' SAR)', 'expenses', record.id);
+        showToast(lang === 'ar' ? 'تم تسجيل المصروف بنجاح في السجل المحلي.' : 'Expense recorded in local ledger.', 'success');
+        setShowAddModal(false);
+        setFormData({ title: '', category: 'Operational', amount: '', date: new Date().toISOString().split('T')[0] });
+        fetchExpenses();
+    } catch (err: any) {
+        showToast(lang === 'ar' ? 'خطأ في تسجيل المصروف' : 'Error recording expense', 'error');
     }
   };
 
@@ -98,41 +94,47 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
            <h2 className="view-title" style={{ margin: 0 }}>{t.title}</h2>
            <p className="view-subtitle" style={{ margin: 0 }}>{t.subtitle}</p>
         </div>
-        <button 
-           onClick={() => setShowAddModal(true)}
-           className="btn-executive" 
-           style={{ border: 'none' }}
-        >
-           <Plus size={18} /> {t.record_new_expense}
-        </button>
+         <button 
+            onClick={() => setShowAddModal(true)}
+            className="btn-executive" 
+            style={{ border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+         >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span> {t.record_new_expense}
+         </button>
       </header>
 
       {/* Cash Flow Summary */}
       <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
-         <div className="card" style={{ background: 'var(--primary)', color: 'white', padding: '2.5rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', color: 'var(--secondary)' }}><Wallet size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(136, 217, 130, 0.2)', color: '#88d982', padding: '0.4rem 1rem', borderRadius: '10px' }}>AUDITED</span>
-            </div>
+         <div className="card" style={{ background: 'var(--primary)', color: 'var(--on-primary)', padding: '2.5rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 2 }}>
+                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(var(--secondary-rgb), 0.1)', color: 'var(--secondary)', display: 'flex' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>wallet</span>
+                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(var(--success-rgb), 0.2)', color: 'var(--success)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OFFLINE SECURED</span>
+             </div>
             <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>{t.current_cash_balance}</p>
-            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>{cashBalance.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'white' }}>SAR</span></h2>
-            <div style={{ position: 'absolute', bottom: '-15%', right: '-5%', width: '120px', height: '120px', background: 'rgba(212, 167, 106, 0.05)', borderRadius: '30px', transform: 'rotate(15deg)' }}></div>
+            <h2 style={{ fontSize: '2.6rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--secondary)', position: 'relative', zIndex: 2 }}>{cashBalance.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.6, color: 'var(--on-primary)' }}>SAR</span></h2>
+            <div style={{ position: 'absolute', bottom: '-15%', right: '-5%', width: '120px', height: '120px', background: 'rgba(var(--secondary-rgb), 0.05)', borderRadius: '30px', transform: 'rotate(15deg)' }}></div>
          </div>
 
          <div className="card" style={{ padding: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'var(--surface-container-high)', color: 'var(--primary)' }}><Users size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'var(--surface-container-low)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>STAFF PETTY</span>
-            </div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '1rem', borderRadius: '16px', background: 'var(--surface-container-high)', color: 'var(--primary)', display: 'flex' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>group</span>
+                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'var(--surface-container-low)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '10px' }}>STAFF PETTY</span>
+             </div>
             <p style={{ fontSize: '0.95rem', color: 'var(--on-surface-variant)', fontWeight: 700, marginBottom: '0.5rem' }}>{t.total_petty_cash}</p>
             <h2 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--primary)' }}>{employeePettyCash.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.5 }}>SAR</span></h2>
          </div>
 
          <div className="card" style={{ padding: '2.5rem', borderInlineStart: '6px solid var(--error)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-               <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)' }}><TrendingDown size={28} /></div>
-               <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(186, 26, 26, 0.1)', color: 'var(--error)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OUTFLOW</span>
-            </div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '1rem', borderRadius: '16px', background: 'rgba(var(--error-rgb), 0.1)', color: 'var(--error)', display: 'flex' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>trending_down</span>
+                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 900, background: 'rgba(var(--error-rgb), 0.1)', color: 'var(--error)', padding: '0.4rem 1rem', borderRadius: '10px' }}>OUTFLOW</span>
+             </div>
             <p style={{ fontSize: '0.95rem', color: 'var(--on-surface-variant)', fontWeight: 700, marginBottom: '0.5rem' }}>{t.total_expenses}</p>
             <h2 style={{ fontSize: '2.4rem', margin: 0, fontFamily: 'Tajawal', fontWeight: 900, color: 'var(--error)' }}>{totalOperating.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.5 }}>SAR</span></h2>
          </div>
@@ -143,13 +145,13 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
          <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--surface-container-high)' }}>
             <div style={{ padding: '1.5rem 2.5rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <h3 style={{ fontSize: '1.3rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900, color: 'var(--primary)' }}>{t.recent_expenses_ledger}</h3>
-               <button className="btn-executive" style={{ background: 'white', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit All</button>
+               <button className="btn-executive" style={{ background: 'var(--surface)', color: 'var(--primary)', border: '1px solid var(--surface-container-high)', padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 800 }}>Audit Ledger</button>
             </div>
             {loading ? (
                <div style={{ textAlign: 'center', padding: '6rem', color: 'var(--on-surface-variant)', fontWeight: 800 }}>Loading Expenditures...</div>
             ) : (
                <div style={{ overflowX: 'auto' }}>
-                  <table className="sovereign-table">
+                  <table className="sovereign-table-premium">
                      <thead>
                         <tr>
                            <th style={{ paddingInlineStart: '2.5rem' }}>{t.table.date}</th>
@@ -169,6 +171,11 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
                               amount={Number(expense.amount).toLocaleString()} 
                            />
                         ))}
+                        {expenses.length === 0 && (
+                            <tr>
+                                <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', opacity: 0.6 }}>لم يتم تسجيل أي مصروفات حتى الآن</td>
+                            </tr>
+                        )}
                      </tbody>
                   </table>
                </div>
@@ -178,9 +185,9 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
          {/* Petty Cash Balances */}
          <div className="card" style={{ padding: '2.5rem', border: '1px solid var(--surface-container-high)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900 }}>{t.active_petty_cash}</h3>
-              <Users size={20} color="var(--primary)" />
-            </div>
+               <h3 style={{ fontSize: '1.2rem', fontFamily: 'Tajawal', margin: 0, fontWeight: 900 }}>{t.active_petty_cash}</h3>
+               <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>group</span>
+             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.8rem' }}>
                <PettyCashItem name={lang === 'ar' ? 'كمال الهاشمي' : 'Kamal Al-Hashimi'} amount="8,500" used="6,200" percentage={73} lang={lang} />
                <PettyCashItem name={lang === 'ar' ? 'فيصل الحريبي' : 'Faisal Al-Huraibi'} amount="12,000" used="4,500" percentage={37} lang={lang} />
@@ -188,10 +195,10 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
                <PettyCashItem name={lang === 'ar' ? 'أحمد منصور' : 'Ahmed Mansour'} amount="15,000" used="14,800" percentage={98} warning lang={lang} />
             </div>
 
-            <div style={{ marginTop: '3.5rem', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-               <CheckCircle2 size={24} color="var(--success)" style={{ marginTop: '0.2rem' }} />
+             <div style={{ marginTop: '3.5rem', padding: '1.5rem', background: 'var(--surface-container-low)', borderRadius: '16px', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--success)', marginTop: '0.2rem', fontSize: '24px' }}>verified</span>
                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 900, marginBottom: '0.4rem', color: 'var(--primary)', fontSize: '0.9rem' }}>Financial Authority Notice:</p>
+                  <p style={{ fontWeight: 900, marginBottom: '0.4rem', color: 'var(--primary)', fontSize: '0.9rem' }}>{lang === 'ar' ? 'إشعار الرقابة المالية:' : 'Financial Authority Notice:'}</p>
                   <p style={{ fontSize: '0.8rem', opacity: 0.8, lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
                     {t.financial_authority_notice}
                   </p>
@@ -202,12 +209,12 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none' }}>
-            <button 
-              onClick={() => setShowAddModal(false)}
-              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}
-            ><X size={24} /></button>
+        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000 }}>
+          <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '3rem', position: 'relative', border: 'none', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+             <button 
+               onClick={() => setShowAddModal(false)}
+               style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex' }}
+             ><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span></button>
             <h3 style={{ fontSize: '1.6rem', fontFamily: 'Tajawal', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--primary)', textAlign: 'center' }}>{t.record_new_expense}</h3>
             
             <form onSubmit={handleManualAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -251,15 +258,7 @@ export default function ExpensesView({ showToast, logActivity, t, lang }: Expens
   );
 }
 
-interface ExpenseRowProps {
-  date: string;
-  desc: string;
-  cat: string;
-  method: string;
-  amount: string;
-}
-
-function ExpenseRow({ date, desc, cat, method, amount }: ExpenseRowProps) {
+function ExpenseRow({ date, desc, cat, method, amount }: any) {
   return (
     <tr style={{ borderBottom: '1px solid var(--surface-container-high)' }}>
        <td style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, paddingInlineStart: '2.5rem' }}>{date}</td>
@@ -273,16 +272,7 @@ function ExpenseRow({ date, desc, cat, method, amount }: ExpenseRowProps) {
   );
 }
 
-interface PettyCashItemProps {
-  name: string;
-  amount: string;
-  used: string;
-  percentage: number;
-  warning?: boolean;
-  lang: string;
-}
-
-function PettyCashItem({ name, amount, used, percentage, warning, lang }: PettyCashItemProps) {
+function PettyCashItem({ name, amount, used, percentage, warning, lang }: any) {
   return (
     <div>
        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', alignItems: 'flex-end' }}>

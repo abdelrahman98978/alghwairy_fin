@@ -1,16 +1,4 @@
 import React from 'react';
-import { 
-  History, 
-  Search, 
-  Filter, 
-  Download, 
-  User, 
-  ShieldCheck, 
-  AlertCircle,
-  FileText,
-  CreditCard,
-  Settings
-} from 'lucide-react';
 
 const ActivityLogView: React.FC = () => {
   const logs = [
@@ -23,45 +11,45 @@ const ActivityLogView: React.FC = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'financial': return <CreditCard size={16} className="text-blue-500" />;
-      case 'security': return <ShieldCheck size={16} className="text-yellow-600" />;
-      case 'system': return <Settings size={16} className="text-purple-500" />;
-      default: return <FileText size={16} />;
+      case 'financial': return <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--secondary)' }}>payments</span>;
+      case 'security': return <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--secondary)' }}>verified_user</span>;
+      case 'system': return <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-surface-variant)' }}>settings</span>;
+      default: return <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>;
     }
   };
 
   return (
-    <div className="slide-in">
-      <div className="dash-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div className="slide-in" style={{ padding: '2rem' }}>
+      <div className="dash-header" style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <History size={32} color="var(--secondary)" />
+          <h1 className="sovereign-title-elite sharp-gold" style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: 0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>history</span>
             سجل النشاطات الموحد (Sovereign Audit)
           </h1>
-          <p style={{ marginTop: '0.5rem' }}>المراقبة اللحظية والتدقيق الأمني لكافة العمليات داخل المنظومة.</p>
+          <p className="view-subtitle" style={{ marginTop: '0.5rem', fontWeight: 800 }}>المراقبة اللحظية والتدقيق الأمني لكافة العمليات داخل المنظومة.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn-executive" style={{ background: 'var(--surface)', border: '1px solid var(--surface-container-high)', color: 'var(--on-surface)' }}>
-            <Download size={18} /> تصدير السجل
+          <button className="btn-sovereign-outline">
+            <span className="material-symbols-outlined">download</span> تصدير السجل
           </button>
-          <button className="btn-executive">
-            <Filter size={18} /> تصفية متقدمة
+          <button className="btn-sovereign-primary">
+            <span className="material-symbols-outlined">filter_list</span> تصفية متقدمة
           </button>
         </div>
       </div>
 
-      <div className="card" style={{ padding: '0' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container)', display: 'flex', gap: '1.5rem' }}>
+      <div className="card shadow-elite" style={{ padding: '0', overflow: 'hidden' }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-container-high)', display: 'flex', gap: '1.5rem', background: 'var(--surface-container-low)' }}>
           <div style={{ flex: 1, position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--secondary-muted)' }} />
+            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--secondary-muted)', fontSize: '20px' }}>search</span>
             <input 
               type="text" 
               placeholder="البحث في سجل العمليات..." 
-              className="input-executive" 
-              style={{ paddingRight: '2.8rem' }}
+              className="input-premium" 
+              style={{ paddingRight: '3rem' }}
             />
           </div>
-          <select className="input-executive" style={{ width: '180px' }}>
+          <select className="input-premium" style={{ width: '220px' }}>
             <option>كافة العمليات</option>
             <option>مالية</option>
             <option>أمنية</option>
@@ -70,42 +58,42 @@ const ActivityLogView: React.FC = () => {
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table className="sovereign-table" style={{ borderSpacing: '0' }}>
+          <table className="sovereign-table-premium" style={{ width: '100%' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-container-low)' }}>
-                <th style={{ borderBottom: '1px solid var(--surface-container)' }}>المستخدم</th>
-                <th style={{ borderBottom: '1px solid var(--surface-container)' }}>العملية</th>
-                <th style={{ borderBottom: '1px solid var(--surface-container)' }}>التفاصيل السيادية</th>
-                <th style={{ borderBottom: '1px solid var(--surface-container)' }}>التوقيت</th>
-                <th style={{ borderBottom: '1px solid var(--surface-container)' }}>الحالة</th>
+              <tr>
+                <th style={{ paddingInlineStart: '2rem' }}>المستخدم</th>
+                <th>العملية</th>
+                <th>التفاصيل السيادية</th>
+                <th>التوقيت</th>
+                <th style={{ paddingInlineEnd: '2rem' }}>الحالة</th>
               </tr>
             </thead>
             <tbody>
               {logs.map(log => (
                 <tr key={log.id}>
-                  <td style={{ borderBottom: '1px solid var(--surface-container)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--surface-container-high)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <User size={16} color="var(--primary)" />
+                  <td style={{ paddingInlineStart: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: 'var(--shadow-brand)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person</span>
                       </div>
-                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{log.user}</span>
+                      <span style={{ fontWeight: 1000, fontSize: '0.95rem', color: 'var(--primary)' }}>{log.user}</span>
                     </div>
                   </td>
-                  <td style={{ borderBottom: '1px solid var(--surface-container)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--primary)', fontWeight: 900, fontSize: '0.9rem' }}>
                       {getTypeIcon(log.type)}
                       {log.action}
                     </div>
                   </td>
-                  <td style={{ borderBottom: '1px solid var(--surface-container)', color: 'var(--secondary-muted)', fontSize: '0.8rem' }}>
+                  <td style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 700 }}>
                     {log.details}
                   </td>
-                  <td style={{ borderBottom: '1px solid var(--surface-container)', color: 'var(--secondary-muted)', fontSize: '0.8rem' }}>
+                  <td style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 800 }}>
                     {log.time}
                   </td>
-                  <td style={{ borderBottom: '1px solid var(--surface-container)' }}>
-                    <span className={`badge ${log.status === 'warning' ? 'badge-warning' : 'badge-success'}`}>
-                      {log.status === 'warning' ? 'تنبيه' : 'آمن وموثق'}
+                  <td style={{ paddingInlineEnd: '2rem' }}>
+                    <span className={`status-badge-premium ${log.status === 'warning' ? 'warning' : 'success'}`} style={{ fontWeight: 1000 }}>
+                      {log.status === 'warning' ? 'تنبيه أمني' : 'آمن وموثق'}
                     </span>
                   </td>
                 </tr>
@@ -114,9 +102,9 @@ const ActivityLogView: React.FC = () => {
           </table>
         </div>
 
-        <div style={{ padding: '1.2rem', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.8rem', color: 'var(--secondary-muted)' }}>
-          <AlertCircle size={16} />
-          <span>يتم الاحتفاظ بسجلات التدقيق لمدة 5 سنوات وفقاً لقواعد الامتثال المالي السيادية.</span>
+        <div style={{ padding: '1.2rem', background: 'var(--surface-container-high)', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.85rem', color: 'var(--on-surface-variant)', borderTop: '1px solid var(--surface-container-high)' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--secondary)' }}>verified</span>
+          <span style={{ fontWeight: 800 }}>يتم الاحتفاظ بسجلات التدقيق لمدة 5 سنوات وفقاً لقواعد الامتثال المالي السيادية - مشفر ببروتوكول AES-256.</span>
         </div>
       </div>
     </div>

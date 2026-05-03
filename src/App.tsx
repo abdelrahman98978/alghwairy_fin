@@ -1,41 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  LayoutDashboard, 
-  Handshake, 
-  Wallet, 
-  ShieldCheck, 
-  Bell,
-  Search,
-  Plus,
-  ArrowUpRight,
-  Clock,
-  Zap,
-  LogOut,
-  Users,
-  UserPlus,
-  AlertCircle,
-  CheckCircle2,
-  FileText,
-  Activity,
-  Sun,
-  Moon,
-  Languages,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Settings,
-  History as HistoryIcon,
-  TrendingDown,
-  Loader2,
-  Banknote,
-  BarChart3,
-  FileSpreadsheet,
-  Trash2,
-  Megaphone,
-  Briefcase
-} from 'lucide-react';
-import { supabase } from './lib/supabase';
+import { localDB } from './lib/localDB';
+import { syncEngine } from './lib/syncEngine';
+import { hasPermission, type AppModule } from './lib/permissions';
 
 // --- Views ---
 import DashboardView from './components/DashboardView';
@@ -50,21 +16,24 @@ import TaxAutomationView from './components/TaxAutomationView';
 import ExpensesView from './components/ExpensesView';
 import PrepaymentsView from './components/PrepaymentsView';
 import DataImportView from './components/DataImportView';
-import { InvoicesView } from './components/InvoicesView';
+import InvoicesView from './components/InvoicesView';
 import AuditLogsView from './components/AuditLogsView';
 import StatementsView from './components/StatementsView';
 import PettyCashView from './components/PettyCashView';
 import LoginView from './components/LoginView';
 import { TrashView } from './components/TrashView';
 import PublicInvoiceView from './components/PublicInvoiceView';
-import MarketingView from './components/MarketingView';
-import AffiliateView from './components/AffiliateView';
+import CommunicationsView from './components/CommunicationsView';
+import { cloudSyncEngine } from './lib/cloudSyncEngine';
+import ContractsView from './components/ContractsView';
+import LandingView from './components/LandingView';
 
 
 const translations = {
   ar: {
-    title: 'الميزان السيادي',
-    subtitle: 'للخدمات المالية والمحاسبية السيادية',
+    lang: 'ar',
+    title: 'مؤسسة الغويري للتخليص الجمركي',
+    subtitle: 'منظومة الميزان السيادي - إدارة اللوجستيات والتخليص',
     welcome: 'مرحباً، ',
     last_sync: 'آخر مزامنة: اليوم، 10:45 صباحاً',
     search: 'بحث مالي سري...',
@@ -74,6 +43,7 @@ const translations = {
     nav: {
       dashboard: 'لوحة التحكم',
       customers: 'العملاء والشركاء',
+      contracts: 'إدارة العقود',
       accounting: 'المحاسبة السيادية',
       invoices: 'الفواتير السيادية',
       prepayments: 'الدفعات المقدمة',
@@ -86,21 +56,43 @@ const translations = {
       audit: 'سجل النشاطات الموحد',
       data: 'استيراد البيانات',
       settings: 'إعدادات النظام',
-      shipments: 'الشحنات والتخليص',
-      financial_compliance: 'المالية والامتثال',
-      system_security: 'النظام والأمان',
-      statements: 'القوائم المالية',
+      shipments: 'إدارة الشحنات الجمركية',
+      financial_compliance: 'الامتثال المالي والجمركي',
+      system_security: 'الأمن السيادي',
+      statements: 'القوائم المالية الجمركية',
       petty_cash: 'العهدة النقدية',
       trash: 'سلة المهملات',
       biometrics: 'الأمان والبصمات',
-      marketing: 'التسويق السيادي',
-      affiliate: 'نظام الشركاء'
+      affiliate: 'التسويق بالعمولة',
+      communications: 'الرابط السيادي'
+    },
+    landing: {
+      lang: 'ar',
+      brand: 'الغويري سيادتك',
+      hero_title: 'الريادة السيادية في التخليص الجمركي',
+      hero_subtitle: 'نحن نؤمن سلاسل التوريد الخاصة بك بأعلى معايير الدقة والأمان الرقمي.',
+      get_started: 'الدخول للمنظومة',
+      explore_services: 'استكشاف الخدمات',
+      services: {
+        title: 'خدماتنا الاستراتيجية',
+        clearance: 'التخليص الجمركي',
+        clearance_desc: 'إجراءات احترافية تضمن سرعة العبور عبر كافة الموانئ.',
+        logistics: 'الحلول اللوجستية',
+        logistics_desc: 'إدارة متكاملة لسلاسل الإمداد من المنشأ حتى المستودع.',
+        tracking: 'تتبع الشحنات السيادي',
+        tracking_desc: 'مراقبة لحظية ومؤمنة لشحناتك عبر لوحة تحكم ذكية.'
+      },
+      about: {
+        title: 'عن المؤسسة',
+        desc: 'نحن نجمع بين الخبرة التاريخية والتقنية المستقبلية لإدارة موازينك المالية واللوجستية.'
+      }
     },
     notifications: {
       success: 'تمت تسجيل العملية السيادية بنجاح بميزان الغويري!',
       error: 'خطأ سيادي في المزامنة: '
     },
     dashboard: {
+      lang: 'ar',
       title: 'لوحة التحكم التنفيذية',
       subtitle: 'المؤشرات المالية والموازين السيادية',
       compliance_title: 'إقرار الامتثال الضريبي (ZATKA)',
@@ -132,6 +124,7 @@ const translations = {
       }
     },
     reports: {
+      lang: 'ar',
       title: 'التحليلات والمؤشرات السيادية',
       subtitle: 'نظرة شمولية على أداء السيولة والربحية وتوزيع الموارد.',
       revenue: 'إجمالي الإيرادات',
@@ -146,9 +139,69 @@ const translations = {
       compliance_audit: 'تدقيق هيئة الزكاة والضريبة',
       compliance_footer: 'كافة الحركات المالية المجمعة متوافقة تماماً مع معايير هيئة الزكاة والضريبة والجمارك (المرحلة الثانية).',
       export_report: 'تصدير التقرير التحليلي',
+      export_csv: 'تصدير بيانات CSV',
+      print_report: 'طباعة التقرير الكامل',
       jan: 'يناير', feb: 'فبراير', mar: 'مارس', apr: 'أبريل', may: 'مايو', jun: 'يونيو'
     },
+    customers: {
+      title: 'إدارة العملاء والشركاء',
+      subtitle: 'الملف الموحد للعملاء والناقلين والموردين والمديونيات الرقمية.',
+      add_customer: 'إضافة كيان جديد',
+      customer: 'عميل',
+      partner: 'شريك استراتيجي',
+      carrier: 'ناقل / شركة شحن',
+      name: 'اسم الكيان',
+      phone: 'رقم التواصل',
+      email: 'البريد الإلكتروني',
+      tax_number: 'الرقم الضريبي',
+      address: 'العنوان الوطني',
+      balance: 'الرصيد الحالي',
+      total_credit: 'إجمالي الائتمان النشط',
+      partners_count: 'عدد الشركاء المسجلين',
+      pending_reviews: 'طلبات بانتظار المراجعة',
+      expired_contracts: 'اتفاقيات منتهية',
+      search_placeholder: 'بحث عن شريك بالاسم أو الرقم الضريبي...',
+      all_categories: 'كافة التصنيفات',
+      print: 'طباعة',
+      export: 'تصدير',
+      table: {
+        entity: 'الكيان / الشركة',
+        sector: 'القطاع',
+        credit: 'الرصيد المخصص',
+        roi: 'نسبة الاستخدام',
+        last_op: 'آخر عملية',
+        options: 'خيارات'
+      },
+      activity: 'النشاطات الأخيرة',
+      modal: {
+        title: 'شريك سيادي جديد',
+        name: 'الاسم القانوني للكيان',
+        phone: 'الهاتف',
+        category: 'الفئة',
+        limit: 'الحد الائتماني (SAR)',
+        cancel: 'إلغاء',
+        submit: 'حفظ السجل الآمن'
+      },
+      lang: 'ar',
+      profile: {
+        financial_kpis: 'المؤشرات المالية للكيان',
+        documents: 'المستندات والوثائق الرقمية',
+        invoices_tab: 'الفواتير والعمليات',
+        statements_tab: 'كشوفات الحساب',
+        contracts_tab: 'العقود والاتفاقيات',
+        documents_tab: 'الأرشيف الرقمي',
+        upload_area: 'اسحب وأفلت المستندات هنا (PDF/صور)',
+        allowed_files: 'صيغ الملفات المسموحة: PDF, PNG, JPG, WebP',
+        delete_doc_confirm: 'هل أنت متأكد من حذف هذا المستند؟',
+        total_balance: 'رصيد المديونية العالقة',
+        total_paid: 'إجمالي التحصيلات المرحلة',
+        total_invoices: 'عدد الفواتير المصدرة',
+        no_docs: 'لا توجد مستندات مرفقة لهذا الكيان',
+        not_found: 'لم يتم العثور على عملاء حالياً'
+      }
+    },
     accounting: {
+      lang: 'ar',
       invoice_editor: 'محرر الفواتير التحليلي',
       invoice_desc: 'إصدار وتدقيق الفواتير الضريبية المتوافقة مع متطلبات زاتكا.',
       client_name: 'اسم العميل / المنشأة',
@@ -170,15 +223,37 @@ const translations = {
       settlement_entry: 'قيد تسوية سيادي',
       adjustment_type: 'نوع التسوية',
       credit_adj: 'تسوية دائنة',
-      debit_adj: 'تسوية مدينة'
+      debit_adj: 'تسوية مدينة',
+      journal: 'دفتر اليومية',
+      general_ledger: 'دفتر الأستاذ العام',
+      daily: 'يومي',
+      monthly: 'شهري',
+      yearly: 'سنوي',
+      profit_loss: 'الأرباح والخسائر',
+      ledger_summary: 'ملخص الأستاذ',
+      statement_number: 'رقم الكشف'
+    },
+    contracts: {
+      lang: 'ar',
+      title: 'إدارة العقود السيادية',
+      client_contracts: 'عقود العملاء',
+      transport_contracts: 'عقود النقل',
+      add_contract: 'إضافة عقد',
+      contract_date: 'تاريخ العقد',
+      expiry_date: 'تاريخ الانتهاء',
+      terms: 'الشروط والأحكام',
+      transporter_name: 'اسم الناقل',
+      transport_fees: 'رسوم النقل',
+      client_name: 'اسم العميل',
+      status: 'الحالة'
     },
     payroll: {
+      lang: 'ar',
       title: 'إدارة مسيرات الرواتب السيادية',
       subtitle: 'متابعة مستحقات الكادر والتعويضات.',
       total_salaries: 'إجمالي الرواتب الشهرية',
       active_employees: 'الموظفون النشطون',
       pending_payments: 'تسويات معلقة',
-      lang: 'ar',
       excel_report: 'تصدير تقرير Excel',
       certify_wps: 'اعتماد نظام حماية الأجور',
       all_certified: 'تمت المصادقة على الجميع',
@@ -198,94 +273,115 @@ const translations = {
       base_label: 'الراتب الأساسي',
       plus_label: 'إجمالي البدلات',
       ded_label: 'إجمالي الاستقطاعات',
+      iban_label: 'رقم الآيبان (IBAN)',
+      bank_label: 'اسم البنك',
+      gosi_deduction: 'استقطاع التأمينات (GOSI)',
+      print_slip: 'طباعة مسير راتب فردي',
+      period_label: 'فترة استحقاق الراتب',
+      sif_export: 'تصدير ملف حماية الأجور (SIF)',
       secure_record: 'حفظ السجل الآمن',
-      cancel: 'إلغاء'
+      cancel: 'إلغاء',
+      enroll_success: 'تم تسجيل الموظف سيادياً بنجاح',
+      certify_confirm: 'جاري توثيق مسيرات الرواتب السيادية...',
+      certify_success: 'تم اعتماد رواتب المؤسسة بنجاح',
+      certify_payroll: 'اعتماد المسيرات',
+      certified_badge: 'تم الاعتماد السيادي',
+      no_pending: 'لا توجد مسيرات معلقة لهذه الفترة',
+      sif_success: 'تم توليد ملف SIF الخاص بحماية الأجور',
+      audit_progress: 'جاري التدقيق...',
+      no_records: 'لا توجد سجلات لهذه الفترة',
+      slip: {
+        preview_title: 'معاينة مسير الراتب',
+        earnings: 'الاستحقاقات',
+        deductions: 'الاستقطاعات',
+        net: 'صافي الراتب',
+        description: 'البيان',
+        base: 'الراتب الأساسي',
+        allowances: 'البدلات',
+        gosi: 'التأمينات الاجتماعية'
+      }
     },
-    customers: {
-      title: 'إدارة العملاء والشركاء',
-      subtitle: 'قاعدة البيانات الموحدة للائتمان، المديونيات، والعلاقات التجارية الإستراتيجية.',
-      print: 'طباعة',
-      export: 'تصدير',
-      add_customer: 'إضافة عميل جديد',
-      total_credit: 'إجمالي الائتمان النشط',
-      partners_count: 'عدد الشركاء المسجلين',
-      pending_reviews: 'طلبات بانتظار المراجعة',
-      expired_contracts: 'اتفاقيات منتهية',
-      search_placeholder: 'بحث عن شريك بالاسم أو الرقم الضريبي...',
-      all_categories: 'كافة التصنيفات',
-      table: {
-        entity: 'الكيان / الشركة',
-        sector: 'القطاع',
-        credit: 'الرصيد المخصص',
-        roi: 'نسبة الاستخدام',
-        last_op: 'آخر عملية',
-        options: 'خيارات'
-      },
-      activity: 'النشاطات الأخيرة',
-      modal: {
-        title: 'شريك سيادي جديد',
-        name: 'الاسم القانوني للكيان',
-        phone: 'الهاتف',
-        category: 'الفئة',
-        limit: 'الحد الائتماني (SAR)',
-        cancel: 'إلغاء',
-        submit: 'حفظ السجل الآمن'
-      },
-      lang: 'ar'
-    },
+
     invoices: {
+      lang: 'ar',
       title: 'إدارة الفواتير والتحصيلات',
       subtitle: 'إصدار ومتابعة الفواتير الضريبية المتوافقة مع معايير هيئة الزكاة والضريبة (ZATCA).',
       active_title: 'سجل الفواتير النشطة',
       search_placeholder: 'بحث في الفواتير...',
+      new_invoice: 'فاتورة جديدة',
+      profit_label: 'صافي أرباح التشغيل',
+      inventory_total: 'إجمالي قيمة البضائع',
+      final_invoice: 'فاتورة ضريبية نهائية',
+      internal_invoice: 'فاتورة داخلية',
       print: 'طباعة القائمة',
+      summary_report: 'تقرير ملخص',
+      summary_title: 'تقرير ملخص الفواتير والتحصيلات',
+      summary_subtitle: 'كشف ملخص العمليات والتحصيل المالي للفترة المحددة',
+      zatca_ready: 'جاهزة للمرحلة الثانية',
+      bilingual: 'ثنائي اللغة',
       add_title: 'إنشاء فاتورة سيادية',
+      operation_number: 'رقم العملية',
+      statement_number: 'رقم البيان',
+      bol_number: 'رقم البوليصة',
+      customs_fees: 'رسوم جمركية',
+      port_fees: 'رسوم الميناء',
+      transport_fees_label: 'أجور النقل',
+      other_fees_label: 'مصاريف إضافية',
+      client_label: 'العميل',
+      carrier_label: 'الناقل',
       stats: {
-        total_due: 'إجمالي المستحقات',
+        total_due: 'إجمالي المبيعات والتحصيل',
         collected: 'التحصيل (هذا الشهر)',
         overdue: 'متأخرات مستحقة',
-        zatca_certified: 'فواتير ZATCA'
+        zatca_certified: 'إجمالي الرسوم والضرائب'
       },
       table: {
-        number: 'رقم الفاتورة / المرجع',
+        number: 'رقم المرجع',
         client: 'العميل',
-        date: 'تاريخ الإصدار',
+        date: 'التاريخ',
         amount: 'المبلغ الصافي',
         tax: 'الضريبة 15%',
         total: 'الإجمالي',
-        status: 'حالة السداد',
-        preview: 'معاينة وطباعة',
+        status: 'الحالة',
+        preview: 'معاينة',
         options: 'خيارات'
+      },
+      preview: {
+        print: 'طباعة الفاتورة',
+        whatsapp: 'واتساب',
+        email: 'إيميل',
+        mark_paid: 'تأكيد السداد',
+        close: 'إغلاق'
       },
       modal: {
         title: 'إصدار فاتورة ضريبية',
-        client_label: 'اختيار العميل / الشريك',
-        amount_label: 'المبلغ المفوتر (قبل الضريبة)',
-        ref_label: 'رقم المرجع (اختياري)',
+        client_label: 'العميل المستفيد',
+        carrier_label: 'الناقل / شركة الشحن',
+        type: 'نوع الفاتورة',
+        type_label: 'تصنيف الفاتورة',
+        final_type: 'فاتورة نهائية',
+        internal_type: 'فاتورة داخلية',
+        operation_num: 'رقم العملية',
+        statement_num: 'رقم البيان الجمركي',
+        bol_num: 'رقم البوليصة (BOL)',
+        cargo_val: 'قيمة الشحنة',
+        total_collection: 'إجمالي مبلغ التحصيل',
+        customs_fees: 'رسوم الجمارك',
+        port_fees: 'أجور الموانئ',
+        transport_fees: 'أجور النقل',
+        extra_expenses: 'مصروفات إضافية',
+        amount_label: 'صافي الإيراد',
+        ref_label: 'المرجع',
         cancel: 'إلغاء',
-        submit: 'إصدار وتوثيق (ZATCA)',
-        whatsapp_share: 'إرسال عبر واتساب (WhatsApp)'
+        submit: 'حفظ الفاتورة والترحيل'
       },
       confirm_delete: 'هل أنت متأكد من حذف هذه الفاتورة؟',
       delete_success: 'تم حذف الفاتورة بنجاح.',
-      wa_invoice_template: 'عزيزي العميل، فاتورتكم رقم {{number}} بقيمة {{total}} جاهزة. المعاينة: {{link}}',
       status_paid: 'مدفوع',
-      status_pending: 'معلق',
-      copy_link_success: 'تم نسخ الرابط',
-      settlement_badge: 'تسوية ضريبية',
+      status_pending: 'بانتظار السداد',
       edit_invoice: 'تعديل الفاتورة',
       status_label: 'الحالة',
-      save_changes: 'حفظ التغييرات',
-      wa_preview_title: 'معاينة واتساب',
-      wa_preview_subtitle: 'إرسال رسمي عبر الواتساب',
-      wa_send_now: 'إرسال الآن',
-      cancel: 'إلغاء',
-      simplified_invoice: 'فاتورة مبسطة',
-      shareable_link_success: 'تم توليد الرابط',
-      whatsapp_preview: 'معاينة',
-      wa_phone_label: 'رقم الهاتف',
-      wa_review_desc: 'راجع الرسالة قبل الإرسال',
-      lang: 'ar'
+      save_changes: 'حفظ التغييرات'
     },
     expenses: {
       lang: 'ar',
@@ -318,17 +414,24 @@ const translations = {
       allocation_label: 'جهة التخصيص'
     },
     tax: {
-      title: 'الأتمتة الضريبية (ZATCA)',
-      subtitle: 'الربط المباشر مع أنظمة هيئة الزكاة والضريبة والجمارك - المرحلة الثانية.',
+      title: 'الأتمتة الضريبية والجمركية',
+      subtitle: 'الربط المباشر مع أنظمة هيئة الزكاة والضريبة والجمارك (ZATCA).',
       output_vat: 'ضريبة المخرجات (المبيعات)',
       input_vat: 'ضريبة المدخلات (المشتريات)',
       net_vat: 'صافي الضريبة المستحقة',
       certified_history: 'أرشيف الإقرارات المعتمدة سيادياً',
-      ai_audit: 'التدقيق الذكي للبيانات الضريبية'
+      ai_audit: 'التدقيق الذكي للبيانات الضريبية',
+      customs_fees: 'الرسوم الجمركية الجارية',
+      municipal_fees: 'الضرائب والرسوم البلدية',
+      total_clearance: 'إجمالي قيمة التخليص',
+      declaration_count: 'عدد البيانات الجمركية (بيان)',
+      platform_fees: 'رسوم المنصات (فسح/تبادل)',
+      lang: 'ar'
     },
     prepayments: {
-      title: 'الدفعات والأرصدة المقدمة',
-      subtitle: 'إدارة وتسوية الدفعات المقدمة للشركات والموردين والخدمات السنوية',
+      lang: 'ar',
+      title: 'الاعتمادات المالية المسبقة',
+      subtitle: 'إدارة الودائع الجمركية والاعتمادات البنكية والخدمات السنوية',
       active_count: 'إجمالي الدفعات النشطة',
       recent_ledger: 'سجل الأرصدة المقدمة',
       loading: 'جاري تحميل البيانات السيادية...',
@@ -343,6 +446,7 @@ const translations = {
       }
     },
     audit_logs: {
+      lang: 'ar',
       title: 'سجل التدقيق والنشاطات',
       subtitle: 'مراقبة شاملة لكافة الحركات والعمليات التي تمت على نظام الميزان الموحد',
       refresh: 'تحديث السجل',
@@ -354,6 +458,7 @@ const translations = {
       empty: 'لا توجد عمليات مسجلة حتى الآن في الميزان السيادي.'
     },
     security: {
+      lang: 'ar',
       title: 'الأمن والسيادة الرقمية',
       subtitle: 'إدارة بروتوكولات الأمان، التشفير، والوصول الآمن للقاعدة.',
       shield_status: 'حالة الدرع السيادي',
@@ -361,11 +466,13 @@ const translations = {
       encryption: 'تشفير ECDSA النشط'
     },
     roles: {
+      lang: 'ar',
       title: 'إدارة الصلاحيات والكوادر',
       subtitle: 'تحديد مستويات الوصول والأدوار الوظيفية داخل النظام المحاسبي.',
       add_role: 'إضافة دور جديد'
     },
     trash: {
+      lang: 'ar',
       title: 'سلة المهملات السيادية',
       subtitle: 'إدارة السجلات المحذوفة والمسترجعة من القاعدة المحلية.',
       invoices: 'الفواتير',
@@ -376,6 +483,7 @@ const translations = {
       empty: 'سلة المهملات فارغة حالياً'
     },
     settings: {
+      lang: 'ar',
       title: 'الإعدادات السيادية',
       subtitle: 'تهيئة المنظومة، معلومات الكيان، والتفضيلات العامة.',
       save: 'حفظ التغييرات السيادية',
@@ -387,7 +495,22 @@ const translations = {
         appearance: 'التصميم والهوية',
         documents: 'ترويسات التقارير',
         security: 'الأمان والبصمات',
-        backup: 'النسخ الاحتياطي'
+        backup: 'النسخ الاحتياطي',
+        cloud: 'المزامنة السحابية'
+      },
+      cloud_sync: {
+        title: 'المزامنة السحابية',
+        subtitle: 'ربط القاعدة المحلية مع السحابة السيادية للمزامنة والوصول المتعدد.',
+        status: 'حالة الاتصال العامة',
+        enable_sync: 'تفعيل المزامنة السيادية',
+        disable_sync: 'إيقاف المزامنة السحابية',
+        sync_now: 'مزامنة الآن',
+        connected: 'متصل بالسحابة المشفرة',
+        disconnected: 'غير متصل - وضع محلي',
+        last_sync: 'آخر مزامنة ناجحة',
+        supabase_url: 'رابط Supabase URL',
+        supabase_key: 'مفتاح Anon Key',
+        auto_sync_label: 'المزامنة التلقائية (كل 3 دقائق)'
       }
     },
     data_import: {
@@ -395,12 +518,8 @@ const translations = {
       title: 'استيراد البيانات الخارجية',
       subtitle: 'رفع ملفات Excel أو CSV لدمجها في السجل الموحد.',
       clear_all: 'مسح كافة السجلات',
-      seed_samples: 'توليد بيانات تجريبية',
       confirm_clear_data: 'هل أنت متأكد من مسح كافة البيانات؟',
       clear_success: 'تم مسح البيانات بنجاح',
-      seeding_info: 'تحميل بيانات تجريبية للتدريب',
-      seed_success: 'تم تحميل العينات بنجاح',
-      seed_error: 'خطأ في تحميل العينات',
       import_success_prefix: 'تم استيراد',
       import_success_suffix: 'سجل بنجاح',
       encryption_msg: 'التشفير السيادي نشط (AES-256)',
@@ -511,122 +630,31 @@ const translations = {
       subtitle: 'إدارة السلف، المسحوبات الشخصية، والمصروفات المكتبية العاجلة.',
       total_active: 'إجمالي العهد النشطة',
       add_request: 'طلب عهدة جديدة',
+      allocation_label: 'قناة الصرف / التخصيص',
+      disburse_btn: 'صرف وتسوية سيادية',
+      settled_status: 'تمت التسوية بنجاح',
+      employee_picker: 'اختيار الموظف المسؤول',
       lang: 'ar'
-    },
-    marketing: {
-      lang: 'ar',
-      title: 'التسويق السيادي',
-      subtitle: 'إدارة الحملات وتحليلات النمو المؤسسي.',
-      create_campaign: 'إنشاء حملة سيادية',
-      active_campaigns: 'الحملات النشطة',
-      total_reach: 'إجمالي الوصول',
-      conv_rate: 'معدل التحويل',
-      roi_multiplier: 'مضاعف العائد',
-      table: {
-        identity: 'هوية الحملة',
-        status: 'الحالة',
-        reach: 'الوصول',
-        engagement: 'التفاعل',
-        leads: 'العملاء المحتملون',
-        budget: 'الميزانية (SAR)'
-      },
-      tabs: {
-        campaigns: 'الحملات',
-        audiences: 'الجمهور',
-        automation: 'الأتمتة',
-        analytics: 'التحليلات',
-        email: 'البريد',
-        intelligence: 'الذكاء'
-      },
-      add_modal: {
-        title: 'حملة سيادية جديدة',
-        name: 'اسم الحملة',
-        budget: 'الميزانية المخصصة (SAR)',
-        start_date: 'تاريخ البدء',
-        category: 'الفئة المستهدفة'
-      },
-      status: {
-        active: 'نشط',
-        scheduled: 'مجدول',
-        completed: 'مكتمل'
-      },
-      categories: {
-        institutional: 'مؤسسي',
-        sovereign: 'سيادي',
-        consumer: 'مستهلك'
-      },
-      cancel: 'إلغاء',
-      launched_at: 'تاريخ الإطلاق',
-      intelligence_title: 'الذكاء التسويقي السيادي',
-      intelligence_accuracy: 'دقة التوقعات',
-      intelligence_savings: 'التوفير المتوقع',
-      intelligence_recommendation: 'توصية النظام',
-      activate_recommendations: 'تفعيل التوصيات الذكية',
-      platform_performance_title: 'أداء المنصات',
-      node_email: 'عقدة البريد',
-      node_google: 'عقدة جوجل',
-      node_x: 'عقدة X',
-      node_linkedin: 'عقدة لينكد إن',
-      ai_automation_title: 'أتمتة الذكاء الاصطناعي',
-      ai_automation_desc: 'تحسين تلقائي لميزانية الحملات بناءً على الأداء.',
-      apply_optimization: 'تطبيق التحسين',
-      last_audit: 'آخر تدقيق',
-      secure_node_active: 'عقدة آمنة نشطة',
-      filter: 'تصفية',
-      complete_campaign_data: 'يرجى إكمال بيانات الحملة',
-      campaign_created_success: 'تم إنشاء الحملة بنجاح',
-      scheduled_emails_success: 'تمت جدولة رسائل البريد بنجاح',
-      ai_optimization_applied_success: 'تم تطبيق تحسين الذكاء الاصطناعي',
-      email_composer_title: 'محرر البريد المؤسسي',
-      email_subject_placeholder: 'موضوع الرسالة...',
-      email_content_placeholder: 'محتوى الرسالة...',
-      broadcast_to_all: 'إرسال للجميع',
-      templates_label: 'القوالب الجاهزة',
-      institutional_welcome_series: 'سلسلة الترحيب المؤسسية',
-      abandoned_cart_retargeting: 'إعادة استهدف السلال المتروكة',
-      sovereign_loyalty_nodes: 'عقد الولاء السيادية',
-      trigger_label: 'المشغل',
-      intelligent_conversion_audit: 'تدقيق التحويل الذكي',
-      sovereign_forecast_accuracy: 'دقة التوقعات السيادية',
-      projected_savings: 'التوفير المتوقع',
-      ai_recommendation_text: 'توصية الذكاء الاصطناعي',
-      activate_ai_recommendations: 'تفعيل توصيات الذكاء الاصطناعي',
-      search_campaigns_placeholder: 'ابحث عن الحملات...',
-      filter_label: 'تصفية',
-      platform_performance_matrix: 'مصفوفة أداء المنصات',
-      sovereign_email_node: 'عقدة البريد السيادية',
-      google_ads_search: 'جوجل سيرش أدز',
-      x_sovereign_presence: 'تواجد X السيادي',
-      linkedin_institutional: 'لينكد إن المؤسسي',
-      sovereign_automation_ai: 'ذكاء الأتمتة السيادي',
-      ai_marketing_engine_alert: 'تنبيه محرك التسويق الذكي',
-      apply_optimization_btn: 'تطبيق التحسين',
-      last_audit_prefix: 'آخر تدقيق:',
-      secure_node_active_label: 'العقدة الآمنة نشطة',
-      activate_campaign_btn: 'تنشيط الحملة',
-      marketing_campaign_title: 'عنوان الحملة التسويقية',
-      transactions_automated: 'العمليات المؤتمتة',
-      configure: 'تكوين'
     },
     affiliate: {
       lang: 'ar',
-      title: 'نظام الشركاء',
-      subtitle: 'إدارة علاقات الشركاء والتسويات السيادية.',
+      title: 'التسويق بالعمولة',
+      subtitle: 'إدارة الشركاء والعمولات والنمو المؤسسي.',
       enroll_partner: 'تسجيل شريك جديد',
       active_partners: 'الشركاء النشطون',
-      total_sales: 'إجمالي مبيعات الشركاء',
-      pending_payouts: 'عمولات معلقة',
+      total_sales: 'إجمالي المبيعات',
+      pending_payouts: 'دفعات معلقة',
       avg_multiplier: 'متوسط المضاعف',
       efficiency_multiplier: 'مضاعف الكفاءة',
-      since_label: 'منذ',
+      since_label: 'منذ:',
       sovereign_load: 'الحمل السيادي',
       manage_structures: 'إدارة الهياكل',
       rate_label: 'المعدل',
       link_copied: 'تم نسخ الرابط',
       complete_partner_data: 'يرجى إكمال بيانات الشريك',
       partner_enrolled_successfully: 'تم تسجيل الشريك بنجاح',
-      authorize_sovereign_payout: 'تفويض الدفع السيادي',
-      commission_architecture: 'بنية العمولات',
+      authorize_sovereign_payout: 'اعتماد صرف سيادي',
+      commission_architecture: 'هيكلية العمولات',
       tabs: {
         partners: 'الشركاء',
         payouts: 'المدفوعات',
@@ -638,8 +666,8 @@ const translations = {
         status: 'الحالة',
         conversions: 'التحويلات',
         commission: 'العمولة',
-        total_payout: 'إجمالي المدفوعات',
-        node: 'العقدة السيادية'
+        total_payout: 'إجمالي الصرف',
+        node: 'العقدة'
       },
       status: {
         active: 'نشط',
@@ -649,21 +677,21 @@ const translations = {
       types: {
         individual: 'فردي',
         agency: 'وكالة',
-        corporate: 'مؤسسة'
+        corporate: 'مؤسسي'
       },
       link_gen: {
-        title: 'مولد الروابط السيادية',
-        destination: 'رابط الوجهة',
-        partner: 'اختيار الشريك',
+        title: 'مولد الروابط السيادي',
+        destination: 'الوجهة',
+        partner: 'الشريك',
         generate: 'توليد الرابط',
-        copy: 'نسخ الرابط',
+        copy: 'نسخ',
         label_destination: 'رابط الوجهة',
-        label_select: 'اختيار الشريك'
+        label_select: 'اختر الشريك'
       },
       payouts: {
-        pending_title: 'المدفوعات المعلقة',
+        pending_title: 'المدفوعات المستحقة',
         due_date: 'تاريخ الاستحقاق',
-        authorize: 'تفويض',
+        authorize: 'اعتماد',
         ref: 'المرجع',
         partner: 'الشريك',
         amount: 'المبلغ',
@@ -673,21 +701,44 @@ const translations = {
         title: 'تسجيل شريك سيادي',
         name: 'اسم الشريك',
         email: 'البريد الإلكتروني',
-        type: 'نوع الشراكة',
-        commission: 'نسبة العمولة (%)'
+        type: 'نوع الشريك',
+        commission: 'نسبة العمولة'
       },
       cancel: 'إلغاء',
-      activate_partner_btn: 'تنشيط الشريك'
-    }
+      activate_partner_btn: 'تفعيل الشريك'
+    },
+
   },
   en: {
-    title: 'Sovereign Ledger',
-    subtitle: 'High-Level Financial & Accounting Services',
+    lang: 'en',
+    title: 'Alghwairy Customs Clearance',
+    subtitle: 'Sovereign Ledger - Logistics & Clearance Management',
     welcome: 'Welcome, ',
     last_sync: 'Last sync: Today, 10:45 AM',
     search: 'Secure financial search...',
     add_trx: 'Add Sovereign TRX',
     logout: 'Log Out',
+    landing: {
+      lang: 'en',
+      brand: 'Alghwairy Sovereign',
+      hero_title: 'Sovereign Leadership in Customs Clearance',
+      hero_subtitle: 'Securing your supply chains with the highest standards of precision and digital safety.',
+      get_started: 'Access System',
+      explore_services: 'Explore Services',
+      services: {
+        title: 'Strategic Services',
+        clearance: 'Customs Clearance',
+        clearance_desc: 'Professional procedures ensuring fast transit through all ports.',
+        logistics: 'Logistics Solutions',
+        logistics_desc: 'Integrated supply chain management from origin to warehouse.',
+        tracking: 'Sovereign Tracking',
+        tracking_desc: 'Real-time secure monitoring of your shipments via intelligent dashboard.'
+      },
+      about: {
+        title: 'About the Institution',
+        desc: 'We combine historical expertise with future technology to manage your financial and logistical scales.'
+      }
+    },
     user_roles: { admin: 'System Admin', cfo: 'CFO', accountant: 'Sovereign Accountant' },
     nav: {
       dashboard: 'Dashboard',
@@ -704,21 +755,23 @@ const translations = {
       audit: 'Unified Audit Logs',
       data: 'Data Import',
       settings: 'System Settings',
-      shipments: 'Shipments & Clearance',
-      financial_compliance: 'Finance & Compliance',
-      system_security: 'System & Security',
-      statements: 'Financial Statements',
+      shipments: 'Customs Shipments',
+      financial_compliance: 'Customs Compliance',
+      system_security: 'Sovereign Security',
+      statements: 'Customs Financial Statements',
       petty_cash: 'Petty Cash',
       trash: 'Trash bin',
       biometrics: 'Security & Biometrics',
-      marketing: 'Marketing Systems',
-      affiliate: 'Affiliate Network'
+      contracts: 'Contracts Management',
+      affiliate: 'Affiliate Marketing',
+      communications: 'Sovereign Link'
     },
     notifications: {
       success: 'Sovereign transaction recorded successfully!',
       error: 'Sovereign sync error: '
     },
     dashboard: {
+      lang: 'en',
       title: 'Executive Dashboard',
       subtitle: 'Financial Oversights & Sovereign Metrics',
       compliance_title: 'Tax Compliance Declaration (ZATKA)',
@@ -747,25 +800,126 @@ const translations = {
         pending_settlement: 'Pending Settlement',
         bank_reconciliation: 'Bank Reconciliation',
         tax_deadline: 'Tax Deadline'
-      }
+      },
+      tax_est: 'Tax & Zakat (15%)',
+      growth_chart: 'Growth & Resources',
+      compliance_audit: 'ZATCA Compliance Audit',
+      compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
+      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun'
     },
     reports: {
       lang: 'en',
-      title: 'Sovereign Analytics & Metrics',
-      subtitle: 'Tracking of liquidity and profitability across all sovereign sectors.',
+      title: 'Analytical Intelligence & Sovereign Metrics',
+      subtitle: 'Comprehensive view of liquidity performance, profitability, and resource distribution.',
       revenue: 'Total Revenue',
       expenses: 'Total Expenses',
-      net_income: 'Net Income',
+      net_income: 'Net Distributable Profit',
       historical_high: 'Historical High',
       operating_costs: 'Operating Costs',
       quarterly_target: 'Quarterly Target',
-      summary_ledger: 'Summary Ledger',
+      summary_ledger: 'Sovereign General Ledger',
       tax_est: 'Tax & Zakat (15%)',
       growth_chart: 'Growth & Resources',
       compliance_audit: 'ZATCA Compliance Audit',
       compliance_footer: 'All financial movements are fully compliant with ZATCA Phase 2 standards.',
       export_report: 'Export Analytical Report',
-      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun'
+      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun',
+      export: 'Export CSV',
+      print: 'Print Report',
+      manual_trx: 'Add Settlement Entry',
+      income: 'Income',
+      expense: 'Expense',
+      net_position: 'Net Financial Position',
+      extracting_intelligence: 'Analyzing data...',
+      table: {
+        id: 'TRX ID',
+        description: 'Description',
+        type: 'Type',
+        value: 'Value',
+        status: 'Status',
+        date: 'Date'
+      }
+    },
+    invoices: {
+      title: 'Invoices & Receipts',
+      subtitle: 'ZATCA-compliant tax invoices and customs collections.',
+      active_title: 'Active Invoices Registry',
+      search_placeholder: 'Search invoices...',
+      new_invoice: 'New Invoice',
+      profit_label: 'Net Operating Profit',
+      inventory_total: 'Total Cargo Value',
+      final_invoice: 'Final Tax Invoice',
+      internal_invoice: 'Internal Invoice',
+      print: 'Print List',
+      summary_report: 'Summary Report',
+      summary_title: 'Invoices & Collections Summary Report',
+      summary_subtitle: 'Detailed listing of operations and financial collections for the selected period',
+      zatca_ready: 'ZATCA PHASE II READY',
+      bilingual: 'Bilingual',
+      add_title: 'Create Sovereign Invoice',
+      operation_number: 'Operation #',
+      statement_number: 'Statement #',
+      bol_number: 'BOL #',
+      customs_fees: 'Customs Fees',
+      port_fees: 'Port Fees',
+      transport_fees_label: 'Transport Fees',
+      other_fees_label: 'Other Expenses',
+      client_label: 'Client',
+      carrier_label: 'Carrier',
+      stats: {
+        total_due: 'Total Sales & Collections',
+        collected: 'Collected (Monthly)',
+        overdue: 'Outstanding Payments',
+        zatca_certified: 'Total Fees & Taxes'
+      },
+      table: {
+        number: 'Ref #',
+        client: 'Client',
+        date: 'Date',
+        amount: 'Net Amount',
+        tax: 'VAT 15%',
+        total: 'Total',
+        status: 'Status',
+        preview: 'Preview',
+        options: 'Actions'
+      },
+      preview: {
+        print: 'Print',
+        whatsapp: 'WhatsApp',
+        email: 'Email',
+        mark_paid: 'Confirm Payment',
+        close: 'Close'
+      },
+      modal: {
+        title: 'Issue Tax Invoice',
+        client_label: 'Beneficiary Client',
+        carrier_label: 'Carrier / Shipping Co.',
+        type: 'Invoice Type',
+        type_label: 'Classification',
+        final_type: 'Final Invoice',
+        internal_type: 'Internal Invoice',
+        operation_num: 'Operation Num',
+        statement_num: 'Statement Num',
+        bol_num: 'BOL Number',
+        cargo_val: 'Cargo Value',
+        total_collection: 'Total Collection',
+        customs_fees: 'Customs Fees',
+        port_fees: 'Port Fees',
+        transport_fees: 'Transport Fees',
+        extra_expenses: 'External Expenses',
+        amount_label: 'Revenue',
+        ref_label: 'Reference',
+        cancel: 'Cancel',
+        submit: 'Save & Post'
+      },
+      confirm_delete: 'Are you sure you want to delete this invoice?',
+      delete_success: 'Invoice deleted successfully.',
+      status_paid: 'Paid',
+      status_pending: 'Pending',
+      edit_invoice: 'Edit Invoice',
+      status_label: 'Status',
+      save_changes: 'Save Changes',
+      lang: 'en'
     },
     accounting: {
       invoice_editor: 'Analytical Invoice Editor',
@@ -789,7 +943,34 @@ const translations = {
       settlement_entry: 'Sovereign Settlement Entry',
       adjustment_type: 'Adjustment Type',
       credit_adj: 'Credit Adjustment',
-      debit_adj: 'Debit Adjustment'
+      debit_adj: 'Debit Adjustment',
+      journal: 'Journal Entry',
+      general_ledger: 'General Ledger',
+      daily: 'Daily',
+      monthly: 'Monthly',
+      yearly: 'Yearly',
+      profit_loss: 'Profit & Loss',
+      ledger_summary: 'Ledger Summary',
+      statement_number: 'Statement No.',
+      ledger_title: 'General Accounting Ledger',
+      post_entry: 'Post Entry',
+      journal_desc: 'Review and audit posted journal entries.',
+      posting_success: 'Journal entry posted successfully',
+      lang: 'en'
+    },
+    contracts: {
+      lang: 'en',
+      title: 'Sovereign Contracts Management',
+      client_contracts: 'Client Contracts',
+      transport_contracts: 'Transport Contracts',
+      add_contract: 'Add Contract',
+      contract_date: 'Contract Date',
+      expiry_date: 'Expiry Date',
+      terms: 'Terms',
+      transporter_name: 'Transporter',
+      transport_fees: 'Transport Fees',
+      client_name: 'Client',
+      status: 'Status'
     },
     payroll: {
       lang: 'en',
@@ -817,8 +998,33 @@ const translations = {
       base_label: 'Base Pay',
       plus_label: 'Total Allowances',
       ded_label: 'Total Deductions',
+      iban_label: 'IBAN Number',
+      bank_label: 'Bank Name',
+      gosi_deduction: 'GOSI Deduction',
+      print_slip: 'Print Salary Slip',
+      period_label: 'Payroll Period',
+      sif_export: 'Export WPS SIF File',
       secure_record: 'Save Secure Record',
-      cancel: 'Cancel'
+      cancel: 'Cancel',
+      enroll_success: 'Staff record secured under sovereign ledger.',
+      certify_confirm: 'Certifying Sovereign Payroll Records...',
+      certify_success: 'Sovereign Payroll Certification Successful',
+      certify_payroll: 'Certify Payroll',
+      certified_badge: 'Sovereign Certified',
+      no_pending: 'No pending payrolls for this period',
+      sif_success: 'WPS SIF File Generated Successfully',
+      audit_progress: 'Audit in progress...',
+      no_records: 'No records for this period',
+      slip: {
+        preview_title: 'SALARY SLIP PREVIEW',
+        earnings: 'Earnings',
+        deductions: 'Deductions',
+        net: 'NET SALARY',
+        description: 'Description',
+        base: 'Base Salary',
+        allowances: 'Allowances',
+        gosi: 'GOSI'
+      }
     },
     customers: {
       lang: 'en',
@@ -832,12 +1038,15 @@ const translations = {
       table_status: 'Ledger Status',
       last_trx: 'Last Sovereign TRX',
       active_badge: 'Active Profile',
+      print: 'Print',
       total_credit: 'Total Active Credit',
       partners_count: 'Registered Partners',
       pending_reviews: 'Pending Reviews',
       expired_contracts: 'Expired Contracts',
       search_placeholder: 'Search for partner by name or VAT...',
       all_categories: 'All Categories',
+      loading: 'Searching Secure Database...',
+      no_customers: 'No customers found currently',
       table: {
         entity: 'Entity / Company',
         sector: 'Sector',
@@ -849,75 +1058,48 @@ const translations = {
       activity: 'Recent Activity',
       modal: {
         title: 'New Sovereign Partner',
+        edit_title: 'Edit Customer',
         name: 'Entity Legal Name',
         phone: 'Phone',
         category: 'Category',
         limit: 'Credit Limit (SAR)',
         cancel: 'Cancel',
-        submit: 'Secure Record'
+        submit: 'Secure Record',
+        save_changes: 'Save Changes'
       },
-      print: 'Print'
-    },
-    invoices: {
-      lang: 'en',
-      title: 'Invoice Management',
-      subtitle: 'Documenting sovereign transactions and tax invoicing.',
-      new_invoice: 'Issue Official Invoice',
-      export_csv: 'Export CSV Ledger',
-      table_num: 'Invoice #',
-      table_client: 'Client',
-      table_amount: 'Gross Amount',
-      table_date: 'Filing Date',
-      table_status: 'Audit Status',
-      active_title: 'Active Sovereign Invoices',
-      search_placeholder: 'Search invoices...',
-      print: 'Print List',
-      add_title: 'Create Sovereign Invoice',
-      stats: {
-        total_due: 'Total Receivables',
-        collected: 'Collections (MTD)',
-        overdue: 'Overdue Arrears',
-        zatca_certified: 'ZATCA Certified'
+      profile: {
+        title: 'Customer/Partner Profile',
+        whatsapp: 'WhatsApp',
+        email: 'Email',
+        financial_kpis: 'Entity Financial KPIs',
+        revenue: 'Total Revenue',
+        profit: 'Net Profit',
+        invoice_count: 'Invoices Count',
+        doc_count: 'Documents Count',
+        tabs: {
+          invoices: 'Invoices & Operations',
+          docs: 'Documents & Files',
+          info: 'Basic Info'
+        },
+        invoices_header: 'Linked Invoices & Operations',
+        no_invoices: 'No linked invoices or financial operations',
+        drop_zone: 'Drag & drop documents here or click to choose',
+        uploading: 'Uploading file...',
+        allowed_formats: 'PDF · PNG · JPG · WebP — Max: 10 MB',
+        no_docs: 'No documents attached yet',
+        upload_first: 'Upload your first document above',
+        delete_doc_confirm: 'Are you sure you want to permanently delete this document?'
       },
-      table: {
-        number: 'Invoice / Ref No.',
-        client: 'Client',
-        date: 'Issue Date',
-        amount: 'Net Amount',
-        tax: 'VAT 15%',
-        total: 'Grand Total',
-        status: 'Payment Status',
-        preview: 'Preview & Print',
-        options: 'Options'
-      },
-      modal: {
-        title: 'Issue Tax Invoice',
-        client_label: 'Select Client / Partner',
-        amount_label: 'Amount (Before VAT)',
-        ref_label: 'Ref Code (Optional)',
-        cancel: 'Cancel',
-        submit: 'Issue & Certify (ZATCA)',
-        whatsapp_share: 'Share via WhatsApp'
-      },
-      confirm_delete: 'Confirm sovereign invoice deletion?',
-      delete_success: 'Invoice deleted successfully.',
-      wa_invoice_template: 'Dear Client, your invoice {{number}} for {{total}} is ready. View: {{link}}',
-      status_paid: 'Paid',
-      status_pending: 'Pending',
-      copy_link_success: 'Link copied to clipboard',
-      settlement_badge: 'Tax Settlement',
-      edit_invoice: 'Edit Invoice',
-      status_label: 'Status',
-      save_changes: 'Save Changes',
-      wa_preview_title: 'WhatsApp Preview',
-      wa_preview_subtitle: 'Official broadcast via WhatsApp',
-      wa_send_now: 'Send Now',
-      simplified_invoice: 'Simplified Tax Invoice',
-      shareable_link_success: 'Link generated',
-      whatsapp_preview: 'Preview',
-      wa_phone_label: 'Phone Number',
-      wa_review_desc: 'Review message before sending',
-      cancel: 'Cancel'
+      notifications: {
+        name_required: 'Name required',
+        success_update: 'Customer updated successfully',
+        success_trash: 'Customer moved to trash',
+        delete_confirm: 'Are you sure you want to delete this customer?',
+        error_loading: 'Error loading customers',
+        error_saving: 'Error saving client',
+        error_updating: 'Error updating client',
+        error_deleting: 'Error deleting client'
+      }
     },
     expenses: {
       lang: 'en',
@@ -956,9 +1138,16 @@ const translations = {
        input_vat: 'Input VAT (Expenses)',
        net_vat: 'Net VAT Payable',
        certified_history: 'Certified Tax Return Archive',
-       ai_audit: 'AI Tax Compliance Audit'
+       ai_audit: 'AI Tax Compliance Audit',
+       customs_fees: 'Current Customs Duties',
+       municipal_fees: 'Municipal Taxes & Fees',
+       total_clearance: 'Total Clearance Value',
+       declaration_count: 'Customs Declarations (Bayen)',
+       platform_fees: 'Platform Fees (Fasah/Tabadul)',
+       lang: 'en'
     },
     prepayments: {
+      lang: 'en',
       title: 'Prepayments & Deposits',
       subtitle: 'Managing and settling prepayments for corporate suppliers and annual services.',
       active_count: 'Total Active Prepayments',
@@ -975,6 +1164,7 @@ const translations = {
       }
     },
     audit_logs: {
+      lang: 'en',
       title: 'Audit & Activity Log',
       subtitle: 'Comprehensive monitoring of all high-level movements and operations.',
       refresh: 'Refresh Log',
@@ -986,6 +1176,7 @@ const translations = {
       empty: 'No recorded operations yet in Sovereign Ledger.'
     },
     security: {
+      lang: 'en',
       title: 'Security & Digital Sovereignty',
       subtitle: 'Managing security protocols, encryption, and secure database access.',
       shield_status: 'Sovereign Shield Status',
@@ -993,11 +1184,13 @@ const translations = {
       encryption: 'Active ECDSA Encryption'
     },
     roles: {
+      lang: 'en',
       title: 'Role & Staff Management',
       subtitle: 'Defining access levels and job roles within the accounting system.',
       add_role: 'Add New Role'
     },
     trash: {
+      lang: 'en',
       title: 'Sovereign Trash Bin',
       subtitle: 'Manage deleted and recoverable records from the local database.',
       invoices: 'Invoices',
@@ -1008,6 +1201,7 @@ const translations = {
       empty: 'Trash is currently empty'
     },
     settings: {
+      lang: 'en',
       title: 'Sovereign Settings',
       subtitle: 'System configuration, entity info, and general preferences.',
       save: 'Save Sovereign Changes',
@@ -1019,7 +1213,22 @@ const translations = {
         appearance: 'Identity & Theme',
         documents: 'Report Headers',
         security: 'Security & Biometrics',
-        backup: 'Cloud Mirroring'
+        backup: 'Cloud Mirroring',
+        cloud: 'Cloud Sync'
+      },
+      cloud_sync: {
+        title: 'Cloud Synchronization',
+        subtitle: 'Connecting local database to sovereign cloud for multi-device access.',
+        status: 'Overall Connection Status',
+        enable_sync: 'Enable Sovereign Sync',
+        disable_sync: 'Disable Cloud Sync',
+        sync_now: 'Sync Now',
+        connected: 'Connected to Encrypted Cloud',
+        disconnected: 'Disconnected - Local Mode',
+        last_sync: 'Last successful sync',
+        supabase_url: 'Supabase URL',
+        supabase_key: 'Anon Key',
+        auto_sync_label: 'Auto Sync (Every 3 mins)'
       }
     },
     data_import: {
@@ -1027,12 +1236,8 @@ const translations = {
       title: 'External Data Integration',
       subtitle: 'Uploading Excel or CSV files to the sovereign ledger.',
       clear_all: 'Clear All Records',
-      seed_samples: 'Generate Sample Data',
       confirm_clear_data: 'Are you sure to clear all data?',
       clear_success: 'Data cleared successfully',
-      seeding_info: 'Loading sample data for training',
-      seed_success: 'Samples loaded successfully',
-      seed_error: 'Error loading samples',
       import_success_prefix: 'Imported',
       import_success_suffix: 'records successfully',
       encryption_msg: 'Sovereign Encryption Active (AES-256)',
@@ -1142,151 +1347,24 @@ const translations = {
       title: 'Petty Cash & Draws',
       subtitle: 'Managing office expenses, staff advances, and cash withdrawals.',
       total_active: 'Total Active Petty Cash',
-      add_request: 'Request Petty Cash'
-    },
-    marketing: {
-      lang: 'en',
-      title: 'Marketing Systems',
-      subtitle: 'Sovereign campaign management and audience tracking.',
-      create_campaign: 'Create Sovereign Campaign',
-      active_campaigns: 'Active Campaigns',
-      total_reach: 'Total Reach',
-      conv_rate: 'Conv. Rate',
-      roi_multiplier: 'Sovereign ROI',
-      table: {
-        identity: 'Campaign Identity',
-        status: 'Status',
-        reach: 'Reach',
-        engagement: 'Engagement',
-        leads: 'Leads',
-        budget: 'Budget'
-      },
-      tabs: {
-        campaigns: 'Campaign Center',
-        audiences: 'Audiences',
-        automation: 'AI Automation',
-        analytics: 'Analytics',
-        email: 'Secure Email Broadcaster',
-        intelligence: 'Marketing Intelligence'
-      },
-      add_modal: {
-        title: 'Create Marketing Node',
-        name: 'Campaign Name',
-        budget: 'Budget (SAR)',
-        start_date: 'Start Date',
-        category: 'Target Category'
-      },
-      status: {
-        active: 'Active',
-        scheduled: 'Scheduled',
-        completed: 'Completed'
-      },
-      categories: {
-        institutional: 'Institutional',
-        sovereign: 'Sovereign',
-        consumer: 'Consumer'
-      },
-      cancel: 'Cancel',
-      launched_at: 'Deployment Date',
-      intelligence_title: 'Sovereign Marketing Intelligence',
-      intelligence_accuracy: 'Forecast Accuracy',
-      intelligence_savings: 'Projected Savings',
-      intelligence_recommendation: 'Smart Ledger Recommendation',
-      activate_recommendations: 'Activate AI Recommendations',
-      platform_performance_title: 'Platform Performance Matrix',
-      node_email: 'Email Node',
-      node_google: 'Google Ads',
-      node_x: 'X Presence',
-      node_linkedin: 'LinkedIn Professional',
-      ai_automation_title: 'AI Ledger Automation',
-      ai_automation_desc: 'This module uses machine learning to optimize sovereign marketing spend.',
-      apply_optimization: 'Apply AI Optimization',
-      last_audit: 'Last Sovereign Audit',
-      secure_node_active: 'Secure Node Active',
-      filter: 'Filter',
-      complete_campaign_data: 'Please complete campaign data',
-      campaign_created_success: 'Campaign created successfully',
-      scheduled_emails_success: 'Broadcast emails scheduled',
-      ai_optimization_applied_success: 'AI optimizations applied',
-      email_composer_title: 'Sovereign Message Composer',
-      email_subject_placeholder: 'Official Subject',
-      email_content_placeholder: 'Approved Content...',
-      broadcast_to_all: 'Broadcast (Encrypted)',
-      templates_label: 'Approved Templates',
-      institutional_welcome_series: 'Institutional Welcome Series',
-      abandoned_cart_retargeting: 'Abandoned Cart Retargeting',
-      sovereign_loyalty_nodes: 'Sovereign Loyalty Nodes',
-      trigger_label: 'Trigger',
-      intelligent_conversion_audit: 'Intelligent Conversion Audit',
-      sovereign_forecast_accuracy: 'Ledger Forecast Accuracy',
-      projected_savings: 'Projected Sovereign Savings',
-      ai_recommendation_text: 'AI Recommendation',
-      activate_ai_recommendations: 'Activate Ledger Intelligence',
-      search_campaigns_placeholder: 'Search campaigns...',
-      filter_label: 'Filter Results',
-      platform_performance_matrix: 'Unified Performance Matrix',
-      sovereign_email_node: 'Email Node',
-      google_ads_search: 'Google Search',
-      x_sovereign_presence: 'X/Twitter Presence',
-      linkedin_institutional: 'LinkedIn Institutional',
-      sovereign_automation_ai: 'Secure AI Automation',
-      ai_marketing_engine_alert: 'Marketing Engine Alert',
-      apply_optimization_btn: 'Apply Optimization',
-      last_audit_prefix: 'Last Scan:',
-      secure_node_active_label: 'Secure Node Active',
-      activate_campaign_btn: 'Activate Campaign',
-      marketing_campaign_title: 'Marketing Campaign Title',
-      transactions_automated: 'Processes Automated',
-      configure: 'Configure'
+      add_request: 'Request Petty Cash',
+      allocation_label: 'Expense Allocation',
+      disburse_btn: 'Disburse & Settle',
+      settled_status: 'Settled Successfully',
+      employee_picker: 'Responsible Staff Member',
+      lang: 'en'
     },
     affiliate: {
       lang: 'en',
-      title: 'Sovereign Affiliate Network',
-      subtitle: 'Managed partnership programs and commission ledgers.',
-      commission_pool: 'Total Commission Pool',
-      active_referrals: 'Active Referrals',
-      pending_payouts: 'Pending Transfers',
-      tabs: {
-        partners: 'Sovereign Partners',
-        links: 'Secure Asset Links',
-        payouts: 'Financial Payouts',
-        settings: 'Network Protocol'
-      },
-      search_placeholder: 'Search partners...',
-      add_partner: 'Register Sovereign Partner',
-      link_gen: {
-        title: 'Secure Link Generator',
-        destination: 'Destination URL',
-        partner: 'Select Partner Node',
-        generate: 'Generate Secure Link',
-        copy: 'Copy Node Link',
-        label_destination: 'Target URL',
-        label_select: 'Partner Entity'
-      },
-      payouts_table: {
-        pending_title: 'Pending Payout Authorization',
-        due_date: 'Sovereign Due Date',
-        authorize: 'Authorize Payout',
-        ref: 'Reference Code',
-        partner: 'Entity Node',
-        amount: 'Value (SAR)',
-        status: 'Audit Status'
-      },
-      add_modal: {
-        title: 'Sovereign Partner Enrollment',
-        name: 'Legal Name',
-        email: 'Encrypted Email',
-        type: 'Partnership Class',
-        commission: 'Commission Alpha (%)'
-      },
-      cancel: 'Cancel Enrollment',
-      activate_partner_btn: 'Authorize Partner Node',
+      title: 'Affiliate Ledger',
+      subtitle: 'Manage partners, commissions, and institutional growth.',
       enroll_partner: 'Enroll New Partner',
       active_partners: 'Active Partners',
-      total_sales: 'Total Sales (Partner)',
-      avg_multiplier: 'Avg. Multiplier',
+      total_sales: 'Total Sales',
+      pending_payouts: 'Pending Payouts',
+      avg_multiplier: 'Avg Multiplier',
       efficiency_multiplier: 'Efficiency Multiplier',
-      since_label: 'Since',
+      since_label: 'Since:',
       sovereign_load: 'Sovereign Load',
       manage_structures: 'Manage Structures',
       rate_label: 'Rate',
@@ -1295,13 +1373,19 @@ const translations = {
       partner_enrolled_successfully: 'Partner enrolled successfully',
       authorize_sovereign_payout: 'Authorize Sovereign Payout',
       commission_architecture: 'Commission Architecture',
+      tabs: {
+        partners: 'Partners',
+        payouts: 'Payouts',
+        links: 'Links',
+        settings: 'Settings'
+      },
       table: {
         identity: 'Partner Identity',
         status: 'Status',
-        conversions: 'Conversion Count',
+        conversions: 'Conversions',
         commission: 'Commission',
-        total_payout: 'Total Payout (SAR)',
-        node: 'Sovereign Node'
+        total_payout: 'Total Payout',
+        node: 'Node'
       },
       status: {
         active: 'Active',
@@ -1313,17 +1397,35 @@ const translations = {
         agency: 'Agency',
         corporate: 'Corporate'
       },
+      link_gen: {
+        title: 'Sovereign Link Generator',
+        destination: 'Destination',
+        partner: 'Partner',
+        generate: 'Generate Link',
+        copy: 'Copy',
+        label_destination: 'Destination URL',
+        label_select: 'Select Partner'
+      },
       payouts: {
         pending_title: 'Pending Payouts',
         due_date: 'Due Date',
         authorize: 'Authorize',
-        ref: 'Reference',
+        ref: 'Ref',
         partner: 'Partner',
         amount: 'Amount',
         status: 'Status'
-      }
-    }
-  }
+      },
+      add_modal: {
+        title: 'Enroll Sovereign Partner',
+        name: 'Partner Name',
+        email: 'Email Address',
+        type: 'Partner Type',
+        commission: 'Commission Rate'
+      },
+      cancel: 'Cancel',
+      activate_partner_btn: 'Activate Partner'
+    },
+  },
 };
 
 export interface Transaction {
@@ -1335,6 +1437,11 @@ export interface Transaction {
   status: string;
   created_at: string;
   currency?: string;
+  payment_method?: string;
+  zatca_certified?: boolean;
+  zatca_xml?: string;
+  zatca_cert_date?: string;
+  paid_amount?: number;
 }
 
 export interface NotificationItem {
@@ -1347,23 +1454,31 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('sovereign_theme') === 'dark');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('sovereign_theme') !== 'light');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [publicInvoiceId, setPublicInvoiceId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState('admin');
+  const [showLanding, setShowLanding] = useState(true);
   
   // Sovereign Global Settings
   const [systemSettings, setSystemSettings] = useState({
-    companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+    companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
     taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
-    primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
+    primaryColor: localStorage.getItem('sov_primary_color') || '#d4af37', // Sovereign Gold (Comfortable Contrast)
     fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
-    reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+    reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+    reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential',
+    address: localStorage.getItem('sov_address') || 'الرياض، المملكة العربية السعودية - حي الميناء',
+    phone: localStorage.getItem('sov_phone') || '+966 50 000 0000',
+    email: localStorage.getItem('sov_email') || 'info@alghwairy.sa',
+    bankName: localStorage.getItem('sov_bank_name') || 'البنك الأهلي السعودي (SNB)',
+    iban: localStorage.getItem('sov_iban') || 'SA00 0000 0000 0000 0000 0000'
   });
 
   const [userName, setUserName] = useState('عبدالله الغويري');
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    return localDB.getActive('transactions') as Transaction[];
+  });
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showAddTrxModal, setShowAddTrxModal] = useState(false);
   const [newTrx, setNewTrx] = useState({
@@ -1374,7 +1489,16 @@ export default function App() {
   const [notification, setNotification] = useState<{message: string, type: string} | null>(null);
   const [notifHistory, setNotifHistory] = useState<NotificationItem[]>([]);
   const [showNotifDrawer, setShowNotifDrawer] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(new Date().toLocaleTimeString());
+  const [lastSyncTime, setLastSyncTime] = useState(() => new Date().toLocaleTimeString());
+  const [unreadMsgCount, setUnreadMsgCount] = useState(() => {
+    const settings = localDB.get('sync_settings');
+    const myId = settings?.device_id;
+    if (myId) {
+      const messages = localDB.getAll('sovereign_messages');
+      return Array.isArray(messages) ? messages.filter(m => m.recipient === myId && !m.read).length : 0;
+    }
+    return 0;
+  });
   const [isActivated, setIsActivated] = useState(() => {
     const saved = localStorage.getItem('sovereign_activation_key');
     const expiry = localStorage.getItem('sovereign_activation_expiry');
@@ -1398,21 +1522,29 @@ export default function App() {
     };
   }, [lang, systemSettings]);
 
-  const reportsT = useMemo(() => ({...t.reports, ...t.dashboard, lang}), [t.reports, t.dashboard, lang]);
+  const reportsT = useMemo(() => ({...t.reports, lang}), [t.reports, lang]);
 
   const handleActivation = (key: string) => {
     setActivationError('');
     let expiryDate: Date | 'lifetime' | null = null;
     
-    if (key === 'LEDGER-PRO-2026') {
+    const keyUpper = key.trim().toUpperCase();
+    
+    if (keyUpper === 'ALGH-LIFETIME-PRO-2026' || keyUpper === 'LEDGER-PRO-2026') {
       expiryDate = 'lifetime';
-    } else if (key.startsWith('LEDGER-S10-')) {
+    } else if (keyUpper === 'ALGH-10D-PRO-2026') {
       expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 10);
-    } else if (key.startsWith('LEDGER-M30-')) {
+    } else if (keyUpper === 'ALGH-30D-PRO-2026') {
+      expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+    } else if (keyUpper.startsWith('LEDGER-S10-')) {
+      expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 10);
+    } else if (keyUpper.startsWith('LEDGER-M30-')) {
       expiryDate = new Date();
       expiryDate.setMonth(expiryDate.getMonth() + 1);
-    } else if (key.startsWith('LEDGER-LIF-')) {
+    } else if (keyUpper.startsWith('LEDGER-LIF-')) {
       expiryDate = 'lifetime';
     } else {
       setActivationError(lang === 'ar' ? 'مفتاح التنشيط غير صالح' : 'Invalid activation key');
@@ -1429,8 +1561,45 @@ export default function App() {
     const newNotif = { message, type, time: new Date().toLocaleTimeString() };
     setNotification({ message, type });
     setNotifHistory(prev => [newNotif, ...prev.slice(0, 9)]);
+    
+    // Play sound if enabled
+    const soundsEnabled = localStorage.getItem('sov_notif_sounds') === 'true';
+    if (soundsEnabled) {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) {
+        console.error('Audio error:', e);
+      }
+    }
+
     setTimeout(() => setNotification(null), 4000);
   }, []);
+
+  const fetchData = useCallback(() => {
+    const data = localDB.getActive('transactions');
+    setTransactions(data as Transaction[]);
+    setLastSyncTime(new Date().toLocaleTimeString());
+    
+    // Check for unread Sovereign Messages
+    const settings = localDB.get('sync_settings');
+    const myId = settings?.device_id;
+    if (myId) {
+      const messages = localDB.getAll('sovereign_messages');
+      const unread = Array.isArray(messages) ? messages.filter((m: any) => m.recipient === myId && !m.read).length : 0;
+      setUnreadMsgCount(unread);
+    }
+  }, []);
+
+  const logActivity = async (action: string, entity: string, entity_id?: string, overrideUser?: string) => {
+     localDB.insert('activity_logs', {
+       user_email: overrideUser || userName,
+       action,
+       entity,
+       entity_id
+     });
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1438,6 +1607,9 @@ export default function App() {
     if (invId) {
       setPublicInvoiceId(invId);
     }
+    
+    // Start Sovereign Sync Engine (Cloud/LAN)
+    syncEngine.start();
   }, []);
 
   useEffect(() => {
@@ -1451,37 +1623,102 @@ export default function App() {
     document.body.style.fontFamily = `'${systemSettings.fontFamily}', 'Cairo', sans-serif`;
     
     // Auto-sync settings from localStorage periodically (or on focus)
-    const sync = () => {
+    const sync = (e: any) => {
+      // If the actual database changed (from Cloud Sync), refresh everything
+      if (e && e.key === 'alghwairy_db') {
+        fetchData();
+      }
+
       setSystemSettings({
-        companyName: localStorage.getItem('sov_company_name') || 'Alghwairy Sovereign Finance',
+        companyName: localStorage.getItem('sov_company_name') || 'مؤسسة الغويري للتخليص الجمركي',
         taxNumber: localStorage.getItem('sov_tax_number') || '310029384756382',
-        primaryColor: localStorage.getItem('sov_primary_color') || '#001a33',
+        primaryColor: localStorage.getItem('sov_primary_color') || '#d4af37',
         fontFamily: localStorage.getItem('sov_font_family') || 'Tajawal',
-        reportHeader: localStorage.getItem('sov_report_header') || 'Sovereign Institutional Ledger - Official Document',
-        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Financial - Confidential'
+        reportHeader: localStorage.getItem('sov_report_header') || 'مؤسسة الغويري للتخليص الجمركي - وثيقة رسمية',
+        reportFooter: localStorage.getItem('sov_report_footer') || 'Alghwairy Customs Clearance - Confidential',
+        address: localStorage.getItem('sov_address') || 'الرياض، المملكة العربية السعودية - حي الميناء',
+        phone: localStorage.getItem('sov_phone') || '+966 50 000 0000',
+        email: localStorage.getItem('sov_email') || 'info@alghwairy.sa',
+        bankName: localStorage.getItem('sov_bank_name') || 'البنك الأهلي السعودي (SNB)',
+        iban: localStorage.getItem('sov_iban') || 'SA00 0000 0000 0000 0000 0000'
       });
     };
     
     window.addEventListener('storage', sync);
-    window.addEventListener('focus', sync);
+    window.addEventListener('focus', sync as any);
     return () => {
       window.removeEventListener('storage', sync);
-      window.removeEventListener('focus', sync);
+      window.removeEventListener('focus', sync as any);
     };
-  }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName]);
-
-  const fetchData = useCallback(async () => {
-    const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-    if (data) setTransactions(data as Transaction[]);
-    setLastSyncTime(new Date().toLocaleTimeString());
-  }, []);
+  }, [isDark, systemSettings.primaryColor, systemSettings.fontFamily, systemSettings.companyName, fetchData]);
 
   useEffect(() => {
     if (isLoggedIn && !publicInvoiceId) {
-      fetchData();
       const timer = setInterval(() => {
         setLastSyncTime(new Date().toLocaleTimeString());
+        
+        // Auto local save logic
+        const freq = localStorage.getItem('sov_sync_frequency') || 'daily';
+        const lastBackup = localStorage.getItem('sov_last_backup_date');
+        const now = new Date();
+        let shouldBackup = false;
+        
+        if (!lastBackup) {
+          shouldBackup = true;
+        } else {
+          const last = new Date(lastBackup);
+          const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (freq === 'daily' && diffDays >= 1) shouldBackup = true;
+          if (freq === 'weekly' && diffDays >= 7) shouldBackup = true;
+          if (freq === 'monthly' && diffDays >= 30) shouldBackup = true;
+        }
+
+        if (shouldBackup) {
+          (async () => {
+             const backupData: any = {};
+             for (const table of (['invoices', 'customers', 'transactions', 'expenses'] as const)) {
+               backupData[table] = localDB.getAll(table);
+             }
+             
+             try {
+                if ((window as any).require) {
+                   const fs = (window as any).require('fs');
+                   const path = (window as any).require('path');
+                   const os = (window as any).require('os');
+                   const backupDir = path.join(os.homedir(), 'Documents', 'Alghwairy_Backups');
+                   if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+                   
+                   const backupPath = path.join(backupDir, `Sovereign_Backup_${now.toISOString().split('T')[0]}.json`);
+                   fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2), 'utf-8');
+                   showToast(lang === 'ar' ? 'تمت مزامنة وحفظ نسخة محلية تلقائياً' : 'Auto Local Sync completed', 'success');
+                } else {
+                   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                   const url = URL.createObjectURL(blob);
+                   const a = document.createElement('a');
+                   a.href = url;
+                   a.download = `Sovereign_Backup_${now.toISOString().split('T')[0]}.json`;
+                   a.click();
+                   showToast(lang === 'ar' ? 'تم تنزيل النسخة الاحتياطية' : 'Backup downloaded', 'success');
+                }
+                
+                 localStorage.setItem('sov_last_backup_date', now.toISOString());
+             } catch (e) {
+                console.error("Backup failed", e);
+             }
+          })();
+        }
       }, 60000);
+      
+      const cloudSyncTimer = setInterval(() => {
+        if (localStorage.getItem('sov_cloud_sync') === 'true') {
+          cloudSyncEngine.syncAll().then(stats => {
+            if (stats && (stats.uploaded > 0 || stats.downloaded > 0)) {
+               fetchData();
+            }
+          }).catch(console.error);
+        }
+      }, 180000); // 3 Minutes
       
       // PRODUCTION STABILITY: Overlay-Killer Effect
       const killer = setInterval(() => {
@@ -1492,18 +1729,10 @@ export default function App() {
       return () => {
         clearInterval(timer);
         clearInterval(killer);
+        clearInterval(cloudSyncTimer);
       };
     }
   }, [isLoggedIn, publicInvoiceId, fetchData]);
-
-  const logActivity = async (action: string, entity: string, entity_id?: string, overrideUser?: string) => {
-     await supabase.from('activity_logs').insert([{
-       user_email: overrideUser || userName,
-       action,
-       entity,
-       entity_id
-     }]);
-  };
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1514,19 +1743,17 @@ export default function App() {
 
     setIsActionLoading(true);
     try {
-      const { data, error } = await supabase.from('transactions').insert([
-        { 
+      const newRecord = {
           trx_number: 'TRX-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
           description: newTrx.description, 
           amount: parseFloat(newTrx.amount), 
           type: newTrx.type,
-          status: 'مكتمل'
-        }
-      ]).select();
+          status: 'مكتمل',
+          created_at: new Date().toISOString()
+      };
+      localDB.insert('transactions', newRecord);
       
-      if (error) throw error;
-      
-      await logActivity('Added New Sovereign TRX', 'transactions', (data as any)?.[0]?.id);
+      await logActivity('Added New Sovereign TRX (Offline/Queue)', 'transactions', newRecord.trx_number);
       showToast(t.notifications.success, 'success');
       setShowAddTrxModal(false);
       setNewTrx({ description: '', amount: '', type: 'income' });
@@ -1549,7 +1776,7 @@ export default function App() {
 
   if (!isActivated) {
     return (
-      <div className={`app-layout ${isDark ? 'dark-theme' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className={`app-layout ${isDark ? 'dark-theme' : 'light-theme'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
          <ActivationView 
            onActivate={handleActivation} 
            error={activationError} 
@@ -1562,8 +1789,24 @@ export default function App() {
   }
 
   if (!isLoggedIn) {
+    if (showLanding) {
+      return (
+        <LandingView 
+          t={t.landing} 
+          lang={lang} 
+          onEnterPortal={() => setShowLanding(false)} 
+          isDark={isDark} 
+        />
+      );
+    }
+
     return (
-      <div className={`app-layout ${isDark ? 'dark-theme' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className={`app-layout ${isDark ? 'dark-theme' : 'light-theme'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div style={{ position: 'fixed', top: '1.5rem', [lang === 'ar' ? 'left' : 'right']: '1.5rem', zIndex: 1000 }}>
+           <button onClick={() => setShowLanding(true)} className="btn-executive" style={{ background: 'var(--surface)', color: 'var(--primary)', padding: '0.5rem 1rem', fontSize: '0.8rem', border: '1px solid var(--outline)' }}>
+              {lang === 'ar' ? 'العودة للموقع' : 'Back to Website'}
+           </button>
+        </div>
         <LoginView onLogin={(role: string, name: string) => {
           setUserRole(role);
           setUserName(name);
@@ -1577,27 +1820,31 @@ export default function App() {
   }
 
   const renderView = () => {
+    // Permission Guard
+    if (activeTab !== 'dashboard' && !hasPermission(userRole, activeTab as AppModule)) {
+       return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
+    }
+
     switch(activeTab) {
       case 'dashboard': return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
       case 'customers': return <CustomersView showToast={showToast} logActivity={logActivity} t={{...t.customers, lang}} />;
       case 'accounting': return <AccountingView showToast={showToast} logActivity={logActivity} t={{...t.accounting, lang}} />;
-      case 'invoices': return <InvoicesView showToast={showToast} logActivity={logActivity} t={{...t.invoices, lang}} />;
+      case 'invoices': return <InvoicesView showToast={showToast} logActivity={logActivity} t={t} />;
       case 'prepayments': return <PrepaymentsView showToast={showToast} logActivity={logActivity} t={{...t.prepayments, lang}} />;
       case 'expenses': return <ExpensesView showToast={showToast} logActivity={logActivity} t={t.expenses} lang={lang} />;
       case 'payroll': return <PayrollView showToast={showToast} logActivity={logActivity} t={{...t.payroll, lang}} />;
       case 'tax': return <TaxAutomationView showToast={showToast} logActivity={logActivity} t={{...t.tax, lang}} />;
       case 'reports': return <ReportsView showToast={showToast} t={{...reportsT, lang}} />;
       case 'security': return <SecurityView showToast={showToast} t={{...t.security, lang}} />;
-      case 'data_import': return <DataImportView showToast={showToast} t={{...t.data_import, lang}} lang={lang} />;
-      case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} />;
+      case 'data_import': return <DataImportView showToast={showToast} logActivity={logActivity} t={{...t.data_import, lang}} lang={lang} />;
+      case 'statements': return <StatementsView transactions={transactions} t={{...t.statements, lang}} showToast={showToast} />;
       case 'petty_cash': return <PettyCashView t={{...t.petty_cash, lang}} lang={lang} showToast={showToast} />;
       case 'audit_logs': return <AuditLogsView showToast={showToast} t={{...t.audit_logs, lang}} />;
-      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} isDark={isDark} toggleTheme={toggleTheme} t={{...t.settings, lang}} />;
-      case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} />;
+      case 'settings': return <SettingsView showToast={showToast} logActivity={logActivity} t={{...t.settings, lang}} userName={userName} />;
+      case 'roles': return <RolesView showToast={showToast} t={{...t.roles, lang}} nav={t.nav} />;
       case 'trash': return <TrashView t={{...t.trash, lang}} lang={lang} showToast={showToast} />;
-      case 'marketing': return <MarketingView showToast={showToast} t={{...t.marketing, lang}} />;
-      case 'affiliate': return <AffiliateView showToast={showToast} t={{...t.affiliate, lang}} />;
-
+      case 'communications': return <CommunicationsView showToast={showToast} lang={lang} />;
+      case 'contracts': return <ContractsView showToast={showToast} logActivity={logActivity} t={{...t.contracts, lang}} />;
       default: return <DashboardView transactions={transactions} fetchData={fetchData} showToast={showToast} t={{...t.dashboard, lang}} />;
     }
   };
@@ -1605,10 +1852,10 @@ export default function App() {
   const isMobileSize = window.innerWidth <= 1024; // Renamed to avoid confusion
 
   return (
-    <div className={`app-layout ${isDark ? 'dark-theme' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {isLoggedIn && !publicInvoiceId && isMobileSize && !isCollapsed && <div className="sidebar-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 90 }} onClick={() => setIsCollapsed(true)} />}
+    <div className={`app-layout ${isDark ? 'dark-theme' : 'light-theme'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {isLoggedIn && !publicInvoiceId && isMobileSize && !isCollapsed && <div className="sidebar-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90 }} onClick={() => setIsCollapsed(true)} />}
       {/* Sidebar - Traditional Sovereign Fixed Width */}
-      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : '72px') : (isMobileSize ? '280px' : '235px'), transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', zIndex: 100 }}>
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={{ width: isCollapsed ? (isMobileSize ? '0' : 'var(--sidebar-collapsed-width)') : 'var(--sidebar-width)', zIndex: 100, background: 'var(--sidebar-bg)' }}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           style={{ 
@@ -1626,111 +1873,124 @@ export default function App() {
             alignItems: 'center', 
             justifyContent: 'center', 
             zIndex: 101, 
-            boxShadow: '0 4px 10px rgba(0,0,0,0.1)' 
+            boxShadow: '0 4px 10px rgba(0,0,0,0.2)' 
           }}
         >
-          {isCollapsed ? (lang === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />) : (lang === 'ar' ? <ChevronRight size={16} /> : <ChevronLeft size={16} />)}
+          {isCollapsed ? (lang === 'ar' ? <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_left</span> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span>) : (lang === 'ar' ? <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_left</span>)}
         </button>
 
-        <div style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1rem 1.2rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+        <div className="sidebar-header-text" style={{ padding: isCollapsed ? '0 0 1rem' : '1.8rem 1.2rem 1.2rem', textAlign: 'center', borderBottom: '1px solid var(--separator)' }}>
           {!isCollapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
-                  <ShieldCheck size={18} strokeWidth={2.8} />
-                  <h2 style={{ fontSize: '0.95rem', fontWeight: 800, fontFamily: 'Tajawal', margin: 0, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'white' }}>{t.title}</h2>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
+                  <img src="./logo.png" alt="Logo" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
+                   <h2 className="text-sovereign sharp-gold sharp-text" style={{ fontSize: '1.05rem', margin: 0, color: 'var(--secondary)', fontWeight: 1000 }}>{t.title}</h2>
                </div>
-               <p style={{ fontSize: '0.55rem', opacity: 0.4, marginTop: '0.4rem', color: '#abc8f5', textAlign: 'center', fontWeight: 700, letterSpacing: '0.5px' }}>{t.subtitle}</p>
+               <p style={{ fontSize: '0.62rem', opacity: 1, marginTop: '0.5rem', color: 'var(--primary)', textAlign: 'center', fontWeight: 900, letterSpacing: '0.8px', textTransform: 'uppercase' }}>{t.subtitle}</p>
             </div>
           )}
           {isCollapsed && (
-            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.08)', borderRadius: '10px', margin: '1.2rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)', cursor: 'pointer', transition: 'all 0.3s' }}>
-               <ShieldCheck size={20} strokeWidth={2.5} />
+            <div className="sidebar-logo-mini" style={{ width: 42, height: 42, background: 'rgba(0,28,57,0.05)', borderRadius: '10px', margin: '0.5rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', border: '1px solid var(--outline)' }}>
+               <img src="./logo.png" alt="Logo" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
             </div>
           )}
         </div>
 
-        <nav className="sidebar-scroll-area" style={{ paddingBottom: '2.5rem' }}>
-          {(userRole === 'admin' || userRole === 'cfo') && (
+        <nav className="sidebar-scroll-area custom-scrollbar">
+          {(hasPermission(userRole, 'dashboard') || hasPermission(userRole, 'customers')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
-              <NavItem icon={<LayoutDashboard size={16} />} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Handshake size={16} />} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Megaphone size={16} />} label={t.nav.marketing} active={activeTab === 'marketing'} onClick={() => setActiveTab('marketing')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Briefcase size={16} />} label={t.nav.affiliate} active={activeTab === 'affiliate'} onClick={() => setActiveTab('affiliate')} lang={lang} isCollapsed={isCollapsed} />
+              {!isCollapsed && <div style={{ padding: '1.25rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'العامة' : 'General'}</div>}
+              {hasPermission(userRole, 'dashboard') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>dashboard</span>} label={t.nav.dashboard} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'customers') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>handshake</span>} label={t.nav.customers} active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'contracts') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>} label={t.nav.contracts} active={activeTab === 'contracts'} onClick={() => setActiveTab('contracts')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'accountant' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'accounting') || hasPermission(userRole, 'invoices') || hasPermission(userRole, 'prepayments') || hasPermission(userRole, 'expenses') || hasPermission(userRole, 'petty_cash') || hasPermission(userRole, 'tax')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
-              <NavItem icon={<Wallet size={16} />} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<FileText size={16} />} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<HistoryIcon size={16} />} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<TrendingDown size={16} />} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Banknote size={16} />} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Zap size={16} />} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'المالية والامتثال' : 'Financials'}</div>}
+              {hasPermission(userRole, 'accounting') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>account_balance_wallet</span>} label={t.nav.accounting} active={activeTab === 'accounting'} onClick={() => setActiveTab('accounting')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'invoices') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>} label={t.nav.invoices} active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'prepayments') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>history</span>} label={t.nav.prepayments} active={activeTab === 'prepayments'} onClick={() => setActiveTab('prepayments')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'expenses') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_down</span>} label={t.nav.expenses} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'petty_cash') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>} label={t.nav.petty_cash} active={activeTab === 'petty_cash'} onClick={() => setActiveTab('petty_cash')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'tax') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bolt</span>} label={t.nav.tax} active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'payroll') || hasPermission(userRole, 'reports') || hasPermission(userRole, 'statements') || hasPermission(userRole, 'communications')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
-              <NavItem icon={<Users size={16} />} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />
-
-              <NavItem icon={<BarChart3 size={16} />} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<FileSpreadsheet size={16} />} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'الموارد والتقارير' : 'Operations'}</div>}
+              {hasPermission(userRole, 'payroll') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>} label={t.nav.payroll} active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'reports') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>} label={t.nav.reports} active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'statements') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_chart</span>} label={t.nav.statements} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'communications') && (
+                <NavItem 
+                   icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>device_hub</span>} 
+                   label={t.nav.communications} 
+                   active={activeTab === 'communications'} 
+                   onClick={() => setActiveTab('communications')} 
+                   lang={lang} 
+                   isCollapsed={isCollapsed} 
+                   badge={unreadMsgCount > 0 ? unreadMsgCount : undefined}
+                />
+              )}
             </>
           )}
 
-          {(userRole === 'admin' || userRole === 'cfo') && (
+          {(hasPermission(userRole, 'security') || hasPermission(userRole, 'roles') || hasPermission(userRole, 'audit_logs') || hasPermission(userRole, 'data_import') || hasPermission(userRole, 'settings') || hasPermission(userRole, 'trash')) && (
             <>
-              {!isCollapsed && <div style={{ padding: '1.2rem 0.8rem 0.4rem', fontSize: '0.65rem', color: '#abc8f5', opacity: 0.7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
-              <NavItem icon={<ShieldCheck size={16} />} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<UserPlus size={16} />} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Activity size={16} />} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Download size={16} />} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Settings size={16} />} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />
-              <NavItem icon={<Trash2 size={16} />} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />
+              {!isCollapsed && <div style={{ padding: '1.5rem 1rem 0.5rem', fontSize: '0.62rem', color: 'var(--primary)', opacity: 0.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'النظام والأمان' : 'System'}</div>}
+              {hasPermission(userRole, 'security') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified_user</span>} label={t.nav.security} active={activeTab === 'security'} onClick={() => setActiveTab('security')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'roles') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>} label={t.nav.roles} active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'audit_logs') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>monitoring</span>} label={t.nav.audit} active={activeTab === 'audit_logs'} onClick={() => setActiveTab('audit_logs')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'data_import') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>} label={t.nav.data || 'Data Import'} active={activeTab === 'data_import'} onClick={() => setActiveTab('data_import')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'settings') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span>} label={t.nav.settings || 'System Settings'} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} lang={lang} isCollapsed={isCollapsed} />}
+              {hasPermission(userRole, 'trash') && <NavItem icon={<span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>} label={t.nav.trash || 'Trash'} active={activeTab === 'trash'} onClick={() => setActiveTab('trash')} lang={lang} isCollapsed={isCollapsed} />}
             </>
           )}
         </nav>
 
+
         {/* User Data Profiler - Miniature Version */}
-        <div style={{ padding: isCollapsed ? '0.6rem 0' : '1rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.05)' }}>
+        <div style={{ padding: isCollapsed ? '0.6rem 0' : '1rem 1.25rem', borderTop: '1px solid var(--separator)', background: 'rgba(0,28,57,0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isCollapsed ? 0 : '0.65rem', marginBottom: isCollapsed ? '0.6rem' : '0.75rem', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
              <div style={{ width: 28, height: 28, borderRadius: '6px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
                 {userName.charAt(0).toUpperCase()}
              </div>
               {!isCollapsed && (
                 <div style={{ textAlign: lang === 'ar' ? 'right' : 'left', flex: 1 }}>
-                   <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
-                   <div style={{ fontSize: '0.6rem', color: 'var(--secondary)', fontWeight: 600 }}>{t.user_roles[userRole as keyof typeof t.user_roles]}</div>
+                   <div style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
+                   <div style={{ color: 'var(--secondary)', fontSize: '0.7rem', fontWeight: 600 }}>{t.user_roles[userRole as keyof typeof t.user_roles]}</div>
                 </div>
               )}
           </div>
           
           <button onClick={() => setIsLoggedIn(false)} className="nav-item" style={{ 
-            color: '#ffdad6', 
+            color: 'var(--error)', 
             justifyContent: isCollapsed ? 'center' : 'flex-start', 
             padding: isCollapsed ? '0' : '0.5rem 0.8rem', 
             gap: isCollapsed ? '0' : '0.8rem',
             width: isCollapsed ? '44px' : 'calc(100% - 1rem)',
             margin: isCollapsed ? '0 auto' : '0 0.5rem'
           }}>
-             <LogOut size={18} />
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
              {!isCollapsed && <span style={{ fontSize: '0.8rem' }}>{t.logout}</span>}
           </button>
 
           {!isCollapsed && (
-            <div style={{ marginTop: '0.8rem', padding: '0 0.2rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.8rem', textAlign: 'center' }}>
-               <div style={{ fontSize: '0.55rem', opacity: 0.5, color: '#fff', letterSpacing: '0.5px' }}>
+            <div style={{ marginTop: '0.8rem', padding: '0 0.2rem', borderTop: '1px solid var(--separator)', paddingTop: '0.8rem', textAlign: 'center' }}>
+               <div style={{ fontSize: '0.55rem', opacity: 0.6, color: 'var(--primary)', letterSpacing: '0.5px', fontWeight: 700 }}>
                   {lang === 'ar' ? 'منشئ النظام' : 'SYSTEM CREATOR'}
                </div>
-               <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#abc8f5', marginTop: '0.2rem', opacity: 0.9 }}>
-                  Abdelhman Abusalif
+               <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.2rem' }}>
+                  Abdel Rahman Abusalif
                </div>
-               <div style={{ fontSize: '0.55rem', color: 'var(--secondary)', marginTop: '0.05rem', opacity: 0.7 }}>
+               <div style={{ fontSize: '0.55rem', color: 'var(--secondary)', marginTop: '0.05rem', fontWeight: 700 }}>
                   966543389314
+               </div>
+               <div style={{ fontSize: '0.5rem', marginTop: '0.6rem', color: 'var(--primary)', fontWeight: 900, opacity: 0.3, letterSpacing: '1px' }}>
+                  v1.0.0 STABLE BUILD
                </div>
             </div>
           )}
@@ -1739,74 +1999,74 @@ export default function App() {
 
       {/* Main Workspace */}
       <main className="main-stage">
-        <header className="view-header">
+        <header className="view-header glass-panel" style={{ borderBottom: 'none', background: 'var(--header-bg)' }}>
           <div className="animate-fade">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <span className="badge-sovereign" style={{ background: 'var(--secondary)', color: 'var(--primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+              <span className="badge-sovereign" style={{ background: 'rgba(212, 167, 106, 0.15)', color: 'var(--secondary)', border: '1px solid rgba(212, 167, 106, 0.2)' }}>
                 {t.roles[userRole as keyof typeof t.roles]}
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 700 }}>
-                 <Clock size={14} /> {t.last_sync}: {lastSyncTime}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.75rem', fontWeight: 800, opacity: 0.7 }}>
+                 <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>schedule</span> {t.last_sync}: {lastSyncTime}
               </div>
             </div>
-            <h1 className="view-title">
-              <span style={{ fontWeight: 400, opacity: 0.6 }}>{t.welcome}</span>
-              <span style={{ color: 'var(--secondary)', fontWeight: 900, marginInlineStart: '0.5rem' }}>{userName}</span>
+            <h1 className="view-title" style={{ fontSize: '1.5rem' }}>
+              <span style={{ fontWeight: 400, opacity: 0.4, color: 'var(--on-surface)' }}>{t.welcome}</span>
+              <span className="text-sovereign" style={{ marginInlineStart: '0.5rem', background: 'none', color: 'var(--secondary)' }}>{userName}</span>
             </h1>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div className="card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '280px', borderRadius: '12px', boxShadow: 'none', background: 'var(--surface-container-low)' }}>
-              <Search size={18} color="var(--primary)" style={{ opacity: 0.5 }} />
-              <input type="text" placeholder={t.search} style={{ border: 'none', outline: 'none', background: 'none', width: '100%', fontSize: '0.9rem', color: 'var(--on-surface)', fontWeight: 600 }} />
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <div className="card-layer-2" style={{ padding: '0.65rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '320px', borderRadius: '100px', border: '1px solid var(--outline-variant)' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', opacity: 0.4, color: 'var(--primary)' }}>search</span>
+              <input type="text" placeholder={t.search} style={{ border: 'none', outline: 'none', background: 'none', width: '100%', fontSize: '0.82rem', color: 'var(--on-surface)', fontWeight: 700 }} />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
               <button 
                 onClick={() => showToast('Sovereign Ledger Integrity: 100% Verified. AES-256 Active.', 'success')}
-                className="card" 
                 style={{ 
                   margin: 0,
-                  padding: '0.4rem 1rem', 
+                  padding: '0.55rem 1.15rem', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '0.75rem', 
-                  borderRadius: '10px', 
+                  gap: '0.8rem', 
+                  borderRadius: '100px', 
                   cursor: 'pointer',
-                  border: '1px solid var(--surface-container-high)',
-                  background: 'var(--surface-container-low)',
-                  transition: 'transform 0.2s',
-                  boxShadow: 'none'
+                  border: '1px solid var(--outline-variant)',
+                  background: 'var(--surface)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
+                className="hover-lift"
               >
-                 <div className="pulse-green" style={{ width: 8, height: 8, borderRadius: '50%' }} />
+                 <div className="pulse-green" style={{ width: 7, height: 7, borderRadius: '50%' }} />
                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary)', opacity: 0.6, textTransform: 'uppercase', lineHeight: 1 }}>Health</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', lineHeight: 1.2 }}>VERIFIED</span>
+                    <span className="label-sovereign" style={{ fontSize: '0.55rem', opacity: 0.6 }}>Network Status</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--primary)', lineHeight: 1 }}>VERIFIED</span>
                  </div>
               </button>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button title="Toggle Theme" onClick={toggleTheme} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  {isDark ? <Sun size={17} /> : <Moon size={17} />}
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                <button title="Toggle Theme" onClick={toggleTheme} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  {isDark ? <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>light_mode</span> : <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>dark_mode</span>}
                 </button>
-                <button title="Change Language" onClick={toggleLang} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <Languages size={17} />
+                <button title="Change Language" onClick={toggleLang} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>language</span>
                 </button>
-                <button title="Direct Print" onClick={handlePrint} className="btn-executive" style={{ width: '38px', height: '38px', padding: '0', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', boxShadow: 'none' }}>
-                  <Printer size={17} />
+                <button title="Direct Print" onClick={handlePrint} className="hover-lift" style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-high)', color: 'var(--primary)', border: '1px solid var(--outline-variant)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span>
                 </button>
               </div>
             </div>
 
-            <button onClick={() => setShowAddTrxModal(true)} className="btn-executive">
-              <Plus size={20} /> {lang === 'ar' ? 'إضافة عملية سيادية' : 'Add Sovereign TRX'}
+            <button onClick={() => setShowAddTrxModal(true)} className="btn-executive" style={{ padding: '0.65rem 1.25rem', borderRadius: '100px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> <span style={{ fontWeight: 900 }}>{lang === 'ar' ? 'إضافة عملية' : 'Add TRX'}</span>
             </button>
             
-            <div style={{ position: 'relative', cursor: 'pointer', padding: '0.4rem' }} onClick={() => setShowNotifDrawer(true)}>
-              <Bell size={24} color="var(--primary)" />
+            <div style={{ position: 'relative', cursor: 'pointer', padding: '0.4rem', borderRadius: '50%', background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowNotifDrawer(true)}>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>notifications</span>
               {notifHistory.length > 0 && (
-                <span className="status-indicator" style={{ position: 'absolute', top: 4, right: 4, background: 'var(--error)', border: '2px solid var(--surface)' }}></span>
+                <span className="status-indicator" style={{ position: 'absolute', top: -2, right: -2, background: 'var(--error)', border: '2.5px solid var(--surface)', width: '12px', height: '12px' }}></span>
               )}
             </div>
           </div>
@@ -1825,7 +2085,7 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h3 style={{ fontFamily: 'Tajawal' }}>{lang === 'ar' ? 'سجل الإشعارات السيادية' : 'Sovereign Notification Log'}</h3>
               <button onClick={() => setShowNotifDrawer(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface)' }}>
-                <Clock size={20} />
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1848,12 +2108,12 @@ export default function App() {
 
       {/* Sovereign Manual Entry Modal */}
       {showAddTrxModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,20,0.6)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,5,15,0.92)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
             <div className="card slide-in" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem', background: 'var(--surface)', border: '1px solid var(--secondary)', boxShadow: '0 20px 80px rgba(0,0,0,0.6)' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h2 style={{ fontFamily: 'Tajawal', margin: 0, fontSize: '1.6rem', color: 'var(--primary)' }}>{lang === 'ar' ? 'توثيق عملية سيادية' : 'Document Sovereign TRX'}</h2>
                   <button onClick={() => setShowAddTrxModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}>
-                     <LogOut size={24} style={{ transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }} />
+                     <span className="material-symbols-outlined" style={{ fontSize: '24px', transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }}>logout</span>
                   </button>
                </div>
                
@@ -1900,7 +2160,7 @@ export default function App() {
                   </div>
 
                   <button disabled={isActionLoading} type="submit" className="btn-executive" style={{ width: '100%', padding: '1.2rem', justifyContent: 'center', gap: '1rem', fontSize: '1.1rem' }}>
-                     {isActionLoading ? <Loader2 className="spin" /> : <><ShieldCheck size={22} /> {lang === 'ar' ? 'اعتماد العملية في الميزان' : 'Authorize Sovereign TRX'}</>}
+                     {isActionLoading ? <span className="material-symbols-outlined spin" style={{ fontSize: '24px' }}>sync</span> : <><span className="material-symbols-outlined" style={{ fontSize: '22px' }}>verified_user</span> {lang === 'ar' ? 'اعتماد العملية في الميزان' : 'Authorize Sovereign TRX'}</>}
                   </button>
                </form>
             </div>
@@ -1908,14 +2168,14 @@ export default function App() {
       )}
 
       {/* Sovereign Toast */}
-      {notification && (
+      {notification ? (
         <div className="toast-container" style={{ zIndex: 2000 }}>
           <div className={`toast-notification ${notification.type === 'error' ? 'toast-error' : ''}`}>
-            {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} color="#88d982" />}
+            {notification.type === 'error' ? <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>error</span> : <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#88d982' }}>check_circle</span>}
             <span>{notification.message}</span>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -1927,20 +2187,54 @@ interface NavItemProps {
   onClick: () => void;
   lang: string;
   isCollapsed: boolean;
+  badge?: number | string;
 }
 
-function NavItem({ icon, label, active, onClick, lang, isCollapsed }: NavItemProps) {
+function NavItem({ icon, label, active, onClick, lang, isCollapsed, badge }: NavItemProps) {
   return (
     <button 
       onClick={onClick} 
       className={`nav-item ${active ? 'active' : ''}`}
+      style={{ position: 'relative' }}
     >
-      {icon}
-      {!isCollapsed && <span style={{ transition: 'opacity 0.2s' }}>{label}</span>}
-      {(active && !isCollapsed) && <ArrowUpRight size={14} style={{ [lang === 'ar' ? 'marginRight' : 'marginLeft']: 'auto', opacity: 0.5 }} />}
+      <div className="nav-icon-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '24px' }}>
+        {icon}
+      </div>
+      {!isCollapsed && <span className="nav-label">{label}</span>}
+      {badge && badge !== 0 && (
+         <span style={{
+            position: 'absolute',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            [lang === 'ar' ? 'left' : 'right']: isCollapsed ? '-4px' : '1.25rem',
+            background: 'var(--secondary)',
+            color: 'var(--primary)',
+            fontSize: '0.62rem',
+            fontWeight: 950,
+            padding: '2px 5px',
+            borderRadius: '6px',
+            minWidth: '16px',
+            textAlign: 'center',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            zIndex: 10
+         }}>
+            {badge}
+         </span>
+      )}
+      {(active && !isCollapsed) && (
+        <div style={{ 
+          marginInlineStart: 'auto', 
+          width: '4px', 
+          height: '16px', 
+          background: 'var(--sidebar-active-text)', 
+          borderRadius: '2px', 
+          opacity: 0.5 
+        }} />
+      )}
     </button>
   );
 }
+
 
 interface ActivationViewProps {
   onActivate: (key: string) => void;
@@ -1954,23 +2248,28 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
   const [key, setKey] = useState('');
 
   return (
-    <div className={`login-container ${isDark ? 'dark-theme' : ''}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--surface-container-low)' }}>
-      <div className="login-card slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem' }}>
+    <div className={`login-container premium-bg slide-in ${isDark ? 'dark-theme' : 'light-theme'}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
+      <div className="login-card premium-bg slide-in" style={{ maxWidth: '500px', width: '90%', padding: '3.5rem', background: 'var(--surface)', border: '1px solid var(--outline)' }}>
         <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
-           <div style={{ display: 'inline-flex', padding: '1.2rem', borderRadius: '24px', background: 'var(--primary)', color: 'var(--secondary)', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-              <ShieldCheck size={42} />
+           <div style={{ display: 'inline-flex', padding: '1.2rem', borderRadius: '24px', background: 'var(--primary)', color: 'var(--on-primary)', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '42px' }}>verified_user</span>
            </div>
            <h2 style={{ fontSize: '2.2rem', fontFamily: 'Tajawal', fontWeight: 950, color: 'var(--primary)', marginBottom: '0.8rem' }}>
               {lang === 'ar' ? 'تنشيط الميزان السيادي' : 'Sovereign Ledger Activation'}
            </h2>
-           <p style={{ color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.95rem' }}>
+           <p style={{ color: 'var(--on-surface)', opacity: 0.8, fontWeight: 700, fontSize: '0.95rem' }}>
               {lang === 'ar' ? 'يرجى إدخال مفتاح الترسيم القانوني للمتابعة' : 'Please enter your legal license key to proceed'}
            </p>
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--surface-container-high)', color: 'var(--on-surface)', opacity: 0.8, fontWeight: 800 }}>10 DAYS</span>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--surface-container-high)', color: 'var(--on-surface)', opacity: 0.8, fontWeight: 800 }}>30 DAYS</span>
+              <span style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'var(--primary)', color: 'var(--on-primary)', fontWeight: 800 }}>LIFETIME</span>
+           </div>
         </header>
 
         <form onSubmit={(e) => { e.preventDefault(); onActivate(key); }}>
           <div style={{ marginBottom: '2.5rem' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '0.8rem', letterSpacing: '1px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--on-surface)', opacity: 0.7, marginBottom: '0.8rem', letterSpacing: '1px' }}>
               {lang === 'ar' ? 'مفتاح التنشيط التنفيذي' : 'Executive Activation Key'}
             </label>
             <input 
@@ -1985,16 +2284,22 @@ function ActivationView({ onActivate, error, lang, toggleLang, isDark }: Activat
             {error && <p style={{ color: 'var(--error)', fontSize: '0.85rem', fontWeight: 800, marginTop: '1rem', textAlign: 'center' }}>{error}</p>}
           </div>
 
-          <button type="submit" className="btn-executive" style={{ width: '100%', padding: '1.5rem', justifyContent: 'center', fontSize: '1.1rem', background: 'var(--primary)', color: 'var(--secondary)' }}>
-            <Zap size={20} /> {lang === 'ar' ? 'تنشيط المنظومة الآن' : 'Activate System Now'}
+          <button type="submit" className="btn-executive primary" style={{ width: '100%', padding: '1.5rem', justifyContent: 'center', fontSize: '1.1rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>bolt</span> {lang === 'ar' ? 'تنشيط المنظومة الآن' : 'Activate System Now'}
           </button>
         </form>
 
-        <footer style={{ marginTop: '3.5rem', paddingTop: '2rem', borderTop: '1px solid var(--surface-container-high)', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-          <button onClick={toggleLang} className="btn-text" style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>
-             <Languages size={18} /> {lang === 'ar' ? 'English Version' : 'اللغة العربية'}
+        <footer style={{ marginTop: '3.5rem', paddingTop: '2rem', borderTop: '1px solid var(--outline)', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+          <button onClick={toggleLang} className="btn-executive" style={{ fontSize: '0.85rem', fontWeight: 800, padding: '0.8rem 1.5rem' }}>
+             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>language</span> {lang === 'ar' ? 'English Version' : 'اللغة العربية'}
           </button>
         </footer>
+        
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', opacity: 0.4 }}>
+           <span className="version-badge">
+              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>verified_user</span> v1.0.0 STABLE BUILD
+           </span>
+        </div>
       </div>
     </div>
   );

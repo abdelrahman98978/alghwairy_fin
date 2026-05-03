@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>تسجيل الدخول - مؤسسة الغويري للتخليص الجمركي</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Tajawal:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "primary": "#002446",
+              "on-primary": "#ffffff",
+              "primary-container": "#003362",
+              "on-primary-container": "#d3e3ff",
+              "surface": "#faf9fc",
+              "on-surface": "#1a1c1e",
+              "outline": "#73777f"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "2xl": "1rem"
+            },
+            "fontFamily": {
+              "headline": ["Tajawal", "Manrope", "sans-serif"],
+              "body": ["Tajawal", "Manrope", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Tajawal', 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(0, 36, 70, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .input-gradient {
+            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease;
+        }
+        .input-gradient:focus-within {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-primary min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Background Layer with Port Imagery -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/70 to-primary/95 z-10"></div>
+<img alt="Industrial port background" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARaHxsmg8-eTqFFKNAyKHlh10dipAvqp27Z7DFgpsOZdBBFYH8i5-xFqoKC3Fv-oePsAuhY_WSTGkjRTaxF9dl0QGIFu5vUX65qGcyynC7GK9GIF_m4iCO5-vT1CZGruuTlIh79-1WTFawQP4pCzQiZM62tWgDUl6FtUR9PSHuUJdBTxWr_lAEX_TEnLNnhI6ZhLFc3RRSs_69xYQNlvlcwZ5LhorZiHPjLUu2jxQOhb8t0z-8WodeYjzM70x41JTE01chfIBT13E"/>
+</div>
+<!-- Main Content Shell -->
+<main class="relative z-20 w-full max-w-[440px] px-6">
+<!-- Brand Identity -->
+<div class="flex flex-col items-center mb-12">
+<div class="bg-white p-4 rounded-2xl shadow-2xl mb-8">
+<img alt="Al-Ghuwairi Logo" class="h-24 w-auto" src="https://lh3.googleusercontent.com/aida/ADBb0uiC5UTHaXUfSjEzWVdUQCYv42uHzgjdJpZNMkIpdmLhN0CpQRb1j02qwRSYfRZr1QhptP-vRdNkQ4DGM4lyEA2GgGm1TlKJ8W5tsm1fVIskVdb0_vnyU17TL1B5LSFtEGCXiYUo-TsP5g0hfoPI2gFOqCu8mecy8YIBZoEp7kTlLN_Re-B0NBDz7KD9-snB5Or6hSUsACdb0ZSst5PhguBdEzlpDvRLJLaS1SHuWFxaQs1bvRc9KyRGRDoDr6vmTXSc21GEPpi1Ug"/>
+</div>
+<h1 class="text-white text-3xl font-bold tracking-tight mb-3">تسجيل الدخول الآمن</h1>
+<p class="text-on-primary-container/70 font-medium text-sm tracking-wide">بوابة الخدمات الجمركية الذكية</p>
+</div>
+<!-- Glassmorphism Login Card -->
+<div class="glass-panel rounded-2xl p-10 overflow-hidden">
+<form class="space-y-7">
+<!-- Username Field -->
+<div class="space-y-2.5">
+<label class="text-white/70 text-xs font-semibold mr-1 uppercase tracking-widest">اسم المستخدم</label>
+<div class="relative input-gradient rounded-xl group">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-primary-container/40 group-focus-within:text-white transition-colors">person</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-white placeholder-white/20 py-4.5 pr-12 pl-4 rounded-xl text-sm" placeholder="أدخل اسم المستخدم" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2.5">
+<div class="flex justify-between items-center px-1">
+<label class="text-white/70 text-xs font-semibold uppercase tracking-widest">كلمة المرور</label>
+<a class="text-on-primary-container/50 text-[11px] hover:text-white transition-colors" href="#">هل نسيت كلمة المرور؟</a>
+</div>
+<div class="relative input-gradient rounded-xl group">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-primary-container/40 group-focus-within:text-white transition-colors">lock</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-white placeholder-white/20 py-4.5 pr-12 pl-12 rounded-xl text-sm" placeholder="••••••••" type="password"/>
+<button class="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full bg-white hover:bg-on-primary-container text-primary font-extrabold py-4 rounded-xl shadow-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 mt-4" type="submit">
+<span class="text-base">دخول النظام</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">login</span>
+</button>
+<!-- Divider -->
+<div class="flex items-center gap-4 py-2">
+<div class="h-[1px] flex-1 bg-white/5"></div>
+<span class="text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">أو</span>
+<div class="h-[1px] flex-1 bg-white/5"></div>
+</div>
+<!-- Biometric Login Button -->
+<button class="w-full bg-white/5 hover:bg-white/10 text-white font-semibold py-4 rounded-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3" type="button">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">fingerprint</span>
+<span class="text-sm">تسجيل الدخول بالبصمة</span>
+</button>
+</form>
+</div>
+<!-- Security Indicators -->
+<div class="mt-10 flex justify-center items-center gap-10 opacity-40">
+<div class="flex items-center gap-2 text-white">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-[9px] font-extrabold tracking-[0.15em] uppercase">SSL SECURE</span>
+</div>
+<div class="flex items-center gap-2 text-white">
+<span class="material-symbols-outlined text-sm">shield_with_heart</span>
+<span class="text-[9px] font-extrabold tracking-[0.15em] uppercase">256-BIT AES</span>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 mt-auto relative z-20">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 w-full text-white/30 text-[11px] font-medium tracking-wide">
+<div class="mb-4 md:mb-0">
+                © 2024 مؤسسة الغويري للتخليص الجمركي. جميع الحقوق محفوظة.
+            </div>
+<div class="flex gap-8">
+<a class="hover:text-white transition-colors" href="#">سياسة الخصوصية</a>
+<a class="hover:text-white transition-colors" href="#">شروط الخدمة</a>
+<a class="hover:text-white transition-colors" href="#">مركز الأمان</a>
+</div>
+</div>
+</footer>
+<!-- Decorative Elements -->
+<div class="absolute top-1/4 -right-24 w-96 h-96 bg-primary-container rounded-full blur-[140px] opacity-30 pointer-events-none"></div>
+<div class="absolute bottom-1/4 -left-24 w-80 h-80 bg-blue-900 rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+</body></html>

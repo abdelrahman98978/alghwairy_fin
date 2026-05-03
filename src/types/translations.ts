@@ -34,8 +34,8 @@ export interface Translations {
     petty_cash: string;
     trash: string;
     biometrics: string;
-    marketing: string;
     affiliate: string;
+    contracts: string;
   };
   notifications: {
     success: string;
@@ -141,6 +141,14 @@ export interface Translations {
     adjustment_type: string;
     credit_adj: string;
     debit_adj: string;
+    journal: string;
+    general_ledger: string;
+    daily: string;
+    monthly: string;
+    yearly: string;
+    profit_loss: string;
+    ledger_summary: string;
+    statement_number: string;
   };
   tax: {
     title: string;
@@ -150,6 +158,11 @@ export interface Translations {
     net_vat: string;
     certified_history: string;
     ai_audit: string;
+    customs_fees: string;
+    municipal_fees: string;
+    platform_fees: string;
+    declaration_count: string;
+    total_clearance: string;
     lang: string;
   };
   payroll: {
@@ -179,8 +192,33 @@ export interface Translations {
     base_label: string;
     plus_label: string;
     ded_label: string;
+    iban_label: string;
+    bank_label: string;
+    gosi_deduction: string;
+    print_slip: string;
+    period_label: string;
+    enroll_success: string;
+    certify_confirm: string;
+    certify_success: string;
+    certify_payroll: string;
+    certified_badge: string;
+    no_pending: string;
+    sif_success: string;
+    audit_progress: string;
+    no_records: string;
+    sif_export: string;
     secure_record: string;
     cancel: string;
+    slip: {
+      preview_title: string;
+      earnings: string;
+      deductions: string;
+      net: string;
+      description: string;
+      base: string;
+      allowances: string;
+      gosi: string;
+    };
   };
   customers: {
     lang: string;
@@ -240,6 +278,13 @@ export interface Translations {
       preview: string;
       options: string;
     };
+    preview: {
+      print: string;
+      whatsapp: string;
+      email: string;
+      mark_paid: string;
+      close: string;
+    };
     modal: {
       title: string;
       client_label: string;
@@ -275,6 +320,32 @@ export interface Translations {
     total_due_label?: string;
     print_invoice_label?: string;
     close_label?: string;
+    internal_invoice: string;
+    final_invoice: string;
+    statement_number: string;
+    bol_number: string;
+    operation_number: string;
+    customs_fees: string;
+    port_fees: string;
+    inventory_total: string;
+    final_profit: string;
+    client_name_label: string;
+    barcode: string;
+    remove_tax: string;
+  };
+  contracts: {
+    lang: string;
+    title: string;
+    client_contracts: string;
+    transport_contracts: string;
+    add_contract: string;
+    contract_date: string;
+    expiry_date: string;
+    terms: string;
+    transporter_name: string;
+    transport_fees: string;
+    client_name: string;
+    status: string;
   };
   expenses: {
     lang: string;
@@ -313,6 +384,10 @@ export interface Translations {
     subtitle: string;
     add_request: string;
     total_active?: string;
+    allocation_label: string;
+    disburse_btn: string;
+    settled_status: string;
+    employee_picker: string;
   };
   prepayments: {
     lang: string;
@@ -356,8 +431,23 @@ export interface Translations {
       documents: string;
       security: string;
       backup: string;
+      cloud: string;
     };
     lang: string;
+    cloud_sync: {
+      title: string;
+      subtitle: string;
+      status: string;
+      enable_sync: string;
+      disable_sync: string;
+      sync_now: string;
+      connected: string;
+      disconnected: string;
+      last_sync: string;
+      supabase_url: string;
+      supabase_key: string;
+      auto_sync_label: string;
+    };
   };
   security: {
     lang: string;
@@ -383,102 +473,6 @@ export interface Translations {
     restore: string;
     permanently_delete: string;
     empty: string;
-  };
-  marketing: {
-    lang: string;
-    title: string;
-    subtitle: string;
-    create_campaign: string;
-    active_campaigns: string;
-    total_reach: string;
-    conv_rate: string;
-    roi_multiplier: string;
-    table: {
-      identity: string;
-      status: string;
-      reach: string;
-      engagement: string;
-      leads: string;
-      budget: string;
-    };
-    tabs: {
-      campaigns: string;
-      audiences: string;
-      automation: string;
-      analytics: string;
-      email?: string;
-      intelligence?: string;
-      [key: string]: string | undefined;
-    };
-    add_modal: {
-      title: string;
-      name: string;
-      budget: string;
-      start_date: string;
-      category: string;
-    };
-    status: {
-      active: string;
-      scheduled: string;
-      completed: string;
-    };
-    categories: {
-      institutional: string;
-      sovereign: string;
-      consumer: string;
-    };
-    cancel?: string;
-    launched_at: string;
-    intelligence_title: string;
-    intelligence_accuracy: string;
-    intelligence_savings: string;
-    intelligence_recommendation: string;
-    activate_recommendations: string;
-    platform_performance_title: string;
-    node_email: string;
-    node_google: string;
-    node_x: string;
-    node_linkedin: string;
-    ai_automation_title: string;
-    ai_automation_desc: string;
-    apply_optimization: string;
-    last_audit: string;
-    secure_node_active: string;
-    filter: string;
-    complete_campaign_data: string;
-    campaign_created_success: string;
-    scheduled_emails_success: string;
-    ai_optimization_applied_success: string;
-    email_composer_title: string;
-    email_subject_placeholder: string;
-    email_content_placeholder: string;
-    broadcast_to_all: string;
-    templates_label: string;
-    institutional_welcome_series: string;
-    abandoned_cart_retargeting: string;
-    sovereign_loyalty_nodes: string;
-    trigger_label: string;
-    intelligent_conversion_audit: string;
-    sovereign_forecast_accuracy: string;
-    projected_savings: string;
-    ai_recommendation_text: string;
-    activate_ai_recommendations: string;
-    search_campaigns_placeholder: string;
-    filter_label: string;
-    platform_performance_matrix: string;
-    sovereign_email_node: string;
-    google_ads_search: string;
-    x_sovereign_presence: string;
-    linkedin_institutional: string;
-    sovereign_automation_ai: string;
-    ai_marketing_engine_alert: string;
-    apply_optimization_btn: string;
-    last_audit_prefix: string;
-    secure_node_active_label: string;
-    activate_campaign_btn: string;
-    marketing_campaign_title?: string;
-    transactions_automated: string;
-    configure: string;
   };
   affiliate: {
     lang: string;
@@ -557,12 +551,8 @@ export interface Translations {
     title: string;
     subtitle: string;
     clear_all: string;
-    seed_samples: string;
     confirm_clear_data: string;
     clear_success: string;
-    seeding_info: string;
-    seed_success: string;
-    seed_error: string;
     import_success_prefix: string;
     import_success_suffix: string;
     encryption_msg: string;

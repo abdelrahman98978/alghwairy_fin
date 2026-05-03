@@ -1,0 +1,470 @@
+{
+  "version": 1,
+  "customers": [
+    {
+      "name": "ali",
+      "type": "Corporate Client",
+      "status": "Active",
+      "phone": "",
+      "email": "",
+      "sector": "General Trade",
+      "credit_limit": 22,
+      "balance": 0,
+      "id": "f6b74673-1db8-4941-b51b-8310fe22c5cc",
+      "created_at": "2026-04-09T22:30:04.609Z"
+    }
+  ],
+  "invoices": [
+    {
+      "customer_id": "f6b74673-1db8-4941-b51b-8310fe22c5cc",
+      "amount": 21.99,
+      "vat": 3.2984999999999998,
+      "total": 25.2885,
+      "status": "paid",
+      "reference_number": "INV-1775773824967",
+      "is_settlement": false,
+      "id": "faff9342-e989-4f2f-bca8-9eddf6f4afec",
+      "created_at": "2026-04-09T22:30:24.967Z",
+      "updated_at": "2026-04-18T21:51:18.268Z"
+    }
+  ],
+  "transactions": [],
+  "expenses": [],
+  "payroll": [],
+  "activity_logs": [
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "7e24a74b-59f9-4ba6-9aaf-a23b9a6c2588",
+      "created_at": "2026-04-09T22:28:44.603Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "88c80de0-0dea-496c-89c5-43505a39e5a8",
+      "created_at": "2026-04-09T00:38:26.890Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Updated Admin Credentials",
+      "entity": "security",
+      "entity_id": "password_reset",
+      "id": "f7c72762-150c-4ad7-8fe6-06e0cfd26d7e",
+      "created_at": "2026-04-09T00:26:26.483Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "515d8848-0f5d-426e-8091-8e788f54c4ae",
+      "created_at": "2026-04-09T00:25:54.355Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "c50829c5-e508-4bed-8ec6-06608165344d",
+      "created_at": "2026-04-09T00:25:32.370Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "b7a19b8a-bbb0-430c-83c8-ef69b1b145d1",
+      "created_at": "2026-04-09T00:14:28.255Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "4a0b5771-2cd1-402f-9cdb-306d34441877",
+      "created_at": "2026-04-09T00:07:56.309Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "79cadaa2-99cc-44f8-a607-607ed9199d74",
+      "created_at": "2026-04-09T00:01:48.304Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Enrolled Biometric ID Locally",
+      "entity": "security",
+      "entity_id": "local-bio-1775691973841",
+      "id": "2669567d-a227-4706-9d66-7e88075d8922",
+      "created_at": "2026-04-08T23:46:13.842Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "66548081-a0d0-47af-99bf-2e95d0d27fea",
+      "created_at": "2026-04-08T23:44:56.382Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Wiped Local Database",
+      "entity": "system",
+      "id": "16421c31-c495-45ff-a444-7aad3699eca1",
+      "created_at": "2026-04-08T23:27:17.279Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Added New Customer: ali",
+      "entity": "customers",
+      "entity_id": "f6b74673-1db8-4941-b51b-8310fe22c5cc",
+      "id": "7e94dadd-6ba3-423d-b95c-f12cfe595023",
+      "created_at": "2026-04-09T22:30:04.609Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Issued Sovereign Tax Invoice Draft",
+      "entity": "invoices",
+      "id": "5f2e6344-a0f7-4a7f-a3df-2f2ca25d9d27",
+      "created_at": "2026-04-09T22:30:24.968Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "d83b6f22-a156-4b96-8ed9-3997b8278794",
+      "created_at": "2026-04-11T10:21:12.754Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "798ce1f1-e668-452c-adfb-7879fc98d3a3",
+      "created_at": "2026-04-11T16:41:58.775Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "72acecfd-3130-41dd-9bb6-1dde91de9832",
+      "created_at": "2026-04-14T13:41:30.942Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "00294883-c245-43be-93c4-bf3b37f79e59",
+      "created_at": "2026-04-14T15:39:52.489Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "zpyyk5u7r",
+      "created_at": "2026-04-18T16:10:27.056Z",
+      "updated_at": "2026-04-18T16:10:27.056Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "1dyw3cg1a",
+      "created_at": "2026-04-18T16:33:54.585Z",
+      "updated_at": "2026-04-18T16:33:54.585Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Updated Admin Credentials",
+      "entity": "security",
+      "entity_id": "password_reset",
+      "id": "xbun6ejt3",
+      "created_at": "2026-04-18T16:36:20.668Z",
+      "updated_at": "2026-04-18T16:36:20.668Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "1dqtczh1r",
+      "created_at": "2026-04-18T20:41:40.147Z",
+      "updated_at": "2026-04-18T20:41:40.147Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Enrolled REAL Biometric ID",
+      "entity": "security",
+      "entity_id": "mm9tldRfoW0Z3IGKgThjKkIQjr75Zo6vPq-5Ik0FYhg",
+      "id": "mh5p3etts",
+      "created_at": "2026-04-18T20:42:15.443Z",
+      "updated_at": "2026-04-18T20:42:15.443Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Enrolled REAL Biometric ID",
+      "entity": "security",
+      "entity_id": "LbR2yKZ8fhd1ZvHJfwo_ILTShffXcDlqoxlydeBsbYo",
+      "id": "2ohkqrlk9",
+      "created_at": "2026-04-18T20:44:13.031Z",
+      "updated_at": "2026-04-18T20:44:13.031Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "i2ud5z78y",
+      "created_at": "2026-04-18T20:45:57.545Z",
+      "updated_at": "2026-04-18T20:45:57.545Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "c8cr4ah1c",
+      "created_at": "2026-04-18T21:47:37.910Z",
+      "updated_at": "2026-04-18T21:47:37.910Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Marked Invoice as Paid",
+      "entity": "invoices",
+      "entity_id": "faff9342-e989-4f2f-bca8-9eddf6f4afec",
+      "id": "5ldl5e73b",
+      "created_at": "2026-04-18T21:51:18.288Z",
+      "updated_at": "2026-04-18T21:51:18.288Z"
+    },
+    {
+      "user_email": "عبدالله الغويري",
+      "action": "Secure Identity Auth & Login",
+      "entity": "biometrics",
+      "entity_id": "SESSION-START",
+      "id": "xiwwqmn3k",
+      "created_at": "2026-04-19T09:43:58.570Z",
+      "updated_at": "2026-04-19T09:43:58.570Z"
+    }
+  ],
+  "user_roles": [
+    {
+      "name": "عبدالله الغويري",
+      "role": "admin",
+      "biometric_key": "{\"id\":\"LbR2yKZ8fhd1ZvHJfwo_ILTShffXcDlqoxlydeBsbYo\",\"rawId\":\"LbR2yKZ8fhd1ZvHJfwo/ILTShffXcDlqoxlydeBsbYo=\",\"type\":\"windows-hello\",\"date\":\"2026-04-18T20:44:13.013Z\"}",
+      "id": "298d10f7-ecb7-4b29-8aa5-84f197565fef",
+      "created_at": "2026-04-08T23:46:13.841Z",
+      "password": "",
+      "updated_at": "2026-04-18T20:44:13.014Z"
+    }
+  ],
+  "prepayments": [],
+  "sovereign_messages": [],
+  "sovereign_files": [],
+  "contracts": [],
+  "journal_entries": [],
+  "ledger_accounts": [
+    {
+      "id": "acc-1",
+      "name": "Cash",
+      "name_ar": "الصندوق",
+      "type": "asset",
+      "balance": 0
+    },
+    {
+      "id": "acc-2",
+      "name": "Bank",
+      "name_ar": "البنك",
+      "type": "asset",
+      "balance": 0
+    },
+    {
+      "id": "acc-3",
+      "name": "Accounts Receivable",
+      "name_ar": "العملاء",
+      "type": "asset",
+      "balance": 125000
+    },
+    {
+      "id": "acc-4",
+      "name": "Accounts Payable",
+      "name_ar": "الموردون",
+      "type": "liability",
+      "balance": 45000
+    },
+    {
+      "id": "acc-5",
+      "name": "Sales Revenue",
+      "name_ar": "إيرادات المبيعات",
+      "type": "revenue",
+      "balance": 350000
+    },
+    {
+      "id": "acc-6",
+      "name": "Expenses",
+      "name_ar": "المصروفات",
+      "type": "expense",
+      "balance": 85000
+    },
+    {
+      "id": "acc-7",
+      "name": "Transport Expenses",
+      "name_ar": "مصاريف النقل",
+      "type": "expense",
+      "balance": 12000
+    },
+    {
+      "id": "acc-8",
+      "name": "Depreciation Expense",
+      "name_ar": "مصروف الإهلاك",
+      "type": "expense",
+      "balance": 0
+    },
+    {
+      "id": "acc-9",
+      "name": "Accumulated Depreciation",
+      "name_ar": "مجمع الإهلاك",
+      "type": "asset",
+      "balance": 0
+    },
+    {
+      "id": "acc-10",
+      "name": "Customs Duties",
+      "name_ar": "الرسوم الجمركية",
+      "type": "expense",
+      "balance": 50000
+    },
+    {
+      "id": "acc-11",
+      "name": "Port Fees",
+      "name_ar": "رسوم الموانئ",
+      "type": "expense",
+      "balance": 8000
+    }
+  ],
+  "shipments": [],
+  "tax_returns": [],
+  "petty_cash": [],
+  "role_permissions": [
+    {
+      "id": "rp-admin",
+      "role": "Admin",
+      "permissions": [
+        "customers",
+        "accounting",
+        "invoices",
+        "prepayments",
+        "expenses",
+        "petty_cash",
+        "tax",
+        "payroll",
+        "reports",
+        "statements",
+        "security",
+        "roles",
+        "audit_logs",
+        "data_import",
+        "settings",
+        "trash",
+        "dashboard"
+      ],
+      "updated_at": "2026-04-14T15:44:07.275Z"
+    },
+    {
+      "id": "rp-cfo",
+      "role": "CFO",
+      "permissions": [
+        "dashboard",
+        "customers",
+        "accounting",
+        "invoices",
+        "prepayments",
+        "expenses",
+        "petty_cash",
+        "payroll",
+        "reports",
+        "statements",
+        "audit_logs",
+        "settings"
+      ]
+    },
+    {
+      "id": "rp-accountant",
+      "role": "Accountant",
+      "permissions": [
+        "dashboard",
+        "customers",
+        "invoices",
+        "prepayments",
+        "expenses",
+        "petty_cash",
+        "tax"
+      ]
+    },
+    {
+      "id": "rp-auditor",
+      "role": "Auditor",
+      "permissions": [
+        "dashboard",
+        "customers",
+        "accounting",
+        "invoices",
+        "prepayments",
+        "expenses",
+        "petty_cash",
+        "tax",
+        "payroll",
+        "reports",
+        "statements",
+        "audit_logs"
+      ]
+    }
+  ],
+  "fixed_assets": [],
+  "scheduled_reports": [
+    {
+      "id": "1",
+      "name": "تقرير الأرباح اليومي",
+      "type": "Profit",
+      "frequency": "Daily (11 PM)",
+      "nextRun": "2024-05-20",
+      "status": "Active"
+    },
+    {
+      "id": "2",
+      "name": "كشف الأستاذ الشهري",
+      "type": "Ledger",
+      "frequency": "Monthly",
+      "nextRun": "2024-06-01",
+      "status": "Active"
+    },
+    {
+      "id": "3",
+      "name": "ميزانية المراجعة السنوية",
+      "type": "Balance",
+      "frequency": "Yearly",
+      "nextRun": "2025-01-01",
+      "status": "Active"
+    }
+  ],
+  "sync_settings": {
+    "last_sync": "2026-04-08T23:44:42.028Z",
+    "sync_folder": "",
+    "device_id": "NODE-P95EEX",
+    "auto_sync": false
+  },
+  "products": [],
+  "inventory_movements": [],
+  "backups": [],
+  "audit_logs": []
+}
