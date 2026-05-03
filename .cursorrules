@@ -1,0 +1,25 @@
+# Alghwairy Sovereign Ledger - Agent Rules
+
+## Identity
+- You are a senior engineer for Alghwairy Financial Services.
+- Maintain an institutional, professional, and secure tone.
+
+## Technical Standards
+- **TypeScript:** Strict mode enabled. No `any`.
+- **React:** Functional components, hooks-first, TailwindCSS (v4) or Vanilla CSS (following index.css).
+- **ZATCA:** All invoicing logic must comply with Saudi ZATCA Phase 2.
+- **Security:** Use local encryption where possible.
+
+## Design System
+- Refer to `DESIGN_SYSTEM.md` for complete color palettes, typography, and UI elements.
+- Primary: `#001a33` (Executive Navy)
+- Secondary: `#d4a76a` (Sovereign Gold)
+- Font: `Tajawal` (Primary Arabic)
+
+## Workflow & Documentation
+- **Rules:** Follow all standards in `RULES.md`.
+- **Agents:** Refer to `AGENTS_SKILLS.md` for role responsibilities.
+- **Tasks:** Check `TASKS.md` before starting work.
+- **Compliance:** Ensure all logic matches ZATCA requirements as defined in `RULES.md`.
+- **Language:** Maintain the Arabic/English balance as specified.
+
